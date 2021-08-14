@@ -11,7 +11,7 @@ export class TimelineBar extends Component {
   private _animator: Animator;
 
   constructor(timeline: Timeline, animator: Animator, parent: HTMLElement) {
-    super(parent);
+    super(parent, 'timeline-bar', 'timeline-bar');
     this._timeline = timeline;
     this._animator = animator;
   }
@@ -33,13 +33,13 @@ export class TimelineBar extends Component {
 
     return `
 <div class="timeline-bar_block-container" style="width: ${totalFrames * this.frameWidth}px">
-    ${blocks.map(b => this._createBlock(b)).join('')}
+    ${blocks.map(b => this._createBlockHTML(b)).join('')}
 </div>
 `;
   }
 
-  private _createBlock(block: Block) {
-    const thumbnail = this._createThumbnail(block);
+  private _createBlockHTML(block: Block): string {
+    const thumbnail = this._createThumbnailHTML(block);
 
     return `
 <div class="timeline-bar_block" style="flex-basis:${block.frames * this.frameWidth}px">
@@ -48,7 +48,7 @@ export class TimelineBar extends Component {
 `;
   }
 
-  private _createThumbnail(block: Block) {
+  private _createThumbnailHTML(block: Block): string {
     if (block.type === BlockType.Image) {
       return `<img
         class = "timeline-bar_draw-thumbnail"

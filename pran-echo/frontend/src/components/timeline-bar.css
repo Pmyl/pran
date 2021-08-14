@@ -1,3 +1,7 @@
+.timeline-bar {
+    display: block;
+}
+
 .timeline-bar_draw-thumbnail {
     height: 100px;
     width: auto;
@@ -15,6 +19,6 @@
     height: 100px;
 }
 
-.timeline-bar_block-container ~ .timeline-bar_block-container {
+.timeline-bar ~ .timeline-bar {
     margin-top: 10px;
 }

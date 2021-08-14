@@ -60,10 +60,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     ))
   );
 
+  const timelineBars = [];
   for (const timeline of animator.timelines) {
     const timelineBar = new TimelineBar(timeline, animator, timelinesContainer)
     timelineBar.frameWidth = 20;
     timelineBar.render();
+    timelineBars.push(timelineBar);
   }
 
   startAnimation(animator, 60);
