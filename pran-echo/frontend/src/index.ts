@@ -1,15 +1,26 @@
 import './index.css';
-import { ActionType, Animator, AnimatorManager, ManagerTimelineAction } from 'pran-animation-frontend';
+import { ActionType, AnimatorManager, ManagerTimelineAction } from 'pran-animation-frontend';
 import { CanvasControllerFactory, phonemesMapper } from 'pran-phonemes-frontend';
-import { TimelineBar } from './components/timeline-bar';
+import { Container } from './components/container/container';
+import { ReplayButton } from './components/replay-button/replay-button';
+import { TimelineBar } from './components/timeline-bar/timeline-bar';
+import { Player } from './services/player';
 
 const draw = (id: string): ManagerTimelineAction => ({ type: ActionType.Draw, imageId: id });
 const clear = (): ManagerTimelineAction => ({ type: ActionType.Clear });
 const wait = (amount: number): ManagerTimelineAction => ({ type: ActionType.None, amount });
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const context = (document.getElementById('canvas') as HTMLCanvasElement).getContext('2d');
-  const timelinesContainer = document.getElementById('timelines-container');
+  const topSection = Container.CreateEmptyElement(document.body, 'section', 'top-section');
+  const canvas = Container.CreateEmptyElement(topSection, 'canvas');
+  (canvas.componentElement as HTMLCanvasElement).width = 500;
+  (canvas.componentElement as HTMLCanvasElement).height = 500;
+  const context = (canvas.componentElement as HTMLCanvasElement).getContext('2d');
+  const controlsContainer = Container.CreateEmptyElement(topSection, 'section', 'controls-container');
+
+  const bottomSection = Container.CreateEmptyElement(document.body, 'section', 'bottom-section');
+  const timelinesContainer = Container.CreateEmptyElement(bottomSection, 'section', 'timelines-container');
+
   const manager = await AnimatorManager.create(CanvasControllerFactory.createFrom(context), [
     ['fv', './resources/mouth/f,v.png'],
     ['ur', './resources/mouth/u,r.png'],
@@ -45,8 +56,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const animator = manager.animate(
     [
+      draw('head_idle'),
+    ],
+    [
       draw('eyes_open'),
-      wait(41),
+      wait(20),
       draw('eyes_semi_open'),
       wait(3),
       draw('eyes_closed'),
@@ -68,26 +82,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     timelineBars.push(timelineBar);
   }
 
-  startAnimation(animator, 60);
+  const player = new Player(animator);
+  player.setFps(60);
+  player.play();
+
+  const replayButton = new ReplayButton(controlsContainer, player);
+  replayButton.render();
 });
-
-function startAnimation(animator: Animator, fps: number) {
-  let fpsInterval, startTime, now, then, elapsed;
-
-  (function startAnimating(fps) {
-    fpsInterval = 1000 / fps;
-    then = performance.now();
-    startTime = then;
-    animate();
-  })(fps);
-
-  function animate() {
-    requestAnimationFrame(animate);
-    now = performance.now();
-    elapsed = now - then;
-    if (elapsed > fpsInterval) {
-      animator.tick();
-      then = now - (elapsed % fpsInterval);
-    }
-  }
-}

@@ -1,6 +1,6 @@
 import './timeline-bar.css';
 import { ActionType, Animator, Timeline, TimelineAction } from 'pran-animation-frontend';
-import { Component } from '../framework/component';
+import { Component, ParentElement } from '../../framework/component';
 
 const FRAME_WIDTH: number = 20;
 
@@ -10,7 +10,7 @@ export class TimelineBar extends Component {
   private _timeline: Timeline;
   private _animator: Animator;
 
-  constructor(timeline: Timeline, animator: Animator, parent: HTMLElement) {
+  constructor(timeline: Timeline, animator: Animator, parent: ParentElement) {
     super(parent, 'timeline-bar', 'timeline-bar');
     this._timeline = timeline;
     this._animator = animator;
