@@ -5,12 +5,13 @@
   "main": "index.js",
   "scripts": {
     "install-animation": "npm i ../../pran-animation/frontend/dist/pran-animation-frontend-1.0.0.tgz",
-    "build": "rimraf dist && mkdir dist && npm run copy-resources && microbundle src/index.ts --output dist/index.js --external none --format modern",
-    "dev": "concurrently --kill-others \"npm run watch\" \"npm run server\"",
-    "watch": "rimraf dist && mkdir dist && npm run copy-resources && microbundle watch src/index.ts --output dist/index.js --external none --format modern",
-    "server": "lite-server --baseDir=dist",
+    "install-phonemes": "npm i ../../pran-phonemes/frontend/dist/pran-phonemes-frontend-1.0.0.tgz",
+    "build": "rimraf dist && mkdir dist && npm run ~copy-resources && microbundle src/index.ts --output dist/index.js --external none --format modern",
+    "dev": "concurrently --kill-others \"npm run ~watch\" \"npm run ~server\"",
     "test": "jasmine-ts --config=jasmine.json",
-    "copy-resources": "ncp src/index.html dist/index.html && ncp src/resources dist/resources"
+    "~watch": "rimraf dist && mkdir dist && npm run ~copy-resources && microbundle watch src/index.ts --output dist/index.js --external none --format modern",
+    "~server": "lite-server --baseDir=dist",
+    "~copy-resources": "ncp src/index.html dist/index.html && ncp src/resources dist/resources"
   },
   "author": "",
   "license": "ISC",

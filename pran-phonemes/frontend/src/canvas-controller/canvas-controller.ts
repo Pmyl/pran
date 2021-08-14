@@ -4,6 +4,9 @@ export interface CanvasController {
   id: string;
   draw(image: HTMLImageElement): void;
   clear(): void;
+  dry_draw(image: HTMLImageElement): void;
+  dry_replace(image: HTMLImageElement): void;
+  dry_clear(): void;
   waitForMs(ms: number): Promise<void>;
   addLayer(id: string): CanvasController;
 }
@@ -60,9 +63,21 @@ export class ParentCanvasController implements MainCanvasController {
       this._parent.canvasChanged();
     }
 
+    public dry_clear(): void {
+      this._imagesToDraw = [];
+    }
+
     public draw(image: HTMLImageElement): void {
       this._imagesToDraw.push(image);
       this._parent.canvasChanged();
+    }
+
+    public dry_draw(image: HTMLImageElement): void {
+      this._imagesToDraw.push(image);
+    }
+
+    public dry_replace(image: HTMLImageElement): void {
+      this._imagesToDraw = [image];
     }
 
     public redraw(): void {

@@ -1,32 +1,11 @@
 import { MainCanvasController } from 'pran-phonemes-frontend';
 import { Animator } from './animator';
-import { Timeline } from './timeline';
+import { Timeline } from '../timeline/timeline';
+import { ActionType, ClearAction, NoneAction, TimelineAction } from '../timeline/timeline-action';
 
-export const enum ActionType {
-  None,
-  Draw,
-  Clear
-}
+export type ManagerTimelineAction = NoneAction | ManagerTimelineDrawAction | ClearAction;
 
-export type TimelineAction = NoneAction | DrawAction | ClearAction;
-
-export interface NoneAction {
-  type: ActionType.None;
-  amount: number;
-}
-
-export interface DrawAction {
-  type: ActionType.Draw;
-  image: HTMLImageElement;
-}
-
-export interface ClearAction {
-  type: ActionType.Clear;
-}
-
-export type PranTimelineAction = NoneAction | PranTimelineDrawAction | ClearAction;
-
-export interface PranTimelineDrawAction {
+export interface ManagerTimelineDrawAction {
   type: ActionType.Draw;
   imageId: string;
 }
@@ -45,8 +24,8 @@ export class AnimatorManager {
     return new AnimatorManager(canvasController, imagesMap);
   }
 
-  public animate(...animations: PranTimelineAction[][]): Animator {
-    const animator = new Animator();
+  public animate(...animations: ManagerTimelineAction[][]): Animator {
+    const animator = new Animator(this._canvasController);
     for (let i = 0; i < animations.length; i++) {
       animator.addTimeline(new Timeline(this._canvasController.addLayer(i.toString()), this._toAnimationDetails(animations[i])));
     }
@@ -70,7 +49,7 @@ export class AnimatorManager {
     return map;
   }
 
-  private _toAnimationDetails(headAnimation: PranTimelineAction[]): TimelineAction[] {
+  private _toAnimationDetails(headAnimation: ManagerTimelineAction[]): TimelineAction[] {
     return headAnimation.map(x => x.type === ActionType.Draw ? { type: ActionType.Draw, image: this._imagesMap.get(x.imageId) } : x);
   }
 }

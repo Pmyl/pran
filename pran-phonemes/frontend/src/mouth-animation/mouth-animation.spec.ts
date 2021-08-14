@@ -9,6 +9,9 @@ function fakeCanvasController(actions: [string, any][]): CanvasController {
       actions.push(['wait', ms]);
       return Promise.resolve();
     },
+    dry_clear: () => {},
+    dry_draw: () => {},
+    dry_replace: () => {},
     addLayer(_: string): CanvasController { return this; },
     id: ''
   };

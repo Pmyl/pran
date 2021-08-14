@@ -6,8 +6,8 @@
     "build-visual": "microbundle visual-test/main.ts --output visual-test/dist/index.js --external none --format modern,cjs",
     "dev-visual": "microbundle watch visual-test/main.ts --output visual-test/dist/index.js --external none --format modern,cjs",
     "test": "jasmine-ts --config=jasmine.json",
-    "build-pack": "rimraf dist && microbundle src/index.ts --output dist/index.js --format modern,cjs && ncp package.json dist/package.json && npm run pack-dist",
-    "pack-dist": "cd dist && npm pack"
+    "build-pack": "rimraf dist && microbundle src/index.ts --output dist/index.js --format modern,cjs && ncp package.json dist/package.json && npm run ~pack-dist",
+    "~pack-dist": "cd dist && npm pack"
   },
   "author": "",
   "license": "ISC",

@@ -1,5 +1,5 @@
 import { CanvasControllerFactory, MainCanvasController, phonemesMapper } from 'pran-phonemes-frontend';
-import { ActionType, Animator, AnimatorManager, PranTimelineAction } from '../src/';
+import { ActionType, Animator, AnimatorManager, ManagerTimelineAction } from '../src/';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const context = (document.getElementById('canvas') as HTMLCanvasElement).getContext('2d');
@@ -162,7 +162,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       { type: ActionType.None, amount: 30 },
       { type: ActionType.Draw, imageId: 'eyes_open' },
     ],
-    mouthMovementsImagesIds.reduce((animation: PranTimelineAction[], imageId: string) => {
+    mouthMovementsImagesIds.reduce((animation: ManagerTimelineAction[], imageId: string) => {
       animation.push({ type: ActionType.Draw, imageId: imageId });
       animation.push({ type: ActionType.None, amount: 5 });
       return animation;

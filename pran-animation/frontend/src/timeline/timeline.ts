@@ -1,20 +1,21 @@
 import { CanvasController } from 'pran-phonemes-frontend';
-import { ActionType, TimelineAction } from './pran-animation';
+import { ActionType, TimelineAction } from './timeline-action';
 
 export class Timeline {
+  public readonly timelineActions: TimelineAction[];
+
   private _currentWait: number;
-  private _timelineActions: TimelineAction[];
   private _timelineActionsQueue: TimelineAction[];
   private _layer: CanvasController;
 
   constructor(layer: CanvasController, animation: TimelineAction[]) {
-    this._layer = layer;
-    this._timelineActions = animation;
+    this.timelineActions = animation;
     this._timelineActionsQueue = animation.slice();
+    this._layer = layer;
   }
 
   public restart(): void {
-    this._timelineActionsQueue = this._timelineActions.slice();
+    this._timelineActionsQueue = this.timelineActions.slice();
   }
 
   public tick(amount: number): void {
@@ -38,11 +39,10 @@ export class Timeline {
     const action = this._timelineActionsQueue.shift();
     switch (action.type) {
       case ActionType.Clear:
-        this._layer.clear();
+        this._layer.dry_clear();
         break;
       case ActionType.Draw:
-        this._layer.clear();
-        this._layer.draw(action.image);
+        this._layer.dry_replace(action.image);
         break;
       case ActionType.None:
         this._currentWait = action.amount;

@@ -1,10 +1,10 @@
-import { ActionType, Animator, AnimatorManager, PranTimelineAction } from 'pran-animation-frontend';
+import { ActionType, Animator, AnimatorManager, ManagerTimelineAction } from 'pran-animation-frontend';
 import { CanvasControllerFactory, phonemesMapper } from 'pran-phonemes-frontend';
 import { TimelineBar } from './components/timeline-bar';
 
-const draw = (id: string): PranTimelineAction => ({ type: ActionType.Draw, imageId: id });
-const clear = (): PranTimelineAction => ({ type: ActionType.Clear });
-const wait = (amount: number): PranTimelineAction => ({ type: ActionType.None, amount });
+const draw = (id: string): ManagerTimelineAction => ({ type: ActionType.Draw, imageId: id });
+const clear = (): ManagerTimelineAction => ({ type: ActionType.Clear });
+const wait = (amount: number): ManagerTimelineAction => ({ type: ActionType.None, amount });
 
 document.addEventListener('DOMContentLoaded', async () => {
   const context = (document.getElementById('canvas') as HTMLCanvasElement).getContext('2d');
@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     ))
   );
 
-  for (const timeline of (animator as any)._timelines) {
+  for (const timeline of animator.timelines) {
     const timelineBar = new TimelineBar()
     timelineBar.init(timeline, timelinesContainer);
   }

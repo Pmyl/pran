@@ -6,13 +6,13 @@
   "scripts": {
     "install-phonemes": "npm i ../../pran-phonemes/frontend/dist/pran-phonemes-frontend-1.0.0.tgz",
     "build-visual": "microbundle visual-test/main.ts --output visual-test/dist/index.js --external none --format modern,cjs",
-    "dev-visual": "concurrently --kill-others \"npm run watch-visual\" \"npm run server-visual\"",
-    "watch-visual": "microbundle watch visual-test/main.ts --output visual-test/dist/index.js --external none --format modern,cjs",
-    "server-visual": "lite-server --baseDir=visual-test",
+    "dev-visual": "concurrently --kill-others \"npm run ~watch-visual\" \"npm run ~server-visual\"",
+    "build-pack": "rimraf dist && microbundle src/index.ts --output dist/index.js --format modern,cjs && npm run ~copy-package && npm run ~pack-dist",
     "test": "jasmine-ts --config=jasmine.json",
-    "build-pack": "rimraf dist && microbundle src/index.ts --output dist/index.js --format modern,cjs && npm run copy-package && npm run pack-dist",
-    "copy-package": "ncp package.json dist/package.json && replace-content dist/package.json file:../../pran-phonemes file:../../../pran-phonemes",
-    "pack-dist": "cd dist && npm pack"
+    "~watch-visual": "microbundle watch visual-test/main.ts --output visual-test/dist/index.js --external none --format modern,cjs",
+    "~server-visual": "lite-server --baseDir=visual-test",
+    "~copy-package": "ncp package.json dist/package.json && replace-content dist/package.json file:../../pran-phonemes file:../../../pran-phonemes",
+    "~pack-dist": "cd dist && npm pack"
   },
   "author": "",
   "license": "ISC",

@@ -12,7 +12,7 @@ export class TimelineBar {
 
   private _generateContent(): HTMLElement {
     const div = document.createElement('div');
-    div.innerHTML = 'wow' + (this._timeline as any)._currentWait;
+    div.innerHTML = 'wow' + this._timeline.timelineActions.map(x => x.type).join();
 
     return div;
   }

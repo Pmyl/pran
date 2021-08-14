@@ -1,3 +1,4 @@
-export * from './pran-animation';
-export { Animator } from './animator';
-export { Timeline } from './timeline';
+export * from './animator/animator-manager';
+export * from './animator/animator';
+export * from './timeline/timeline';
+export * from './timeline/timeline-action';
