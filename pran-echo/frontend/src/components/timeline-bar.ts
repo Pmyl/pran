@@ -1,34 +1,22 @@
-import { ActionType, Animator, Timeline, TimelineAction } from 'pran-animation-frontend';
 import './timeline-bar.css';
+import { ActionType, Animator, Timeline, TimelineAction } from 'pran-animation-frontend';
+import { Component } from '../framework/component';
 
 const FRAME_WIDTH: number = 20;
 
-export class TimelineBar {
+export class TimelineBar extends Component {
   public frameWidth: number = FRAME_WIDTH;
 
-  private _parent: HTMLElement;
   private _timeline: Timeline;
   private _animator: Animator;
-  private _barContainer: HTMLElement;
 
   constructor(timeline: Timeline, animator: Animator, parent: HTMLElement) {
-    this._parent = parent;
+    super(parent);
     this._timeline = timeline;
     this._animator = animator;
-    this._parent.append(this._generateAndStoreTimelineBarContainer());
-  }
-  
-  public render() {
-    this._barContainer.outerHTML = this._generateContent().outerHTML;
   }
 
-  private _generateAndStoreTimelineBarContainer() {
-    this._barContainer = document.createElement('div');
-    return this._barContainer;
-  }
-
-  private _generateContent(): HTMLElement {
-    const div = document.createElement('template');
+  protected override _render(): string {
     // TODO: fix performance hit here, animator should have this info ready
     // to ensure this happens I should make sure the exposed timeline is readonly
     // and every change is made through the Animator (this number is updated only on timeline change)
@@ -43,13 +31,11 @@ export class TimelineBar {
     );
     const blocks = this._identifyBlocks(this._timeline.timelineActions, totalFrames);
 
-    div.innerHTML = `
+    return `
 <div class="timeline-bar_block-container" style="width: ${totalFrames * this.frameWidth}px">
     ${blocks.map(b => this._createBlock(b)).join('')}
 </div>
-`.trim();
-
-    return div.content.firstChild as HTMLElement;
+`;
   }
 
   private _createBlock(block: Block) {
