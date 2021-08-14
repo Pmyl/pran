@@ -1,3 +1,4 @@
+import './index.css';
 import { ActionType, Animator, AnimatorManager, ManagerTimelineAction } from 'pran-animation-frontend';
 import { CanvasControllerFactory, phonemesMapper } from 'pran-phonemes-frontend';
 import { TimelineBar } from './components/timeline-bar';
@@ -44,7 +45,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const animator = manager.animate(
     [
-      draw('eyes_open')
+      draw('eyes_open'),
+      wait(41),
+      draw('eyes_semi_open'),
+      wait(3),
+      draw('eyes_closed'),
+      wait(3),
+      draw('eyes_semi_open'),
+      wait(3),
+      draw('eyes_open'),
     ],
     mouthMovementsImagesIds.flatMap(id => (
       [draw(id), wait(5)]
@@ -52,8 +61,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   );
 
   for (const timeline of animator.timelines) {
-    const timelineBar = new TimelineBar()
-    timelineBar.init(timeline, timelinesContainer);
+    const timelineBar = new TimelineBar(timeline, animator, timelinesContainer)
+    timelineBar.frameWidth = 20;
+    timelineBar.render();
   }
 
   startAnimation(animator, 60);
