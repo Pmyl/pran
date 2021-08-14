@@ -2,7 +2,12 @@ import { CanvasController } from 'pran-phonemes-frontend';
 import { ActionType, TimelineAction } from './timeline-action';
 
 export class Timeline {
-  public readonly timelineActions: TimelineAction[];
+  public readonly timelineActions: readonly TimelineAction[];
+  public get frames(): number {
+    return this.timelineActions.reduce((acc, action) => {
+      return acc + (action.type === ActionType.None ? action.amount : 1);
+    }, 0);
+  }
 
   private _currentWait: number;
   private _timelineActionsQueue: TimelineAction[];
@@ -45,7 +50,7 @@ export class Timeline {
         this._layer.dry_replace(action.image);
         break;
       case ActionType.None:
-        this._currentWait = action.amount;
+        this._currentWait = action.amount - 1;
         break;
     }
   }

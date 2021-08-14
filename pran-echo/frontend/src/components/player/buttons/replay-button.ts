@@ -1,5 +1,5 @@
-import { Component, ParentElement } from '../../framework/component';
-import { Player } from '../../services/player';
+import { Component, ParentElement } from '../../../framework/component';
+import { Player } from '../../../services/player';
 
 export class ReplayButton extends Component {
   private player: Player;

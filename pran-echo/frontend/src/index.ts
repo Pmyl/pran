@@ -2,7 +2,11 @@ import './index.css';
 import { ActionType, AnimatorManager, ManagerTimelineAction } from 'pran-animation-frontend';
 import { CanvasControllerFactory, phonemesMapper } from 'pran-phonemes-frontend';
 import { Container } from './components/container/container';
-import { ReplayButton } from './components/replay-button/replay-button';
+import { PauseButton } from './components/player/buttons/pause-button';
+import { PlayButton } from './components/player/buttons/play-button';
+import { ReplayButton } from './components/player/buttons/replay-button';
+import { StopButton } from './components/player/buttons/stop-button';
+import { LoopToggle } from './components/player/loop-toggle';
 import { TimelineBar } from './components/timeline-bar/timeline-bar';
 import { Player } from './services/player';
 
@@ -88,4 +92,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const replayButton = new ReplayButton(controlsContainer, player);
   replayButton.render();
+
+  const stopButton = new StopButton(controlsContainer, player);
+  stopButton.render();
+
+  const pauseButton = new PauseButton(controlsContainer, player);
+  pauseButton.render();
+
+  const playButton = new PlayButton(controlsContainer, player);
+  playButton.render();
+
+  const loopToggle = new LoopToggle(controlsContainer, player);
+  loopToggle.render();
 });

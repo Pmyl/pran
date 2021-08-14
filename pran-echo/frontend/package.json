@@ -9,7 +9,7 @@
     "build": "rimraf dist && mkdir dist && npm run ~copy-resources && microbundle src/index.ts --output dist/index.js --external none --format modern",
     "dev": "concurrently --kill-others \"npm run ~watch\" \"npm run ~server\"",
     "test": "jasmine-ts --config=jasmine.json",
-    "~watch": "rimraf dist && mkdir dist && npm run ~copy-resources && microbundle watch src/index.ts --output dist/index.js --external none --format modern",
+    "~watch": "rimraf dist && mkdir dist && npm run ~copy-resources && microbundle watch src/index.ts --output dist/index.js --external none --format modern --sourcemap",
     "~server": "lite-server --baseDir=dist",
     "~copy-resources": "ncp src/index.html dist/index.html && ncp src/resources dist/resources"
   },

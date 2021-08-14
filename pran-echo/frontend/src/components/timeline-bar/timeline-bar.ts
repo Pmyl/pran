@@ -17,18 +17,7 @@ export class TimelineBar extends Component {
   }
 
   protected override _render(): string {
-    // TODO: fix performance hit here, animator should have this info ready
-    // to ensure this happens I should make sure the exposed timeline is readonly
-    // and every change is made through the Animator (this number is updated only on timeline change)
-    const totalFrames = Math.max.apply(
-      Math,
-      this._animator.timelines
-        .map(t =>
-          t.timelineActions.reduce((acc, action) => {
-            return acc + (action.type === ActionType.None ? action.amount : 1);
-          }, 0)
-        )
-    );
+    const totalFrames = this._animator.totalFrames;
     const blocks = this._identifyBlocks(this._timeline.timelineActions, totalFrames);
 
     return `
@@ -62,7 +51,7 @@ export class TimelineBar extends Component {
         src = "./resources/clear.png" / >`
   }
 
-  private _identifyBlocks(timelineActions: TimelineAction[], totalFrames: number): Block[] {
+  private _identifyBlocks(timelineActions: readonly TimelineAction[], totalFrames: number): Block[] {
     const blocks = [];
     let currentBlock: Block = null;
     let currentFrames: number = 0;

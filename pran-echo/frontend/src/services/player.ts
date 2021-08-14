@@ -5,6 +5,7 @@ export class Player {
   private _fps: number = 60;
   private _isPlaying: boolean;
   private _hasFullStopped: boolean = true;
+  private _isLooping: boolean = false;
 
   constructor(animator: Animator) {
     this._animator = animator;
@@ -34,6 +35,9 @@ export class Player {
       elapsed = now - then;
       if (elapsed > fpsInterval) {
         this._animator.tick();
+        if (this._isLooping && this._animator.totalFrames === this._animator.currentFrame) {
+          this._animator.restart();
+        }
         then = now - (elapsed % fpsInterval);
       }
     };
@@ -53,6 +57,6 @@ export class Player {
   }
 
   public setLoop(loop: boolean) {
-    // to implement
+    this._isLooping = loop;
   }
 }
