@@ -1,15 +1,18 @@
-import { Component, ParentElement } from '../../../framework/component';
-import { Player } from '../../../services/player';
+import { Component } from '../../../framework/component';
+import { PlayerController } from '../../../services/player-controller';
 
 export class ReplayButton extends Component {
-  private player: Player;
+  public playerController: PlayerController;
 
-  constructor(parent: ParentElement, player: Player) {
-    super(parent, 'replay-button', 'replay-button');
-    this.player = player;
+  constructor() {
+    super('replay-button', 'replay-button');
   }
 
   protected _render(): string {
+    if (!this.playerController) {
+      throw new Error(`PlayerController input is mandatory in component ${this.constructor.name} before rendering`);
+    }
+
     return `
 <button type="button" class="replay-button_button">
     Replay
@@ -19,8 +22,8 @@ export class ReplayButton extends Component {
   
   protected override _postRender(component: HTMLElement): void {
     component.querySelector('.replay-button_button').addEventListener('click', () => {
-      this.player.stop();
-      this.player.play();
+      this.playerController.stop();
+      this.playerController.play();
     });
   }
 }

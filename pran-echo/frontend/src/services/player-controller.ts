@@ -1,6 +1,6 @@
 import { Animator } from 'pran-animation-frontend';
 
-export class Player {
+export class PlayerController {
   private _animator: Animator;
   private _fps: number = 60;
   private _isPlaying: boolean;

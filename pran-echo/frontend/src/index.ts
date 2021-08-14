@@ -7,8 +7,9 @@ import { PlayButton } from './components/player/buttons/play-button';
 import { ReplayButton } from './components/player/buttons/replay-button';
 import { StopButton } from './components/player/buttons/stop-button';
 import { LoopToggle } from './components/player/loop-toggle';
+import { Player } from './components/player/player';
 import { TimelineBar } from './components/timeline-bar/timeline-bar';
-import { Player } from './services/player';
+import { PlayerController } from './services/player-controller';
 
 const draw = (id: string): ManagerTimelineAction => ({ type: ActionType.Draw, imageId: id });
 const clear = (): ManagerTimelineAction => ({ type: ActionType.Clear });
@@ -16,11 +17,13 @@ const wait = (amount: number): ManagerTimelineAction => ({ type: ActionType.None
 
 document.addEventListener('DOMContentLoaded', async () => {
   const topSection = Container.CreateEmptyElement(document.body, 'section', 'top-section');
-  const canvas = Container.CreateEmptyElement(topSection, 'canvas');
+  const topLeftContainer = Container.CreateEmptyElement(topSection, 'div', 'top-left-container');
+  const playerContainer = Container.CreateEmptyElement(topSection, 'div', 'player-container');
+  const canvas = Container.CreateEmptyElement(playerContainer, 'canvas');
   (canvas.componentElement as HTMLCanvasElement).width = 500;
   (canvas.componentElement as HTMLCanvasElement).height = 500;
   const context = (canvas.componentElement as HTMLCanvasElement).getContext('2d');
-  const controlsContainer = Container.CreateEmptyElement(topSection, 'section', 'controls-container');
+  const editControlsContainer = Container.CreateEmptyElement(topSection, 'div', 'edit-controls-container');
 
   const bottomSection = Container.CreateEmptyElement(document.body, 'section', 'bottom-section');
   const timelinesContainer = Container.CreateEmptyElement(bottomSection, 'section', 'timelines-container');
@@ -80,28 +83,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const timelineBars = [];
   for (const timeline of animator.timelines) {
-    const timelineBar = new TimelineBar(timeline, animator, timelinesContainer)
+    const timelineBar = new TimelineBar(timeline, animator).appendTo(timelinesContainer)
     timelineBar.frameWidth = 20;
     timelineBar.render();
     timelineBars.push(timelineBar);
   }
 
-  const player = new Player(animator);
-  player.setFps(60);
-  player.play();
-
-  const replayButton = new ReplayButton(controlsContainer, player);
-  replayButton.render();
-
-  const stopButton = new StopButton(controlsContainer, player);
-  stopButton.render();
-
-  const pauseButton = new PauseButton(controlsContainer, player);
-  pauseButton.render();
-
-  const playButton = new PlayButton(controlsContainer, player);
-  playButton.render();
-
-  const loopToggle = new LoopToggle(controlsContainer, player);
-  loopToggle.render();
+  const playerController = new PlayerController(animator);
+  playerController.setFps(60);
+  playerController.play();
+  
+  const player = new Player().appendTo(playerContainer);
+  player.playerController = playerController;
+  player.render();
 });

@@ -1,15 +1,18 @@
-import { Component, ParentElement } from '../../framework/component';
-import { Player } from '../../services/player';
+import { Component } from '../../framework/component';
+import { PlayerController } from '../../services/player-controller';
 
 export class LoopToggle extends Component {
-  private _player: Player;
+  public playerController: PlayerController;
 
-  constructor(parent: ParentElement, player: Player) {
-    super(parent, 'loop-toggle', 'loop-toggle');
-    this._player = player;
+  constructor() {
+    super('loop-toggle', 'loop-toggle');
   }
 
   protected _render(): string {
+    if (!this.playerController) {
+      throw new Error(`PlayerController input is mandatory in component ${this.constructor.name} before rendering`);
+    }
+
     return `
 <input class="loop-toggle_input" type="checkbox" />
 `;
@@ -17,7 +20,7 @@ export class LoopToggle extends Component {
   
   protected _postRender(componentToRender: HTMLElement) {
     componentToRender.querySelector('.loop-toggle_input').addEventListener('click', (e) => {
-      this._player.setLoop((e.target as HTMLInputElement).checked);
+      this.playerController.setLoop((e.target as HTMLInputElement).checked);
     });
   }
 }

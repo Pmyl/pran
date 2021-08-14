@@ -1,15 +1,18 @@
-import { Component, ParentElement } from '../../../framework/component';
-import { Player } from '../../../services/player';
+import { Component } from '../../../framework/component';
+import { PlayerController } from '../../../services/player-controller';
 
 export class StopButton extends Component {
-  private player: Player;
+  public playerController: PlayerController;
 
-  constructor(parent: ParentElement, player: Player) {
-    super(parent, 'stop-button', 'stop-button');
-    this.player = player;
+  constructor() {
+    super('stop-button', 'stop-button');
   }
 
   protected _render(): string {
+    if (!this.playerController) {
+      throw new Error(`PlayerController input is mandatory in component ${this.constructor.name} before rendering`);
+    }
+
     return `
 <button type="button" class="stop-button_button">
     Stop
@@ -19,7 +22,7 @@ export class StopButton extends Component {
   
   protected override _postRender(component: HTMLElement): void {
     component.querySelector('.stop-button_button').addEventListener('click', () => {
-      this.player.stop();
+      this.playerController.stop();
     });
   }
 }
