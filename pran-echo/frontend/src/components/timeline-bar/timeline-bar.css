@@ -1,27 +1,12 @@
 .timeline-bar {
-    display: block;
-}
-
-.timeline-bar_draw-thumbnail {
-    height: 100px;
-    width: auto;
-    position: -webkit-sticky;
-    position: sticky;
-    left: 0;
-}
-
-.timeline-bar_block {
-    min-width: 0;
-    flex: 0 0;
-    box-shadow: inset 0 0 0 1px #ccc;
-    position: relative;
-}
-
-.timeline-bar_block-container {
-    display: flex;
-    height: 100px;
+    display: inline-block;
 }
 
 .timeline-bar ~ .timeline-bar {
     margin-top: 10px;
+}
+
+.timeline-bar_block-container {
+    display: inline-flex;
+    height: 100px;
 }

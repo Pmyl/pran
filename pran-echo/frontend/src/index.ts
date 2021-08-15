@@ -3,7 +3,6 @@ import { ActionType, AnimatorManager, ManagerTimelineAction } from 'pran-animati
 import { CanvasControllerFactory, phonemesMapper } from 'pran-phonemes-frontend';
 import { Container } from './components/container/container';
 import { Player } from './components/player/player';
-import { TimelineBar } from './components/timeline-bar/timeline-bar';
 import { createTimelineBoard } from './components/timeline-board/timeline-board';
 import { PlayerController } from './services/player-controller';
 
@@ -13,7 +12,6 @@ const wait = (amount: number): ManagerTimelineAction => ({ type: ActionType.None
 
 document.addEventListener('DOMContentLoaded', async () => {
   const player = new Player();
-  const timelineBoard = createTimelineBoard();
   const topSection = Container.CreateEmptyElement(document.body, 'section', 'top-section');
   const topLeftContainer = Container.CreateEmptyElement(topSection, 'div', 'top-left-container');
   const playerContainer = Container.CreateEmptyElement(topSection, 'div', 'player-container');
@@ -60,6 +58,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       draw('head_idle'),
     ],
     [
+      draw('head_idle'),
+    ],
+    [
+      draw('head_idle'),
+    ],
+    [
       draw('eyes_open'),
       wait(20),
       draw('eyes_semi_open'),
@@ -77,7 +81,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const playerController = new PlayerController(animator);
   playerController.setFps(60);
-  playerController.play();
+  // playerController.play();
   
   player.appendTo(playerContainer)
     .setInput('playerController', playerController)

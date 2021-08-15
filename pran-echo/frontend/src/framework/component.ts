@@ -1,6 +1,6 @@
 export type ParentElement = HTMLElement | Component;
 
-export type RenderResult = string | (string | Component)[];
+export type RenderResult = string | Component | (string | Component)[];
 
 type Immutable<T> = {
   readonly [K in keyof T]: Immutable<T[K]>;
@@ -24,7 +24,7 @@ export abstract class Component<T extends object = {}> {
     }
   }
 
-  public render() {
+  public render(): this {
     let toRender = this._render();
     
     if (!toRender) {
@@ -61,6 +61,8 @@ export abstract class Component<T extends object = {}> {
 
     this._lastRenderedItemsCount = toRender.length;
     this._postRender(this.componentElement);
+    
+    return this;
   }
 
   public appendTo(parent: ParentElement): this {

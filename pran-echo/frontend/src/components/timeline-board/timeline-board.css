@@ -1,9 +1,11 @@
 .timeline-board {
     position: relative;
-    display: block;
+    display: inline-block;
+    padding: 0 15px;
 }
 
 .timeline-board_vertical-line {
+    margin-left: 15px;
     position: absolute;
     border-right: 1px solid black;
     display: block;
@@ -14,4 +16,15 @@
 .timeline-board_frame-pick-area {
     height: 50px;
     background-color: lightcyan;
+    position: sticky;
+    top: 0;
+    z-index: 299
+}
+
+.timeline-board_frame-pick-line {
+    pointer-events: none;
+    border-right: 1px solid gray;
+    position: absolute;
+    height: 50%;
+    top: 0;
 }

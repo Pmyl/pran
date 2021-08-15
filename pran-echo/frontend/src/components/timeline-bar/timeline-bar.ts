@@ -1,6 +1,8 @@
 import './timeline-bar.css';
 import { ActionType, Animator, Timeline, TimelineAction } from 'pran-animation-frontend';
-import { Component } from '../../framework/component';
+import { Component, RenderResult } from '../../framework/component';
+import { Container } from '../container/container';
+import { Block, BlockType, createTimelineBlock } from '../timeline-block/timeline-block';
 
 const FRAME_WIDTH: number = 20;
 
@@ -9,46 +11,21 @@ export class TimelineBar extends Component {
 
   private _timeline: Timeline;
   private _animator: Animator;
+  private readonly _timelineBlocksContainer: Component;
 
   constructor(timeline: Timeline, animator: Animator) {
     super('timeline-bar', 'timeline-bar');
     this._timeline = timeline;
     this._animator = animator;
+    this._timelineBlocksContainer = Container.CreateEmptyElement('div', 'timeline-bar_block-container');
   }
 
-  protected override _render(): string {
+  protected override _render(): RenderResult {
     const totalFrames = this._animator.totalFrames;
     const blocks = this._identifyBlocks(this._timeline.timelineActions, totalFrames);
+    this._createBlockComponents(blocks, this.frameWidth);
 
-    return `
-<div class="timeline-bar_block-container" style="width: ${totalFrames * this.frameWidth}px">
-    ${blocks.map(b => this._createBlockHTML(b)).join('')}
-</div>
-`;
-  }
-
-  private _createBlockHTML(block: Block): string {
-    const thumbnail = this._createThumbnailHTML(block);
-
-    return `
-<div class="timeline-bar_block" style="flex-basis:${block.frames * this.frameWidth}px">
-    ${thumbnail}
-</div>
-`;
-  }
-
-  private _createThumbnailHTML(block: Block): string {
-    if (block.type === BlockType.Image) {
-      return `<img
-        class = "timeline-bar_draw-thumbnail"
-        alt = "draw block image"
-        src = "${block.imageSrc}" / >`
-    }
-
-    return `<img
-        class = "timeline-bar_clear-thumbnail"
-        alt = "clear block image"
-        src = "./resources/clear.png" / >`
+    return this._timelineBlocksContainer;
   }
 
   private _identifyBlocks(timelineActions: readonly TimelineAction[], totalFrames: number): Block[] {
@@ -87,22 +64,8 @@ export class TimelineBar extends Component {
 
     return blocks;
   }
-}
 
-enum BlockType {
-  Image,
-  Clear
+  private _createBlockComponents(blocks: Block[], frameWidth: number): Component[] {
+    return blocks.map(block => createTimelineBlock().setInputs({ block, frameWidth }).render().appendTo(this._timelineBlocksContainer));
+  }
 }
-
-interface ImageBlock {
-  frames: number;
-  type: BlockType.Image;
-  imageSrc: string;
-}
-
-interface ClearBlock {
-  frames: number;
-  type: BlockType.Clear;
-}
-
-type Block = ImageBlock | ClearBlock;
