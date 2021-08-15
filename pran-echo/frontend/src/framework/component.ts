@@ -12,6 +12,8 @@ export abstract class Component<T extends object = {}> {
   public get inputs(): Immutable<T> {
     return this._inputs;
   }
+  private _lastRenderedItemsCount: number = 0;
+  protected _isTemplate: boolean = false;
   protected _inputs: T = {} as T;
 
   protected constructor(selector: string, initialClass?: string) {
@@ -23,31 +25,41 @@ export abstract class Component<T extends object = {}> {
   }
 
   public render() {
-    const template = document.createElement('template');
-    const toRender = this._render();
+    let toRender = this._render();
     
     if (!toRender) {
       return;
     }
 
-    if (Array.isArray(toRender)) {
+    toRender = Array.isArray(toRender) ? toRender : [toRender];
+
+    if (this._lastRenderedItemsCount === toRender.length) {
+      for (let i = 0; i < toRender.length; i++){
+        const element: string | Component = toRender[i];
+
+        if (!this._isComponent(element)) {
+          this.componentElement.children[i].replaceWith(this._htmlToElement(element));
+        }
+      }
+    } else {
       this.componentElement.innerHTML = '';
 
       for (const renderItem of toRender) {
         let child: HTMLElement;
         if (this._isComponent(renderItem)) {
-          child = renderItem.componentElement;
+          if (renderItem._isTemplate) {
+            child = renderItem.componentElement.firstChild as HTMLElement;
+          } else {
+            child = renderItem.componentElement;
+          }
         } else {
           child = this._htmlToElement(renderItem);
         }
         this.componentElement.append(child);
       }
-    } else {
-      template.innerHTML = toRender.trim();
-      const renderedComponent = template.content.firstChild as HTMLElement;
-      this.componentElement.innerHTML = renderedComponent.outerHTML;
     }
 
+    this._lastRenderedItemsCount = toRender.length;
     this._postRender(this.componentElement);
   }
 
@@ -79,6 +91,7 @@ export abstract class Component<T extends object = {}> {
   private _isComponent(parent: unknown | Component): parent is Component {
     return parent instanceof Component;
   }
+
   protected abstract _render(): RenderResult;
   
   protected _postRender(componentToRender: HTMLElement): void {};

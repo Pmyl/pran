@@ -3,6 +3,7 @@ import { Animator } from 'pran-animation-frontend';
 import { Component } from '../../framework/component';
 import { inlineComponent } from '../../framework/inline-component';
 import { onClick } from '../../framework/on-click';
+import { staticElement } from '../../framework/static-element';
 import { PlayerController } from '../../services/player-controller';
 import { TimelineBar } from '../timeline-bar/timeline-bar';
 
@@ -21,9 +22,7 @@ export const createTimelineBoard = inlineComponent<{ animator: Animator, playerC
     controls.mandatoryInput('playerController') && [[`
 <span class="timeline-board_vertical-line" style="left: ${currentFrame * 15}px"></span>
 `,
-`
-<div class="timeline-board_frame-pick-area"></div>
-`,
+    staticElement(`<div class="timeline-board_frame-pick-area"></div>`),
     ...bars
   ], element => onClick(element, '.timeline-board_frame-pick-area', e => {
       const rect = e.target.getBoundingClientRect();
