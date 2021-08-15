@@ -3,9 +3,8 @@ import { Animator } from 'pran-animation-frontend';
 import { Component } from '../../framework/component';
 import { inlineComponent } from '../../framework/inline-component';
 import { onClick } from '../../framework/on-click';
-import { containerElement, staticElement } from '../../framework/static-element';
+import { staticElement } from '../../framework/static-element';
 import { PlayerController } from '../../services/player-controller';
-import { Container } from '../container/container';
 import { TimelineBar } from '../timeline-bar/timeline-bar';
 
 const frameWidth: number = 20;

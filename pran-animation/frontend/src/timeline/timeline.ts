@@ -21,6 +21,7 @@ export class Timeline {
 
   public restart(): void {
     this._timelineActionsQueue = this.timelineActions.slice();
+    this._currentWait = 0;
   }
 
   public tick(amount: number): void {
