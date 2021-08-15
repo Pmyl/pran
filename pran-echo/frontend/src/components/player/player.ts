@@ -1,46 +1,44 @@
+import './buttons/buttons.css';
 import { Component } from '../../framework/component';
+import { mandatoryInput } from '../../framework/mandatory-input';
 import { PlayerController } from '../../services/player-controller';
 import { Container } from '../container/container';
-import { PauseButton } from './buttons/pause-button';
-import { PlayButton } from './buttons/play-button';
-import { ReplayButton } from './buttons/replay-button';
-import { StopButton } from './buttons/stop-button';
-import { LoopToggle } from './loop-toggle';
+import { createPauseButton } from './buttons/pause-button';
+import { createPlayButton } from './buttons/play-button';
+import { createReplayButton } from './buttons/replay-button';
+import { createStopButton } from './buttons/stop-button';
+import { createLoopToggle } from './buttons/loop-toggle';
 
-export class Player extends Component {
-  public playerController: PlayerController;
+export class Player extends Component<{ playerController: PlayerController }> {
+  public readonly canvas: Component;
 
   constructor() {
     super('player', 'player');
+    this.canvas = Container.CreateEmptyElement('canvas');
+    (this.canvas.componentElement as HTMLCanvasElement).width = 500;
+    (this.canvas.componentElement as HTMLCanvasElement).height = 500;
   }
 
   protected _render(): (string | Component)[] {
-    if (!this.playerController) {
-      throw new Error(`PlayerController input is mandatory in component ${this.constructor.name} before rendering`);
-    }
+    mandatoryInput(this, 'playerController');
 
     const playerControlsContainer = Container.CreateEmptyElement('section', 'player-controls-container');
 
-    const replayButton = new ReplayButton().appendTo(playerControlsContainer);
-    replayButton.playerController = this.playerController;
+    const replayButton = createReplayButton({ playerController: this._inputs.playerController }).appendTo(playerControlsContainer);
     replayButton.render();
 
-    const stopButton = new StopButton().appendTo(playerControlsContainer);
-    stopButton.playerController = this.playerController;
+    const stopButton = createStopButton({ playerController: this._inputs.playerController }).appendTo(playerControlsContainer);
     stopButton.render();
 
-    const pauseButton = new PauseButton().appendTo(playerControlsContainer);
-    pauseButton.playerController = this.playerController;
+    const pauseButton = createPauseButton({ playerController: this._inputs.playerController }).appendTo(playerControlsContainer);
     pauseButton.render();
 
-    const playButton = new PlayButton().appendTo(playerControlsContainer);
-    playButton.playerController = this.playerController;
+    const playButton = createPlayButton({ playerController: this._inputs.playerController }).appendTo(playerControlsContainer);
     playButton.render();
 
-    const loopToggle = new LoopToggle().appendTo(playerControlsContainer);
-    loopToggle.playerController = this.playerController;
+    const loopToggle = createLoopToggle({ playerController: this._inputs.playerController }).appendTo(playerControlsContainer);
     loopToggle.render();
 
-    return [playerControlsContainer];
+    return [this.canvas, playerControlsContainer];
   }
 }

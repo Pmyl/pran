@@ -1,9 +1,21 @@
 export type ParentElement = HTMLElement | Component;
 
-export abstract class Component {
+export type RenderResult = string | (string | Component)[];
+
+type Immutable<T> = {
+  readonly [K in keyof T]: Immutable<T[K]>;
+}
+
+export abstract class Component<T extends object = {}> {
+  public readonly selector: string;
   public componentElement: HTMLElement;
+  public get inputs(): Immutable<T> {
+    return this._inputs;
+  }
+  protected _inputs: T = {} as T;
 
   protected constructor(selector: string, initialClass?: string) {
+    this.selector = selector;
     this.componentElement = document.createElement(selector);
     if (initialClass) {
       this.componentElement.classList.add(initialClass);
@@ -48,6 +60,16 @@ export abstract class Component {
     return this;
   }
   
+  public setInput<K extends keyof T>(name: K, input: T[K]): this {
+    this._inputs[name] = input;
+    return this;
+  }
+  
+  public setInputs(inputs: Partial<T>): this {
+    Object.assign(this._inputs, inputs);
+    return this;
+  }
+  
   private _htmlToElement(html: string): HTMLElement {
     const template = document.createElement('template');
     template.innerHTML = html.trim();
@@ -57,7 +79,7 @@ export abstract class Component {
   private _isComponent(parent: unknown | Component): parent is Component {
     return parent instanceof Component;
   }
-  protected abstract _render(): string | (string | Component)[];
+  protected abstract _render(): RenderResult;
   
   protected _postRender(componentToRender: HTMLElement): void {};
 }

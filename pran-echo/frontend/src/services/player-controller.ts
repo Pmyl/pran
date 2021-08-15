@@ -1,11 +1,22 @@
 import { Animator } from 'pran-animation-frontend';
 
+export enum PlayerState {
+  Play,
+  Stop,
+  Pause
+}
+
 export class PlayerController {
+  public get state(): PlayerState {
+    return this._state;
+  }
+
   private _animator: Animator;
   private _fps: number = 60;
-  private _isPlaying: boolean;
   private _hasFullStopped: boolean = true;
   private _isLooping: boolean = false;
+  private _onStateChangeSubscribers: ((newState: PlayerState) => void)[] = [];
+  private _state: PlayerState;
 
   constructor(animator: Animator) {
     this._animator = animator;
@@ -16,7 +27,7 @@ export class PlayerController {
   }
 
   public play() {
-    this._isPlaying = true;
+    this._applyStateChange(PlayerState.Play);
 
     if (!this._hasFullStopped) {
       return;
@@ -26,10 +37,11 @@ export class PlayerController {
     let fpsInterval, now, then, elapsed;
 
     const animate = () => {
-      if (this._isPlaying) {
+      if (this._state === PlayerState.Play) {
         requestAnimationFrame(animate);
       } else {
         this._hasFullStopped = true;
+        return;
       }
       now = performance.now();
       elapsed = now - then;
@@ -48,15 +60,32 @@ export class PlayerController {
   }
 
   public pause() {
-    this._isPlaying = false;
+    this._applyStateChange(PlayerState.Pause);
   }
 
   public stop() {
-    this._isPlaying = false;
     this._animator.restart();
+    this._applyStateChange(PlayerState.Stop);
   }
 
   public setLoop(loop: boolean) {
     this._isLooping = loop;
+  }
+  
+  public onStateChange(cb: (newState: PlayerState) => void): () => void {
+    this._onStateChangeSubscribers.push(cb);
+    return () => this._onStateChangeSubscribers.splice(this._onStateChangeSubscribers.indexOf(cb), 1);
+  }
+
+  public pickFrame(frame: number) {
+    this._animator.pickFrame(frame);
+  }
+
+  private _applyStateChange(state: PlayerState) {
+    this._state = state;
+
+    for (const subscriber of this._onStateChangeSubscribers) {
+      subscriber(state);
+    }
   }
 }

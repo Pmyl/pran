@@ -36,34 +36,20 @@ export class Timeline {
         this._currentWait = 0;
       }
     } else {
-      this._executeNextAction();
+      this._executeActionAfter(amount);
     }
   }
 
-  private _executeNextAction(): void {
-    const action = this._timelineActionsQueue.shift();
-    switch (action.type) {
-      case ActionType.Clear:
-        this._layer.dry_clear();
-        break;
-      case ActionType.Draw:
-        this._layer.dry_replace(action.image);
-        break;
-      case ActionType.None:
-        this._currentWait = action.amount - 1;
-        break;
-    }
-  }
-
-  // This doesn't really work, it has to be fixes so it can be used as "skip" on the timeline
   private _executeActionAfter(amount: number) {
-    while (amount > 0) {
+    while (amount > 0 && this._timelineActionsQueue.length) {
       const action = this._timelineActionsQueue.shift();
       switch (action.type) {
         case ActionType.Clear:
+          this._layer.dry_clear();
           amount--;
           break;
         case ActionType.Draw:
+          this._layer.dry_replace(action.image);
           amount--;
           break;
         case ActionType.None:

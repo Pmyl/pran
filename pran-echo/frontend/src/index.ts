@@ -2,13 +2,9 @@ import './index.css';
 import { ActionType, AnimatorManager, ManagerTimelineAction } from 'pran-animation-frontend';
 import { CanvasControllerFactory, phonemesMapper } from 'pran-phonemes-frontend';
 import { Container } from './components/container/container';
-import { PauseButton } from './components/player/buttons/pause-button';
-import { PlayButton } from './components/player/buttons/play-button';
-import { ReplayButton } from './components/player/buttons/replay-button';
-import { StopButton } from './components/player/buttons/stop-button';
-import { LoopToggle } from './components/player/loop-toggle';
 import { Player } from './components/player/player';
 import { TimelineBar } from './components/timeline-bar/timeline-bar';
+import { createTimelineBoard } from './components/timeline-board/timeline-board';
 import { PlayerController } from './services/player-controller';
 
 const draw = (id: string): ManagerTimelineAction => ({ type: ActionType.Draw, imageId: id });
@@ -16,17 +12,15 @@ const clear = (): ManagerTimelineAction => ({ type: ActionType.Clear });
 const wait = (amount: number): ManagerTimelineAction => ({ type: ActionType.None, amount });
 
 document.addEventListener('DOMContentLoaded', async () => {
+  const player = new Player();
+  const timelineBoard = createTimelineBoard();
   const topSection = Container.CreateEmptyElement(document.body, 'section', 'top-section');
   const topLeftContainer = Container.CreateEmptyElement(topSection, 'div', 'top-left-container');
   const playerContainer = Container.CreateEmptyElement(topSection, 'div', 'player-container');
-  const canvas = Container.CreateEmptyElement(playerContainer, 'canvas');
-  (canvas.componentElement as HTMLCanvasElement).width = 500;
-  (canvas.componentElement as HTMLCanvasElement).height = 500;
-  const context = (canvas.componentElement as HTMLCanvasElement).getContext('2d');
+  const context = (player.canvas.componentElement as HTMLCanvasElement).getContext('2d');
   const editControlsContainer = Container.CreateEmptyElement(topSection, 'div', 'edit-controls-container');
 
   const bottomSection = Container.CreateEmptyElement(document.body, 'section', 'bottom-section');
-  const timelinesContainer = Container.CreateEmptyElement(bottomSection, 'section', 'timelines-container');
 
   const manager = await AnimatorManager.create(CanvasControllerFactory.createFrom(context), [
     ['fv', './resources/mouth/f,v.png'],
@@ -81,19 +75,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     ))
   );
 
-  const timelineBars = [];
-  for (const timeline of animator.timelines) {
-    const timelineBar = new TimelineBar(timeline, animator).appendTo(timelinesContainer)
-    timelineBar.frameWidth = 20;
-    timelineBar.render();
-    timelineBars.push(timelineBar);
-  }
-
   const playerController = new PlayerController(animator);
   playerController.setFps(60);
   playerController.play();
   
-  const player = new Player().appendTo(playerContainer);
-  player.playerController = playerController;
-  player.render();
+  player.appendTo(playerContainer)
+    .setInput('playerController', playerController)
+    .render();
+  
+  createTimelineBoard().appendTo(bottomSection).setInputs({ animator, playerController });
 });

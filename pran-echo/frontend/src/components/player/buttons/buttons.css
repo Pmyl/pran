@@ -1,0 +1,76 @@
+.pause-button_button,
+.play-button_button,
+.stop-button_button,
+.replay-button_button,
+.loop-toggle_button {
+    padding: 0;
+    box-sizing: content-box;
+    border: none;
+    background: none;
+    width: 30px;
+    height: 30px;
+    vertical-align: top;
+    cursor: pointer;
+}
+
+.pause-button_button:hover,
+.play-button_button:hover,
+.stop-button_button:hover,
+.replay-button_button:hover,
+.loop-toggle_button:hover {
+    filter: invert(1) brightness(20%) sepia(20) saturate(10) hue-rotate(240deg);
+}
+
+
+.pause-button_button.is-active,
+.play-button_button.is-active,
+.stop-button_button.is-active,
+.replay-button_button.is-active,
+.loop-toggle_button.is-active {
+    filter: invert(1) brightness(50%) sepia(100) saturate(100) hue-rotate(240deg);
+}
+
+.replay-button_button {
+    margin-right: 5px;
+}
+
+.stop-button_button {
+    margin-right: 8px;
+}
+
+.pause-button_button {
+    margin-right: 5px;
+}
+
+.play-button_button {
+    margin-right: 5px;
+}
+
+.replay-button_button-icon {
+    margin-top: 2px;
+    width: 31px;
+    height: 31px;
+}
+
+.stop-button_button-icon {
+    width: 35px;
+    height: 35px;
+}
+
+.play-button_button-icon {
+    margin-top: 4px;
+    width: 29px;
+    height: 29px;
+}
+
+.pause-button_button-icon {
+    margin-top: 5px;
+    width: 25px;
+    height: 25px;
+}
+
+.loop-toggle_button-icon {
+    margin-top: 2px;
+    width: 33px;
+    height: 33px;
+}
