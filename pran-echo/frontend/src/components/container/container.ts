@@ -18,6 +18,16 @@ export class Container extends Component {
     this._subComponents = [];
   }
 
+  public insertAt(component: Component, index: number) {
+    this._subComponents.splice(index, 0, component);
+    this.render();
+  }
+
+  public removeAt(index: number) {
+    this._subComponents.splice(index, 1);
+    this.render();
+  }
+
   public append(component: string | Component) {
     this._subComponents.push(component);
     this.render();
@@ -26,10 +36,10 @@ export class Container extends Component {
   protected _render(): RenderResult {
     return this._subComponents;
   }
-
   public static CreateEmptyElement(selector: string, initialClass?: string): Container;
 
   public static CreateEmptyElement(parent: Container, selector: string, initialClass?: string): Container;
+
   public static CreateEmptyElement(parentOrSelector: string | Container, selectorOrInitialClass?: string, initialClass?: string): Container {
     if (this._isString(parentOrSelector)) {
       return new Container(parentOrSelector, selectorOrInitialClass);

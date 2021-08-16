@@ -1,5 +1,5 @@
 import './timeline-block.css';
-import { ActionType, Animator, NoneAction, Timeline, TimelineAction } from 'pran-animation-frontend';
+import { Animator, NoneAction, Timeline, TimelineAction } from 'pran-animation-frontend';
 import { inlineComponent } from '../../framework/inline-component';
 import { onClick } from '../../framework/on-click';
 
@@ -8,27 +8,53 @@ export enum BlockType {
   Clear
 }
 
-export class ImageBlock {
-  public readonly type: BlockType.Image = BlockType.Image;
+export abstract class BaseBlock {
   public get frames(): number {
     return this._frames;
   }
+  public get actions(): readonly TimelineAction[] {
+    return this._actions;
+  }
+
+  protected _frames: number = 0;
+  protected _actions: TimelineAction[] = [];
+  
+  private _onChangeSubscriptions: (() => void)[] = [];
+  
+  public addFrames(amount: number) {
+    this._frames += amount;
+    this._notifyChanges();
+  }
+  
+  public addNoneAction(action: NoneAction) {
+    this._frames += action.amount;
+    this._actions.push(action);
+    this._notifyChanges();
+  }
+  
+  public removeNoneAction(action: NoneAction) {
+    this._frames -= action.amount;
+    this._actions.splice(this._actions.indexOf(action), 1);
+    this._notifyChanges();
+  }
+  
+  public onChange(cb: () => void): () => void {
+    this._onChangeSubscriptions.push(cb);
+    return () => this._onChangeSubscriptions.splice(this._onChangeSubscriptions.indexOf(cb), 1);
+  }
+  
+  private _notifyChanges() {
+    this._onChangeSubscriptions.forEach(s => s());
+  }
+}
+
+export class ImageBlock extends BaseBlock {
+  public readonly type: BlockType.Image = BlockType.Image;
   public get imageSrc(): string {
     return this._imageSrc;
   }
-  private _frames: number = 0;
   private _imageSrc: string;
-  private _actions: TimelineAction[] = [];
-  
-  public expandBy1(animator: Animator, timeline: Timeline) {
-    // TODO: random assumption that it's a NoneAction, this won't work if we have a single frame of draw/clear, to fix
-    const lastAction = this._actions[this._actions.length - 1] as NoneAction;
-    
-    const newAction: TimelineAction = { type: ActionType.None, amount: lastAction.amount + 1 };
-    animator.updateTimelineAction(timeline, lastAction, [newAction]);
-  }
-    
-  
+
   public static Builder() {
     const block = new ImageBlock();
 
@@ -42,22 +68,8 @@ export class ImageBlock {
   }
 }
 
-export class ClearBlock {
+export class ClearBlock extends BaseBlock {
   public readonly type: BlockType.Clear = BlockType.Clear;
-  public get frames(): number {
-    return this._frames;
-  }
-
-  private _frames: number = 0;
-  private _actions: TimelineAction[] = [];
-
-  public expandBy1(animator: Animator, timeline: Timeline) {
-    // TODO: random assumption that it's a NoneAction, this won't work if we have a single frame of draw/clear, to fix
-    const lastAction = this._actions[this._actions.length - 1] as NoneAction;
-
-    const newAction: TimelineAction = { type: ActionType.None, amount: lastAction.amount + 1 };
-    animator.updateTimelineAction(timeline, lastAction, [newAction]);
-  }
 
   public static Builder() {
     const block = new ClearBlock();
@@ -73,8 +85,17 @@ export class ClearBlock {
 
 export type Block = ImageBlock | ClearBlock;
 
-export const createTimelineBlock = inlineComponent<{ block: Block, timeline: Timeline, animator: Animator, frameWidth: number }>(controls => {
+export const createTimelineBlock = inlineComponent<{ block: Block, timeline: Timeline, animator: Animator, frameWidth: number, onSelect: () => void }>(controls => {
   controls.setup('timeline-block', 'timeline-block');
+  let unsubscribe: () => void;
+
+  controls.onInputChange = {
+    block: b => {
+      unsubscribe?.();
+      unsubscribe = b.onChange(controls.changed);
+    }
+  };
+  controls.onDestroy = () => unsubscribe?.();
 
   return inputs => controls.mandatoryInput('block')
     && controls.mandatoryInput('frameWidth')
@@ -83,10 +104,7 @@ export const createTimelineBlock = inlineComponent<{ block: Block, timeline: Tim
     && [`
 <div class="timeline-block_block" style="width:${inputs.block.frames * inputs.frameWidth}px">
     ${createThumbnailHTML(inputs.block)}
-</div>`, el => onClick(el, '.timeline-block_block', () => (
-    console.log('Selected:', inputs.block),
-    inputs.block.expandBy1(inputs.animator, inputs.timeline)
-  ))];
+</div>`, el => onClick(el, '.timeline-block_block', () => inputs.onSelect())];
 });
 
   function createThumbnailHTML(block: Block): string {

@@ -1,29 +1,112 @@
-import './timeline-bar.css';
-import { ActionType, Animator, Timeline, TimelineAction } from 'pran-animation-frontend';
-import { Component } from '../../framework/component';
+import {
+  ActionType,
+  Animator, NoneAction,
+  Timeline,
+  TimelineAction,
+  TimelineChange,
+  TimelineChangeType
+} from 'pran-animation-frontend';
 import { inlineComponent } from '../../framework/inline-component';
+import { IEvent, Mediator } from '../../services/mediator';
 import { Container } from '../container/container';
 import { Block, ClearBlock, createTimelineBlock, ImageBlock } from '../timeline-block/timeline-block';
+import './timeline-bar.css';
 
-function updateBlocks(inputs: { timeline: Timeline; animator: Animator; frameWidth: number }, timelineBlocksContainer: Container) {
-  const totalFrames = inputs.animator.totalFrames;
-  const blocks = identifyBlocks(inputs.timeline.timelineActions, totalFrames);
-  timelineBlocksContainer.clear();
-  createBlockComponents(blocks, inputs.frameWidth, inputs.timeline, inputs.animator, timelineBlocksContainer);
+export type BlockSelected = IEvent<'blockSelected', { block: Block, timeline: Timeline, animator: Animator }>;
+export type BlockUnselected = IEvent<'blockUnselected', { block: Block }>;
+type TimelineBarInputs = { timeline: Timeline, animator: Animator, frameWidth: number };
+
+function findBlockWithAction(blocks: Block[], action: TimelineAction): Block {
+  return blocks.find(b => b.actions.includes(action));
 }
 
-export const createTimelineBar = inlineComponent<{ timeline: Timeline, animator: Animator, frameWidth: number }>(controls => {
+function findBlockBeforeFrame(blocks: Block[], frame: number): Block {
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i];
+    frame -= block.frames;
+    if (frame === 0) {
+      return block[i];
+    }
+    
+    if (frame < 0) {
+      // TODO: something weird happened and the timeline has to be re-rendered from scratch
+    }
+  }
+
+  // TODO: something weird happened and the timeline has to be re-rendered from scratch
+  return null;
+}
+
+export const createTimelineBar = inlineComponent<TimelineBarInputs>(controls => {
   const timelineBlocksContainer = Container.CreateEmptyElement('div', 'timeline-bar_block-container');
-  let unsubscribe: () => void;
+  let unsubscribe: () => void,
+    currentBlocks: Block[];
+  
+  const onBlockSelect = (block: Block, inputs: TimelineBarInputs) => {
+    Mediator.raiseEvent<BlockSelected>('blockSelected', { block, timeline: inputs.timeline, animator: inputs.animator });
+  }
+
+  const renderBlocks = (inputs: TimelineBarInputs) => {
+    (currentBlocks || []).forEach(b => Mediator.raiseEvent<BlockUnselected>('blockUnselected', { block: b }));
+    const totalFrames = inputs.animator.totalFrames;
+    currentBlocks = identifyBlocks(inputs.timeline.timelineActions, totalFrames);
+    timelineBlocksContainer.clear();
+    createBlockComponents(currentBlocks, inputs, timelineBlocksContainer, (block: Block) => onBlockSelect(block, inputs));
+  };
+
+  const updateBlocks = (inputs: TimelineBarInputs, change: TimelineChange) => {
+    switch (change.type) {
+      case TimelineChangeType.Expand:
+        findBlockWithAction(currentBlocks, change.action).addFrames(change.amount);
+        break;
+      case TimelineChangeType.Reduce:
+        findBlockWithAction(currentBlocks, change.action).addFrames(-change.amount);
+        break;
+      case TimelineChangeType.Insert:
+        if (change.action.type === ActionType.None) {
+          const block: Block = findBlockBeforeFrame(currentBlocks, change.frame);
+          block.addNoneAction(change.action);
+        } else {
+          const block: Block = findBlockBeforeFrame(currentBlocks, change.frame);
+          const blockIndex = currentBlocks.indexOf(block);
+          const newBlocks = identifyBlocks([change.action], 1);
+          currentBlocks.splice(blockIndex, 0, ...newBlocks);
+          createBlockComponents(newBlocks, inputs, timelineBlocksContainer, (block: Block) => onBlockSelect(block, inputs), blockIndex + 1);
+        }
+        break;
+      case TimelineChangeType.Remove:
+        if (change.action.type === ActionType.None) {
+          findBlockWithAction(currentBlocks, change.action).removeNoneAction(change.action);
+        } else {
+          const blockWithAction = findBlockWithAction(currentBlocks, change.action);
+          const blockIndex = currentBlocks.indexOf(blockWithAction);
+          const blockBefore = currentBlocks[blockIndex - 1];
+          currentBlocks.splice(blockIndex, 1);
+          timelineBlocksContainer.removeAt(blockIndex);
+          Mediator.raiseEvent<BlockUnselected>('blockUnselected', { block: blockWithAction })
+
+          if (blockBefore) {
+            blockWithAction.actions.filter(a => a.type === ActionType.None).forEach(a => {
+              blockBefore.addNoneAction(a as NoneAction);
+            });
+          }
+        }
+        break;
+    }
+    adaptToTotalFrames(inputs, currentBlocks);
+  }
 
   controls.setup('timeline-bar', 'timeline-bar');
   controls.onInputsChange = inputs => {
     controls.mandatoryInput('timeline')
     && controls.mandatoryInput('animator')
     && controls.mandatoryInput('frameWidth');
-    updateBlocks(inputs, timelineBlocksContainer);
+    renderBlocks(inputs);
     unsubscribe?.();
-    unsubscribe = inputs.animator.onTimelineChange(() => (updateBlocks(inputs, timelineBlocksContainer), controls.changed()));
+    unsubscribe = inputs.animator.onTimelineChange((timeline: Timeline, change: TimelineChange) => (
+      timeline === inputs.timeline ? updateBlocks(inputs, change) : adaptToTotalFrames(inputs, currentBlocks),
+      controls.changed()
+    ));
   };
   controls.onDestroy = unsubscribe;
 
@@ -49,7 +132,7 @@ function identifyBlocks(timelineActions: readonly TimelineAction[], totalFrames:
         if (currentBlock) {
           blocks.push(currentBlock.build());
         }
-        currentBlock = ImageBlock.Builder().withImage(a.image.src).addFrame();
+        currentBlock = ImageBlock.Builder().addAction(a).withImage(a.image.src).addFrame();
         currentFrames++;
         break;
       case ActionType.Clear:
@@ -72,6 +155,30 @@ function identifyBlocks(timelineActions: readonly TimelineAction[], totalFrames:
   return blocks;
 }
 
-function createBlockComponents(blocks: Block[], frameWidth: number, timeline: Timeline, animator: Animator, timelineBlocksContainer: Container): Component[] {
-  return blocks.map(block => createTimelineBlock().setInputs({ block, frameWidth, timeline, animator }).appendTo(timelineBlocksContainer));
+function createBlockComponents(blocks: Block[], inputs: TimelineBarInputs, timelineBlocksContainer: Container, onSelect: (block: Block) => void, index?: number): void {
+  blocks.map(block => {
+    const blockComponent = createTimelineBlock().setInputs({
+      block,
+      frameWidth: inputs.frameWidth,
+      timeline: inputs.timeline,
+      animator: inputs.animator,
+      onSelect: () => onSelect(block)
+    });
+
+    if (!index && index !== 0) {
+      return blockComponent.appendTo(timelineBlocksContainer);
+    } else {
+      timelineBlocksContainer.insertAt(blockComponent, index);
+      return blockComponent;
+    }
+  });
+}
+
+function adaptToTotalFrames(inputs: TimelineBarInputs, blocks: Block[]): void {
+  const totalFrames = blocks.reduce((sum, block) => {
+    return sum + block.frames;
+  }, 0);
+  
+  const lastBlock: Block = blocks[blocks.length - 1];
+  lastBlock.addFrames(inputs.animator.totalFrames - totalFrames);
 }

@@ -1,6 +1,7 @@
 import './index.css';
 import { ActionType, AnimatorManager, ManagerTimelineAction } from 'pran-animation-frontend';
 import { CanvasControllerFactory, phonemesMapper } from 'pran-phonemes-frontend';
+import { createBlockEditor } from './components/block-editor/block-editor';
 import { Container } from './components/container/container';
 import { Player } from './components/player/player';
 import { createTimelineBoard } from './components/timeline-board/timeline-board';
@@ -81,7 +82,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   player.setInput('playerController', playerController)
     .appendTo(playerContainer);
   
-  createTimelineBoard().setInputs({ animator, playerController, frameWidth: 20 }).appendTo(bottomSection);
+  createTimelineBoard().setInputs({ animator, playerController, frameWidth: 20 })
+    .appendTo(bottomSection);
   
+  createBlockEditor().appendTo(editControlsContainer);
+
   body.render();
 });

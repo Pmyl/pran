@@ -74,6 +74,7 @@ export function inlineComponent<T extends object, TS extends object = {}>(compon
         const rendered = renderFn(this._inputs);
 
         if (this._isRenderResult(rendered)) {
+          this._postRenderFn = null;
           return rendered;
         } else {
           this._postRenderFn = rendered[1];

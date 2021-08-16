@@ -46,7 +46,35 @@ export class Timeline {
 
   public updateAction(action: TimelineAction, newActions: TimelineAction[]): void {
     const actionIndex = this._timelineActions.indexOf(action);
-    this._timelineActions.splice(actionIndex, newActions.length, ...newActions);
+    this._timelineActions.splice(actionIndex, Math.max(newActions.length, 1), ...newActions);
+  }
+
+  public insertTimelineAction(frame: number, action: TimelineAction) {
+    const actions = this._timelineActions.slice();
+    let amount = frame,
+      insertAfterCount = 0;
+
+    while (amount > 0 && actions.length) {
+      const action = actions.shift();
+      insertAfterCount++;
+      switch (action.type) {
+        case ActionType.Clear:
+          amount--;
+          break;
+        case ActionType.Draw:
+          amount--;
+          break;
+        case ActionType.None:
+          if (amount > action.amount) {
+            amount -= action.amount;
+          } else {
+            throw new Error(`Cannot insert action in timeline at frame ${frame} because there is already an action at that frame`);
+          }
+          break;
+      }
+    }
+    
+    this._timelineActions.splice(insertAfterCount, 0, action);
   }
 
   private _executeActionAfter(amount: number) {
@@ -70,6 +98,31 @@ export class Timeline {
           }
           break;
       }
+    }
+  }
+
+  removeTimelineAction(action: TimelineAction) {
+    const actionIndex = this._timelineActions.indexOf(action);
+    this._timelineActions.splice(actionIndex, 1);
+  }
+
+  expandTimelineAction(amount: number, action: TimelineAction) {
+    if (action.type === ActionType.None) {
+      action.amount += amount;
+    } else {
+      throw new Error('Only None actions can be expanded');
+    }
+  }
+
+  reduceTimelineAction(amount: number, action: TimelineAction) {
+    if (action.type === ActionType.None) {
+      if (action.amount - amount <= 0) {
+        throw new Error('Actions cannot be reduced to be less than one frame, remove them instead');
+      } else {
+        action.amount -= amount;
+      }
+    } else {
+      throw new Error('Only None actions can be reduced');
     }
   }
 }
