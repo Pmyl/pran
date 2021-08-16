@@ -1,27 +1,43 @@
-import { Component, RenderResult } from './component';
+import { Component, Immutable, RenderResult } from './component';
 import { mandatoryInput } from './mandatory-input';
 
-export interface ComponentControls<T> {
+type InputChangeHooks<T> = {
+  [key in keyof T]: (changed: T[key], inputs: Immutable<T>) => void;
+};
+
+type SideInputChangeHooks<T, TS> = {
+  [key in keyof TS]: (changed: TS[key], sideInputs: Partial<TS>, inputs: Immutable<T>) => void;
+};
+
+export interface ComponentControls<T extends object, TE extends object = {}> {
   setup: (selector: string, initialClass?: string) => void;
   mandatoryInput: (inputName: keyof T) => boolean;
   changed(): void;
-  onInputChange?: (inputs: T) => void;
+  onInputsChange?: (inputs: T) => void;
+  onInputChange?: Partial<InputChangeHooks<T>>;
+  setSideInput: <TK extends keyof TE>(inputName: TK, input: TE[TK]) => void;
+  onSideInputChange?: SideInputChangeHooks<T, TE>;
+  onDestroy?: () => void;
 }
 
-export function inlineComponent<T extends object>(componentFunction: (controls: ComponentControls<T>) => (inputs: T) => RenderResult | [RenderResult, (component: HTMLElement) => void]): (inputs?: T) => Component<T> {
+export function inlineComponent<T extends object, TS extends object = {}>(componentFunction: (controls: ComponentControls<T, TS>) => (inputs: T) => RenderResult | [RenderResult, (component: HTMLElement) => void]): (inputs?: T) => Component<T> {
   return (inputs?: T) => {
-    let _selector, _initialClass, component: Component<T>;
+    let _selector, _initialClass, component: Component<T>, sideInputs: Partial<TS> = {};
 
-    const componentControls: ComponentControls<T> = {
+    const componentControls: ComponentControls<T, TS> = {
       setup(selector: string, initialClass?: string) {
         _selector = selector;
         _initialClass = initialClass
       },
       mandatoryInput: (inputName: keyof T) => mandatoryInput(component, inputName),
-      changed: () => component.render()
+      changed: () => component.render(),
+      setSideInput: <TK extends keyof TS>(inputName: TK, input: TS[TK]) => {
+        sideInputs[inputName] = input;
+        componentControls.onSideInputChange[inputName](input, sideInputs, component.inputs);
+      }
     };
 
-    const renderControls = componentFunction(componentControls);
+    const renderFn = componentFunction(componentControls);
 
     component = new (class InlinedComponent extends Component<T> {
       private _postRenderFn: null | ((componentToRender: HTMLElement) => void);
@@ -34,19 +50,29 @@ export function inlineComponent<T extends object>(componentFunction: (controls: 
       }
       
       public setInput<K extends keyof T>(name: K, input: T[K]) {
-        super.setInput(name, input);
-        componentControls.onInputChange?.(this._inputs);
-        return this;
+        return this.setInputs({ [name]: input } as unknown as Partial<T>);
       }
 
       public setInputs(inputs: Partial<T>): this {
         super.setInputs(inputs);
-        componentControls.onInputChange?.(this._inputs);
         return this;
       }
+      
+      protected _onDestroy(): void {
+        componentControls.onDestroy?.();
+      }
+      
+      protected _onInputsChange(): void {
+        componentControls.onInputsChange?.(this._inputs);
+      }
+      
+      protected _onInputChange(name: string): void {
+        componentControls.onInputChange?.[name]?.(this._inputs[name], this._inputs);
+      }
 
-      protected _render(): string | (string | Component)[] {
-        const rendered = renderControls(this._inputs);
+      protected _render(): RenderResult {
+        const rendered = renderFn(this._inputs);
+
         if (this._isRenderResult(rendered)) {
           return rendered;
         } else {
@@ -65,9 +91,7 @@ export function inlineComponent<T extends object>(componentFunction: (controls: 
     });
 
     if (inputs) {
-      for (const key in inputs) {
-        component.setInput(key, inputs[key]);
-      }
+      component.setInputs(inputs);
     }
 
     return component;

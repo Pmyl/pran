@@ -1,17 +1,13 @@
-import { Component, RenderResult } from './component';
+import { Container } from '../components/container/container';
 
-export function staticElement(html: string): Component {
-  const component = new (class extends Component {
+export function staticElement(html: string): Container {
+  const staticElement = new (class extends Container {
     constructor() {
       super('should-never-render');
       this._isTemplate = true;
     }
-
-    protected _render(): RenderResult {
-      return html;
-    }
   })();
-  component.render();
+  staticElement.append(html);
 
-  return component;
+  return staticElement;
 }

@@ -24,20 +24,11 @@ export class Player extends Component<{ playerController: PlayerController }> {
 
     const playerControlsContainer = Container.CreateEmptyElement('section', 'player-controls-container');
 
-    const replayButton = createReplayButton({ playerController: this._inputs.playerController }).appendTo(playerControlsContainer);
-    replayButton.render();
-
-    const stopButton = createStopButton({ playerController: this._inputs.playerController }).appendTo(playerControlsContainer);
-    stopButton.render();
-
-    const pauseButton = createPauseButton({ playerController: this._inputs.playerController }).appendTo(playerControlsContainer);
-    pauseButton.render();
-
-    const playButton = createPlayButton({ playerController: this._inputs.playerController }).appendTo(playerControlsContainer);
-    playButton.render();
-
-    const loopToggle = createLoopToggle({ playerController: this._inputs.playerController }).appendTo(playerControlsContainer);
-    loopToggle.render();
+    createReplayButton({ playerController: this._inputs.playerController }).appendTo(playerControlsContainer);
+    createStopButton({ playerController: this._inputs.playerController }).appendTo(playerControlsContainer);
+    createPauseButton({ playerController: this._inputs.playerController }).appendTo(playerControlsContainer);
+    createPlayButton({ playerController: this._inputs.playerController }).appendTo(playerControlsContainer);
+    createLoopToggle({ playerController: this._inputs.playerController }).appendTo(playerControlsContainer);
 
     return [this.canvas, playerControlsContainer];
   }

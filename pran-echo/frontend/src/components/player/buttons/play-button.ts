@@ -6,7 +6,7 @@ export const createPlayButton = inlineComponent<{ playerController: PlayerContro
   let isPlaying: boolean = false, unsubscribe: () => void;
 
   controls.setup('play-button', 'play-button');
-  controls.onInputChange = inputs => (
+  controls.onInputsChange = inputs => (
     isPlaying = inputs.playerController.state === PlayerState.Play,
     unsubscribe?.(),
     unsubscribe = inputs.playerController

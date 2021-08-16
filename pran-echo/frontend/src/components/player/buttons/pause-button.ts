@@ -6,7 +6,7 @@ export const createPauseButton = inlineComponent<{ playerController: PlayerContr
   let isPaused: boolean = false, unsubscribe: () => void;
 
   controls.setup('pause-button', 'pause-button');
-  controls.onInputChange = inputs => (
+  controls.onInputsChange = inputs => (
     isPaused = inputs.playerController.state === PlayerState.Pause,
       unsubscribe?.(),
       unsubscribe = inputs.playerController

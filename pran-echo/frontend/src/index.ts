@@ -12,13 +12,14 @@ const wait = (amount: number): ManagerTimelineAction => ({ type: ActionType.None
 
 document.addEventListener('DOMContentLoaded', async () => {
   const player = new Player();
-  const topSection = Container.CreateEmptyElement(document.body, 'section', 'top-section');
-  const topLeftContainer = Container.CreateEmptyElement(topSection, 'div', 'top-left-container');
-  const playerContainer = Container.CreateEmptyElement(topSection, 'div', 'player-container');
+  const body: Container = Container.CreateBody();
+  const topSection: Container = Container.CreateEmptyElement(body, 'section', 'top-section');
+  const topLeftContainer: Container = Container.CreateEmptyElement(topSection, 'div', 'top-left-container');
+  const playerContainer: Container = Container.CreateEmptyElement(topSection, 'div', 'player-container');
   const context = (player.canvas.componentElement as HTMLCanvasElement).getContext('2d');
-  const editControlsContainer = Container.CreateEmptyElement(topSection, 'div', 'edit-controls-container');
+  const editControlsContainer: Container = Container.CreateEmptyElement(topSection, 'div', 'edit-controls-container');
 
-  const bottomSection = Container.CreateEmptyElement(document.body, 'section', 'bottom-section');
+  const bottomSection: Container = Container.CreateEmptyElement(body, 'section', 'bottom-section');
 
   const manager = await AnimatorManager.create(CanvasControllerFactory.createFrom(context), [
     ['fv', './resources/mouth/f,v.png'],
@@ -58,12 +59,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       draw('head_idle'),
     ],
     [
-      draw('head_idle'),
-    ],
-    [
-      draw('head_idle'),
-    ],
-    [
       draw('eyes_open'),
       wait(20),
       draw('eyes_semi_open'),
@@ -83,9 +78,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   playerController.setFps(60);
   // playerController.play();
   
-  player.appendTo(playerContainer)
-    .setInput('playerController', playerController)
-    .render();
+  player.setInput('playerController', playerController)
+    .appendTo(playerContainer);
   
-  createTimelineBoard().appendTo(bottomSection).setInputs({ animator, playerController });
+  createTimelineBoard().setInputs({ animator, playerController, frameWidth: 20 }).appendTo(bottomSection);
+  
+  body.render();
 });

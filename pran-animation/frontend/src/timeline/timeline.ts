@@ -2,7 +2,9 @@ import { CanvasController } from 'pran-phonemes-frontend';
 import { ActionType, TimelineAction } from './timeline-action';
 
 export class Timeline {
-  public readonly timelineActions: readonly TimelineAction[];
+  public get timelineActions(): readonly TimelineAction[] {
+    return this._timelineActions;
+  }
   public get frames(): number {
     return this.timelineActions.reduce((acc, action) => {
       return acc + (action.type === ActionType.None ? action.amount : 1);
@@ -11,16 +13,17 @@ export class Timeline {
 
   private _currentWait: number;
   private _timelineActionsQueue: TimelineAction[];
+  private _timelineActions: TimelineAction[];
   private _layer: CanvasController;
 
   constructor(layer: CanvasController, animation: TimelineAction[]) {
-    this.timelineActions = animation;
+    this._timelineActions = animation;
     this._timelineActionsQueue = animation.slice();
     this._layer = layer;
   }
 
   public restart(): void {
-    this._timelineActionsQueue = this.timelineActions.slice();
+    this._timelineActionsQueue = this._timelineActions.slice();
     this._currentWait = 0;
   }
 
@@ -39,6 +42,11 @@ export class Timeline {
     } else {
       this._executeActionAfter(amount);
     }
+  }
+
+  public updateAction(action: TimelineAction, newActions: TimelineAction[]): void {
+    const actionIndex = this._timelineActions.indexOf(action);
+    this._timelineActions.splice(actionIndex, newActions.length, ...newActions);
   }
 
   private _executeActionAfter(amount: number) {
