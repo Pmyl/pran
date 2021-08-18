@@ -2,6 +2,8 @@ import { ActionType, Animator, NoneAction, Timeline, TimelineAction } from 'pran
 import { inlineComponent } from '../../framework/inline-component';
 import { onClick } from '../../framework/on-click';
 import './timeline-block.css';
+import { Mediator } from '../../services/mediator';
+import { BlockSelected } from '../timeline-bar/timeline-bar';
 
 export enum BlockType {
   Image,
@@ -9,6 +11,9 @@ export enum BlockType {
 }
 
 export abstract class BaseBlock {
+  public get visualFrames(): number {
+    return this._frames + this._virtualFrames;
+  }
   public get frames(): number {
     return this._frames;
   }
@@ -16,20 +21,35 @@ export abstract class BaseBlock {
     return this._actions;
   }
   public get noneAmount(): number {
-    return this._actions.reduce((sum, a) => sum + (a.type === ActionType.None ? a.amount : 0), 0);
+    return this._frames - 1;
   }
 
   protected _frames: number = 0;
+  protected _virtualFrames: number = 0;
   protected _actions: TimelineAction[] = [];
   
   private _onChangeSubscriptions: (() => void)[] = [];
   
-  public addFrames(amount: number) {
-    this._frames += amount;
+  public addVirtualFrames(amount: number) {
+    this._virtualFrames += amount;
+    this._notifyChanges();
+  }
+  
+  public removeVirtualFrames() {
+    this._virtualFrames = 0;
+    this._notifyChanges();
+  }
+  
+  public updateNoneFrames() {
+    this._frames = 0;
+    this._actions.forEach(action => {
+      this._frames += action.type === ActionType.None ? action.amount : 1;
+    });
     this._notifyChanges();
   }
   
   public addNoneAction(action: NoneAction) {
+    this._virtualFrames = Math.max(0, this._virtualFrames - action.amount);
     this._frames += action.amount;
     this._actions.push(action);
     this._notifyChanges();
@@ -53,9 +73,14 @@ export abstract class BaseBlock {
   protected static BaseBuilder(block: BaseBlock) {
     return {
       addVirtualFrames(amount: number) {
-        block._frames += amount; return this;
+        block._virtualFrames += amount;
+        return this;
       },
       addAction(action: TimelineAction) {
+        if (action.type === ActionType.None && action.amount <= 0) {
+          return this;
+        }
+
         block._frames += action.type === ActionType.None ? action.amount : 1;
         block._actions.push(action);
         return this;
@@ -94,22 +119,29 @@ export type Block = ImageBlock | ClearBlock;
 
 export const createTimelineBlock = inlineComponent<{ block: Block, timeline: Timeline, animator: Animator, frameWidth: number, onSelect: () => void }>(controls => {
   controls.setup('timeline-block', 'timeline-block');
-  let unsubscribe: () => void;
+  let unsubscribeOnChange: () => void,
+    unsubscribeEvent: () => void,
+    isSelected: boolean = false;
 
   controls.onInputChange = {
     block: b => {
-      unsubscribe?.();
-      unsubscribe = b.onChange(controls.changed);
+      unsubscribeOnChange?.();
+      unsubscribeOnChange = b.onChange(controls.changed);
+      unsubscribeEvent?.();
+      unsubscribeEvent = Mediator.onEvent<BlockSelected>('blockSelected', ({ block: selectedBlock }) => (
+        isSelected = selectedBlock === b,
+        controls.changed()
+      ));
     }
   };
-  controls.onDestroy = () => unsubscribe?.();
+  controls.onDestroy = () => unsubscribeOnChange?.();
 
   return inputs => controls.mandatoryInput('block')
     && controls.mandatoryInput('frameWidth')
     && controls.mandatoryInput('animator')
     && controls.mandatoryInput('timeline')
     && [`
-<div class="timeline-block_block" style="width:${inputs.block.frames * inputs.frameWidth}px">
+<div class="timeline-block_block${isSelected ? ' isSelected' : ''}" style="width:${inputs.block.visualFrames * inputs.frameWidth}px">
     ${createThumbnailHTML(inputs.block)}
 </div>`, el => onClick(el, '.timeline-block_block', () => inputs.onSelect())];
 });

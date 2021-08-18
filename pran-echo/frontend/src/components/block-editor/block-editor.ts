@@ -6,13 +6,23 @@ import { Mediator } from '../../services/mediator';
 import { BlockSelected, BlockUnselected, TimelineBar } from '../timeline-bar/timeline-bar';
 import { Block, BlockType } from '../timeline-block/timeline-block';
 import './block-editor.css';
-import { clearBlock, expandBlock, expandBlockLeft, reduceBlock, reduceBlockLeft, removeBlock } from './editor-actions';
+import { TimelinePositionChanged } from '../timeline-board/timeline-board';
+import {
+  clearBlock,
+  expandBlock,
+  expandBlockLeft,
+  reduceBlock,
+  reduceBlockLeft,
+  removeBlock,
+  splitBlock
+} from './editor-actions';
 
 export const createBlockEditor = inlineComponent(controls => {
   let block: Block,
     animator: Animator,
     timeline: Timeline,
-    timelineBar: TimelineBar;
+    timelineBar: TimelineBar,
+    timelinePosition: number = 0;
 
   controls.setup('block-editor', 'block-editor');
   Mediator.onEvent<BlockSelected>('blockSelected', e => {
@@ -26,6 +36,9 @@ export const createBlockEditor = inlineComponent(controls => {
       block = null;
       controls.changed();
     }
+  });
+  Mediator.onEvent<TimelinePositionChanged>('timelinePositionChanged', newPosition => {
+    timelinePosition = newPosition;
   });
   
   return () => !block ? `<span></span>` : [`
@@ -50,6 +63,7 @@ export const createBlockEditor = inlineComponent(controls => {
   <div class="block-editor_buttons-container">
     <button class="block-editor_remove" type="button">Remove</button>
     <button class="block-editor_clear" type="button">Clear</button>
+    <button class="block-editor_split" type="button">Split</button>
   </div>
 </div>
 `, e => (
@@ -58,7 +72,8 @@ export const createBlockEditor = inlineComponent(controls => {
   onClick(e, '.block-editor_right-controls .block-editor_right-arrow', emit(expandBlock, animator, timeline, block, timelineBar)),
   onClick(e, '.block-editor_right-controls .block-editor_left-arrow', emit(reduceBlock, animator, timeline, block)),
   onClick(e, '.block-editor_remove', emit(removeBlock, animator, timeline, block)),
-  onClick(e, '.block-editor_clear', emit(clearBlock, animator, timeline, block, timelineBar))
+  onClick(e, '.block-editor_clear', emit(clearBlock, animator, timeline, block, timelineBar)),
+  onClick(e, '.block-editor_split', () => emit(splitBlock, animator, timeline, block, timelineBar, timelinePosition)())
   )];
 });
 

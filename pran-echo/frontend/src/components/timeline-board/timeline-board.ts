@@ -4,8 +4,11 @@ import { Component, Immutable } from '../../framework/component';
 import { inlineComponent } from '../../framework/inline-component';
 import { onClick } from '../../framework/on-click';
 import { staticElement } from '../../framework/static-element';
+import { IEvent, Mediator } from '../../services/mediator';
 import { PlayerController } from '../../services/player-controller';
 import { createTimelineBar } from '../timeline-bar/timeline-bar';
+
+export type TimelinePositionChanged = IEvent<'timelinePositionChanged', number>;
 
 export const createTimelineBoard = inlineComponent<{ animator: Animator, playerController: PlayerController, frameWidth: number }, { totalFrames: number }>(controls => {
   let bars: Component[],
@@ -44,7 +47,10 @@ export const createTimelineBoard = inlineComponent<{ animator: Animator, playerC
     ], element => onClick(element, '.timeline-board_frame-pick-area', e => {
       const rect = e.target.getBoundingClientRect();
       const x = e.clientX - rect.left;
-      inputs.playerController.pickFrame(Math.round(x / inputs.frameWidth));
+      const frame: number = Math.round(x / inputs.frameWidth);
+
+      inputs.playerController.pickFrame(frame);
+      Mediator.raiseEvent<TimelinePositionChanged>('timelinePositionChanged', frame);
     })];
   };
 });

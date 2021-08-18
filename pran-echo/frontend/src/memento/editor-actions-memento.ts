@@ -34,6 +34,14 @@ export function invert(name: string, editorAction: EditorAction): EditorAction {
   };
 }
 
+export function noop(name: string): EditorAction {
+  return {
+    name,
+    do() {},
+    undo() {}
+  };
+}
+
 export class EditorActionsMemento {
   public get actions(): readonly EditorAction[] {
     return this._actions;

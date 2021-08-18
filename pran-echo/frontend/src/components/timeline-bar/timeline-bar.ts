@@ -44,7 +44,7 @@ export class TimelineBar {
     let frames = 0;
 
     for (let i = 0; i < this.blocks.length && this.blocks[i] !== block; i++) {
-      frames += this.blocks[i].frames;
+      frames += this.blocks[i].visualFrames;
     }
 
     return frames;
@@ -68,11 +68,11 @@ export class TimelineBar {
 
   public adaptToTotalFrames(inputs: TimelineBarInputs): void {
     const totalFrames = this.blocks.reduce((sum, block) => {
-      return sum + block.frames;
+      return sum + block.visualFrames;
     }, 0);
 
     const lastBlock: Block = this.blocks[this.blocks.length - 1];
-    lastBlock.addFrames(inputs.animator.totalFrames - totalFrames);
+    lastBlock.addVirtualFrames(inputs.animator.totalFrames - totalFrames);
   }
 
   private _identifyBlocks(timelineActions: readonly TimelineAction[], totalFrames: number): Block[] {
@@ -138,10 +138,10 @@ export const createTimelineBar = inlineComponent<TimelineBarInputs>(controls => 
   const updateBlocks = (inputs: TimelineBarInputs, change: TimelineChange) => {
     switch (change.type) {
       case TimelineChangeType.Expand:
-        timelineBar.findBlockWithAction(change.action).addFrames(change.amount);
+        timelineBar.findBlockWithAction(change.action).updateNoneFrames();
         break;
       case TimelineChangeType.Reduce:
-        timelineBar.findBlockWithAction(change.action).addFrames(-change.amount);
+        timelineBar.findBlockWithAction(change.action).updateNoneFrames();
         break;
       case TimelineChangeType.Insert:
         if (change.action.type === ActionType.None) {
@@ -150,6 +150,7 @@ export const createTimelineBar = inlineComponent<TimelineBarInputs>(controls => 
         } else {
           const block: Block = timelineBar.findBlockBeforeFrame(change.frame);
           const blockIndex = timelineBar.blocks.indexOf(block);
+          block && block.removeVirtualFrames();
           const newBlocks = timelineBar.generateAt(blockIndex + 1, [change.action]);
           
           createBlockComponents(newBlocks, inputs, timelineBlocksContainer, (block: Block) => onBlockSelect(block, inputs), blockIndex + 1);
@@ -157,7 +158,7 @@ export const createTimelineBar = inlineComponent<TimelineBarInputs>(controls => 
         break;
       case TimelineChangeType.Remove:
         if (change.action.type === ActionType.None) {
-          timelineBar.findBlockWithAction(change.action).removeNoneAction(change.action);
+          timelineBar.findBlockWithAction(change.action)?.removeNoneAction(change.action);
         } else {
           const blockWithAction = timelineBar.findBlockWithAction(change.action);
           const blockIndex = timelineBar.blocks.indexOf(blockWithAction);

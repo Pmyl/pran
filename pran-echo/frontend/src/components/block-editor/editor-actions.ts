@@ -1,9 +1,18 @@
-import { ActionType, Animator, NoneAction, Timeline, TimelineAction } from 'pran-animation-frontend';
-import { combine, EditorAction, invert } from '../../memento/editor-actions-memento';
+import { ActionType, Animator, DrawAction, NoneAction, Timeline, TimelineAction } from 'pran-animation-frontend';
+import { combine, EditorAction, invert, noop } from '../../memento/editor-actions-memento';
 import { TimelineBar } from '../timeline-bar/timeline-bar';
-import { Block, ClearBlock } from '../timeline-block/timeline-block';
+import { Block, BlockType, ClearBlock, ImageBlock } from '../timeline-block/timeline-block';
 
-export function reduceBlock(animator: Animator, timeline: Timeline, block: Block): EditorAction {
+export function reduceBlock(animator: Animator, timeline: Timeline, block: Block, amount: number = 1): EditorAction {
+  if (block.frames <= amount) {
+    console.warn('Tried to reduce block', block, 'to disappear, something went wrong.')
+    return noop('Reduce block (Invalid)');
+  }
+  
+  if (amount > 1) {
+    return combine(`Reduce block of ${amount}`, ...Array(amount).fill(undefined).map(() => reduceBlock(animator, timeline, block)));
+  }
+
   let lastAction: TimelineAction = block.actions[block.actions.length - 1],
     wasReduced: boolean,
     actionInitialFrame: number;
@@ -30,7 +39,11 @@ export function reduceBlock(animator: Animator, timeline: Timeline, block: Block
   };
 }
 
-export function expandBlock(animator: Animator, timeline: Timeline, block: Block, timelineBar: TimelineBar) {
+export function expandBlock(animator: Animator, timeline: Timeline, block: Block, timelineBar: TimelineBar, amount: number = 1) {
+  if (amount > 1) {
+    return combine(`Expand block of ${amount}`, ...Array(amount).fill(undefined).map(() => expandBlock(animator, timeline, block, timelineBar)));
+  }
+
   let actionExpanded: NoneAction;
 
   return {
@@ -108,10 +121,47 @@ export function clearBlock(animator: Animator, timeline: Timeline, block: Block,
   return combine(
     'Clear block',
     removeBlock(animator, timeline, block),
-    insertBlock(animator, timeline,
-      ClearBlock.Builder()
-        .addAction({ type: ActionType.Clear })
-        .addAction({ type: ActionType.None, amount: block.noneAmount })
-        .build(), frame)
+    insertBlock(animator, timeline, ClearBlock.Builder()
+      .addAction({ type: ActionType.Clear })
+      .addAction({ type: ActionType.None, amount: block.noneAmount }).build(), frame)
+  );
+}
+
+export function splitBlock(animator: Animator, timeline: Timeline, block: Block, timelineBar: TimelineBar, frame: number): EditorAction {
+  const blockInitialFrame = timelineBar.findBlockInitialFrame(block);
+
+  if (frame < blockInitialFrame) {
+    return noop('Split block before start (Invalid)');
+  }
+
+  if (block.visualFrames + blockInitialFrame < frame) {
+    return noop('Split block after end (Invalid)');
+  }
+
+  const rightBlockPartFrames: number = Math.max(1, blockInitialFrame + block.frames - frame);
+
+  let adjustLeftBlockPart: EditorAction;
+
+  if (block.frames + blockInitialFrame < frame) {
+    adjustLeftBlockPart = expandBlock(animator, timeline, block, timelineBar, frame - block.frames - blockInitialFrame);
+  } else {
+    adjustLeftBlockPart = reduceBlock(animator, timeline, block, rightBlockPartFrames);
+  }
+
+  let blockRightPartBuilder: ReturnType<typeof ImageBlock.Builder | typeof ClearBlock.Builder>;
+  
+  if (block.type === BlockType.Image) {
+    blockRightPartBuilder = ImageBlock.Builder()
+      .addAction({ type: ActionType.Draw, image: (block.actions[0] as DrawAction).image });
+  } else {
+    blockRightPartBuilder = ClearBlock.Builder();
+  }
+
+  return combine(
+    'Split block',
+    adjustLeftBlockPart,
+    insertBlock(animator, timeline, blockRightPartBuilder
+      .addAction({ type: ActionType.None, amount: rightBlockPartFrames - 1 })
+      .build(), frame)
   );
 }
