@@ -23,7 +23,9 @@ class MediatorService {
     };
   }
 
-  public raiseEvent<T extends IEvent<any, any>>(eventName: T['name'], event: T['value']): void {
+  public raiseEvent<T extends IEvent<any, void>>(eventName: T['name']): void;
+  public raiseEvent<T extends IEvent<any, any>>(eventName: T['name'], event: T['value']): void;
+  public raiseEvent<T extends IEvent<any, any>>(eventName: T['name'], event?: T['value']): void {
     let list;
 
     if (!this._subscribers.has(eventName)) {

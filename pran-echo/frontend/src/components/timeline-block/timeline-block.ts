@@ -1,7 +1,7 @@
-import './timeline-block.css';
-import { Animator, NoneAction, Timeline, TimelineAction } from 'pran-animation-frontend';
+import { ActionType, Animator, NoneAction, Timeline, TimelineAction } from 'pran-animation-frontend';
 import { inlineComponent } from '../../framework/inline-component';
 import { onClick } from '../../framework/on-click';
+import './timeline-block.css';
 
 export enum BlockType {
   Image,
@@ -14,6 +14,9 @@ export abstract class BaseBlock {
   }
   public get actions(): readonly TimelineAction[] {
     return this._actions;
+  }
+  public get noneAmount(): number {
+    return this._actions.reduce((sum, a) => sum + (a.type === ActionType.None ? a.amount : 0), 0);
   }
 
   protected _frames: number = 0;
@@ -46,6 +49,20 @@ export abstract class BaseBlock {
   private _notifyChanges() {
     this._onChangeSubscriptions.forEach(s => s());
   }
+
+  protected static BaseBuilder(block: BaseBlock) {
+    return {
+      addVirtualFrames(amount: number) {
+        block._frames += amount; return this;
+      },
+      addAction(action: TimelineAction) {
+        block._frames += action.type === ActionType.None ? action.amount : 1;
+        block._actions.push(action);
+        return this;
+      },
+      build: () => block
+    };
+  }
 }
 
 export class ImageBlock extends BaseBlock {
@@ -59,11 +76,8 @@ export class ImageBlock extends BaseBlock {
     const block = new ImageBlock();
 
     return {
-      withImage(imageSrc: string) { block._imageSrc = imageSrc; return this; }, 
-      addFrame() { block._frames++; return this; },
-      addFrames(amount: number) { block._frames += amount; return this; },
-      addAction(action: TimelineAction) { block._actions.push(action); return this; },
-      build: () => block
+      ...BaseBlock.BaseBuilder(block),
+      withImage(imageSrc: string) { block._imageSrc = imageSrc; return this; }
     };
   }
 }
@@ -72,14 +86,7 @@ export class ClearBlock extends BaseBlock {
   public readonly type: BlockType.Clear = BlockType.Clear;
 
   public static Builder() {
-    const block = new ClearBlock();
-
-    return {
-      addFrame() { block._frames++; return this; },
-      addFrames(amount: number) { block._frames += amount; return this; },
-      addAction(action: TimelineAction) { block._actions.push(action); return this; },
-      build: () => block
-    };
+    return BaseBlock.BaseBuilder(new ClearBlock());
   }
 }
 
@@ -107,7 +114,7 @@ export const createTimelineBlock = inlineComponent<{ block: Block, timeline: Tim
 </div>`, el => onClick(el, '.timeline-block_block', () => inputs.onSelect())];
 });
 
-  function createThumbnailHTML(block: Block): string {
+function createThumbnailHTML(block: Block): string {
   if (block.type === BlockType.Image) {
     return `<img
         class = "timeline-block_draw-thumbnail"

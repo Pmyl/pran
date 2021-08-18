@@ -12,76 +12,157 @@ import { Container } from '../container/container';
 import { Block, ClearBlock, createTimelineBlock, ImageBlock } from '../timeline-block/timeline-block';
 import './timeline-bar.css';
 
-export type BlockSelected = IEvent<'blockSelected', { block: Block, timeline: Timeline, animator: Animator }>;
+export type BlockSelected = IEvent<'blockSelected', { block: Block, timeline: Timeline, animator: Animator, timelineBar: TimelineBar }>;
 export type BlockUnselected = IEvent<'blockUnselected', { block: Block }>;
 type TimelineBarInputs = { timeline: Timeline, animator: Animator, frameWidth: number };
 
-function findBlockWithAction(blocks: Block[], action: TimelineAction): Block {
-  return blocks.find(b => b.actions.includes(action));
-}
+export class TimelineBar {
+  public blocks: Block[] = [];
 
-function findBlockBeforeFrame(blocks: Block[], frame: number): Block {
-  for (let i = 0; i < blocks.length; i++) {
-    const block = blocks[i];
-    frame -= block.frames;
-    if (frame === 0) {
-      return block[i];
+  public findBlockWithAction(action: TimelineAction): Block {
+    return this.blocks.find(b => b.actions.includes(action));
+  }
+  
+  public findBlockBeforeFrame(frame: number): Block {
+    for (let i = 0; i < this.blocks.length; i++) {
+      const block = this.blocks[i];
+      frame -= block.frames;
+      if (frame === 0) {
+        return this.blocks[i];
+      }
+
+      if (frame < 0) {
+        // TODO: something weird happened and the timeline has to be re-rendered from scratch
+      }
     }
-    
-    if (frame < 0) {
-      // TODO: something weird happened and the timeline has to be re-rendered from scratch
+
+    // TODO: something weird happened and the timeline has to be re-rendered from scratch
+    return null;
+  }
+  
+  public findBlockInitialFrame(block: Block): number {
+    let frames = 0;
+
+    for (let i = 0; i < this.blocks.length && this.blocks[i] !== block; i++) {
+      frames += this.blocks[i].frames;
     }
+
+    return frames;
   }
 
-  // TODO: something weird happened and the timeline has to be re-rendered from scratch
-  return null;
+  public generateAt(blockIndex: number, actions: TimelineAction[]): readonly Block[] {
+    const newBlocks = this._identifyBlocks(actions, 1);
+    this.blocks.splice(blockIndex, 0, ...newBlocks);
+
+    return newBlocks;
+  }
+
+  public regenerate(timelineActions: readonly TimelineAction[], totalFrames: number): void {
+    this.blocks.forEach(b => Mediator.raiseEvent<BlockUnselected>('blockUnselected', { block: b }));
+    this.blocks = this._identifyBlocks(timelineActions, totalFrames);
+  }
+  
+  public removeBlockAt(blockIndex: number) {
+    this.blocks.splice(blockIndex, 1);
+  }
+
+  public adaptToTotalFrames(inputs: TimelineBarInputs): void {
+    const totalFrames = this.blocks.reduce((sum, block) => {
+      return sum + block.frames;
+    }, 0);
+
+    const lastBlock: Block = this.blocks[this.blocks.length - 1];
+    lastBlock.addFrames(inputs.animator.totalFrames - totalFrames);
+  }
+
+  private _identifyBlocks(timelineActions: readonly TimelineAction[], totalFrames: number): Block[] {
+    const blocks = [];
+    let currentBlock: ReturnType<typeof ClearBlock.Builder> | ReturnType<typeof ImageBlock.Builder> = null;
+    let currentFrames: number = 0;
+
+    timelineActions.forEach(a => {
+      switch(a.type) {
+        case ActionType.None:
+          if (!currentBlock) {
+            currentBlock = ClearBlock.Builder().addAction(a);
+          } else {
+            currentBlock.addAction(a);
+          }
+          currentFrames += a.amount;
+          break;
+        case ActionType.Draw:
+          if (currentBlock) {
+            blocks.push(currentBlock.build());
+          }
+          currentBlock = ImageBlock.Builder().addAction(a).withImage(a.image.src);
+          currentFrames++;
+          break;
+        case ActionType.Clear:
+          if (currentBlock) {
+            blocks.push(currentBlock.build());
+          }
+          currentBlock = ClearBlock.Builder().addAction(a);
+          currentFrames++;
+          break;
+        default:
+          throw new Error("Unmapped action type");
+      }
+    });
+
+    if (currentFrames < totalFrames) {
+      currentBlock.addVirtualFrames(totalFrames - currentFrames);
+    }
+    blocks.push(currentBlock.build());
+    return blocks;
+  }
 }
 
 export const createTimelineBar = inlineComponent<TimelineBarInputs>(controls => {
   const timelineBlocksContainer = Container.CreateEmptyElement('div', 'timeline-bar_block-container');
   let unsubscribe: () => void,
-    currentBlocks: Block[];
+    timelineBar: TimelineBar = new TimelineBar();
   
   const onBlockSelect = (block: Block, inputs: TimelineBarInputs) => {
-    Mediator.raiseEvent<BlockSelected>('blockSelected', { block, timeline: inputs.timeline, animator: inputs.animator });
+    Mediator.raiseEvent<BlockSelected>('blockSelected', { block, timeline: inputs.timeline, animator: inputs.animator, timelineBar });
   }
 
   const renderBlocks = (inputs: TimelineBarInputs) => {
-    (currentBlocks || []).forEach(b => Mediator.raiseEvent<BlockUnselected>('blockUnselected', { block: b }));
     const totalFrames = inputs.animator.totalFrames;
-    currentBlocks = identifyBlocks(inputs.timeline.timelineActions, totalFrames);
+    timelineBar.regenerate(inputs.timeline.timelineActions, totalFrames);
     timelineBlocksContainer.clear();
-    createBlockComponents(currentBlocks, inputs, timelineBlocksContainer, (block: Block) => onBlockSelect(block, inputs));
+    createBlockComponents(timelineBar.blocks, inputs, timelineBlocksContainer, (block: Block) => onBlockSelect(block, inputs));
+    // TODO: remove this, used only to dev block controls
+    Mediator.raiseEvent<BlockSelected>('blockSelected', { block: timelineBar.blocks[0], timeline: inputs.timeline, animator: inputs.animator, timelineBar });
   };
 
   const updateBlocks = (inputs: TimelineBarInputs, change: TimelineChange) => {
     switch (change.type) {
       case TimelineChangeType.Expand:
-        findBlockWithAction(currentBlocks, change.action).addFrames(change.amount);
+        timelineBar.findBlockWithAction(change.action).addFrames(change.amount);
         break;
       case TimelineChangeType.Reduce:
-        findBlockWithAction(currentBlocks, change.action).addFrames(-change.amount);
+        timelineBar.findBlockWithAction(change.action).addFrames(-change.amount);
         break;
       case TimelineChangeType.Insert:
         if (change.action.type === ActionType.None) {
-          const block: Block = findBlockBeforeFrame(currentBlocks, change.frame);
+          const block: Block = timelineBar.findBlockBeforeFrame(change.frame);
           block.addNoneAction(change.action);
         } else {
-          const block: Block = findBlockBeforeFrame(currentBlocks, change.frame);
-          const blockIndex = currentBlocks.indexOf(block);
-          const newBlocks = identifyBlocks([change.action], 1);
-          currentBlocks.splice(blockIndex, 0, ...newBlocks);
+          const block: Block = timelineBar.findBlockBeforeFrame(change.frame);
+          const blockIndex = timelineBar.blocks.indexOf(block);
+          const newBlocks = timelineBar.generateAt(blockIndex + 1, [change.action]);
+          
           createBlockComponents(newBlocks, inputs, timelineBlocksContainer, (block: Block) => onBlockSelect(block, inputs), blockIndex + 1);
         }
         break;
       case TimelineChangeType.Remove:
         if (change.action.type === ActionType.None) {
-          findBlockWithAction(currentBlocks, change.action).removeNoneAction(change.action);
+          timelineBar.findBlockWithAction(change.action).removeNoneAction(change.action);
         } else {
-          const blockWithAction = findBlockWithAction(currentBlocks, change.action);
-          const blockIndex = currentBlocks.indexOf(blockWithAction);
-          const blockBefore = currentBlocks[blockIndex - 1];
-          currentBlocks.splice(blockIndex, 1);
+          const blockWithAction = timelineBar.findBlockWithAction(change.action);
+          const blockIndex = timelineBar.blocks.indexOf(blockWithAction);
+          const blockBefore = timelineBar.blocks[blockIndex - 1];
+          timelineBar.removeBlockAt(blockIndex);
           timelineBlocksContainer.removeAt(blockIndex);
           Mediator.raiseEvent<BlockUnselected>('blockUnselected', { block: blockWithAction })
 
@@ -93,7 +174,7 @@ export const createTimelineBar = inlineComponent<TimelineBarInputs>(controls => 
         }
         break;
     }
-    adaptToTotalFrames(inputs, currentBlocks);
+    timelineBar.adaptToTotalFrames(inputs);
   }
 
   controls.setup('timeline-bar', 'timeline-bar');
@@ -104,7 +185,7 @@ export const createTimelineBar = inlineComponent<TimelineBarInputs>(controls => 
     renderBlocks(inputs);
     unsubscribe?.();
     unsubscribe = inputs.animator.onTimelineChange((timeline: Timeline, change: TimelineChange) => (
-      timeline === inputs.timeline ? updateBlocks(inputs, change) : adaptToTotalFrames(inputs, currentBlocks),
+      timeline === inputs.timeline ? updateBlocks(inputs, change) : timelineBar.adaptToTotalFrames(inputs),
       controls.changed()
     ));
   };
@@ -113,49 +194,7 @@ export const createTimelineBar = inlineComponent<TimelineBarInputs>(controls => 
   return () => timelineBlocksContainer;
 });
 
-function identifyBlocks(timelineActions: readonly TimelineAction[], totalFrames: number): Block[] {
-  const blocks = [];
-  let currentBlock: ReturnType<typeof ClearBlock.Builder> | ReturnType<typeof ImageBlock.Builder> = null;
-  let currentFrames: number = 0;
-
-  timelineActions.forEach(a => {
-    switch(a.type) {
-      case ActionType.None:
-        if (!currentBlock) {
-          currentBlock = ClearBlock.Builder().addAction(a).addFrames(a.amount);
-        } else {
-          currentBlock.addFrames(a.amount).addAction(a);
-        }
-        currentFrames += a.amount;
-        break;
-      case ActionType.Draw:
-        if (currentBlock) {
-          blocks.push(currentBlock.build());
-        }
-        currentBlock = ImageBlock.Builder().addAction(a).withImage(a.image.src).addFrame();
-        currentFrames++;
-        break;
-      case ActionType.Clear:
-        if (currentBlock) {
-          blocks.push(currentBlock.build());
-        }
-        currentBlock = ClearBlock.Builder().addAction(a).addFrame();
-        currentFrames++;
-        break;
-      default:
-        throw new Error("Unmapped action type");
-    }
-  });
-
-  if (currentFrames < totalFrames) {
-    currentBlock.addFrames(totalFrames - currentFrames);
-  }
-  blocks.push(currentBlock.build());
-
-  return blocks;
-}
-
-function createBlockComponents(blocks: Block[], inputs: TimelineBarInputs, timelineBlocksContainer: Container, onSelect: (block: Block) => void, index?: number): void {
+function createBlockComponents(blocks: readonly Block[], inputs: TimelineBarInputs, timelineBlocksContainer: Container, onSelect: (block: Block) => void, index?: number): void {
   blocks.map(block => {
     const blockComponent = createTimelineBlock().setInputs({
       block,
@@ -172,13 +211,4 @@ function createBlockComponents(blocks: Block[], inputs: TimelineBarInputs, timel
       return blockComponent;
     }
   });
-}
-
-function adaptToTotalFrames(inputs: TimelineBarInputs, blocks: Block[]): void {
-  const totalFrames = blocks.reduce((sum, block) => {
-    return sum + block.frames;
-  }, 0);
-  
-  const lastBlock: Block = blocks[blocks.length - 1];
-  lastBlock.addFrames(inputs.animator.totalFrames - totalFrames);
 }

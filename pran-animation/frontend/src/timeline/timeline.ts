@@ -65,7 +65,7 @@ export class Timeline {
           amount--;
           break;
         case ActionType.None:
-          if (amount > action.amount) {
+          if (amount >= action.amount) {
             amount -= action.amount;
           } else {
             throw new Error(`Cannot insert action in timeline at frame ${frame} because there is already an action at that frame`);
@@ -75,6 +75,55 @@ export class Timeline {
     }
     
     this._timelineActions.splice(insertAfterCount, 0, action);
+  }
+
+  public removeTimelineAction(action: TimelineAction) {
+    const actionIndex = this._timelineActions.indexOf(action);
+    this._timelineActions.splice(actionIndex, 1);
+  }
+
+  public expandTimelineAction(amount: number, action: TimelineAction) {
+    if (action.type === ActionType.None) {
+      action.amount += amount;
+    } else {
+      throw new Error('Only None actions can be expanded');
+    }
+  }
+
+  public reduceTimelineAction(amount: number, action: TimelineAction) {
+    if (action.type === ActionType.None) {
+      if (action.amount - amount <= 0) {
+        throw new Error('Actions cannot be reduced to be less than one frame, remove them instead');
+      } else {
+        action.amount -= amount;
+      }
+    } else {
+      throw new Error('Only None actions can be reduced');
+    }
+  }
+  
+  public getActionInitialFrame(action: TimelineAction): number | undefined {
+    const actions = this._timelineActions.slice();
+    let amount = 0;
+
+    while (actions.length) {
+      const currentAction = actions.shift();
+      if (currentAction === action) {
+        return amount;
+      }
+
+      switch (currentAction.type) {
+        case ActionType.Clear:
+          amount++;
+          break;
+        case ActionType.Draw:
+          amount++;
+          break;
+        case ActionType.None:
+          amount += currentAction.amount;
+          break;
+      }
+    }
   }
 
   private _executeActionAfter(amount: number) {
@@ -98,31 +147,6 @@ export class Timeline {
           }
           break;
       }
-    }
-  }
-
-  removeTimelineAction(action: TimelineAction) {
-    const actionIndex = this._timelineActions.indexOf(action);
-    this._timelineActions.splice(actionIndex, 1);
-  }
-
-  expandTimelineAction(amount: number, action: TimelineAction) {
-    if (action.type === ActionType.None) {
-      action.amount += amount;
-    } else {
-      throw new Error('Only None actions can be expanded');
-    }
-  }
-
-  reduceTimelineAction(amount: number, action: TimelineAction) {
-    if (action.type === ActionType.None) {
-      if (action.amount - amount <= 0) {
-        throw new Error('Actions cannot be reduced to be less than one frame, remove them instead');
-      } else {
-        action.amount -= amount;
-      }
-    } else {
-      throw new Error('Only None actions can be reduced');
     }
   }
 }

@@ -5,6 +5,8 @@ import { createBlockEditor } from './components/block-editor/block-editor';
 import { Container } from './components/container/container';
 import { Player } from './components/player/player';
 import { createTimelineBoard } from './components/timeline-board/timeline-board';
+import { EditorActionsMemento, EditorRedoEvent, EditorUndoEvent } from './memento/editor-actions-memento';
+import { Mediator } from './services/mediator';
 import { PlayerController } from './services/player-controller';
 
 const draw = (id: string): ManagerTimelineAction => ({ type: ActionType.Draw, imageId: id });
@@ -81,11 +83,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   player.setInput('playerController', playerController)
     .appendTo(playerContainer);
+
+  createBlockEditor().appendTo(editControlsContainer);
   
   createTimelineBoard().setInputs({ animator, playerController, frameWidth: 20 })
     .appendTo(bottomSection);
   
-  createBlockEditor().appendTo(editControlsContainer);
+  // TODO: this is horrible, do it differently
+  new EditorActionsMemento();
+
+  document.addEventListener('keydown', e => {
+    if (e.ctrlKey && !e.shiftKey && e.code === 'KeyZ') {
+      Mediator.raiseEvent<EditorUndoEvent>('undoEditorAction');
+    }
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.ctrlKey && e.shiftKey && e.code === 'KeyZ') {
+      Mediator.raiseEvent<EditorRedoEvent>('redoEditorAction');
+    }
+  });
 
   body.render();
 });

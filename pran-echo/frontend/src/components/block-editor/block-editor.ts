@@ -1,19 +1,23 @@
-import { ActionType, Animator, Timeline, TimelineAction } from 'pran-animation-frontend';
+import { ActionType, Animator, NoneAction, Timeline, TimelineAction } from 'pran-animation-frontend';
 import { inlineComponent } from '../../framework/inline-component';
 import { onClick } from '../../framework/on-click';
+import { EditorAction, EditorDoActionEvent } from '../../memento/editor-actions-memento';
 import { Mediator } from '../../services/mediator';
-import { BlockSelected, BlockUnselected } from '../timeline-bar/timeline-bar';
-import { Block } from '../timeline-block/timeline-block';
+import { BlockSelected, BlockUnselected, TimelineBar } from '../timeline-bar/timeline-bar';
+import { Block, BlockType } from '../timeline-block/timeline-block';
+import './block-editor.css';
+import { clearBlock, expandBlock, expandBlockLeft, reduceBlock, reduceBlockLeft, removeBlock } from './editor-actions';
 
 export const createBlockEditor = inlineComponent(controls => {
   let block: Block,
     animator: Animator,
-    timeline: Timeline;
+    timeline: Timeline,
+    timelineBar: TimelineBar;
 
   controls.setup('block-editor', 'block-editor');
   Mediator.onEvent<BlockSelected>('blockSelected', e => {
     console.log('Selected:', e.block);
-    ({ block, animator, timeline } = e);
+    ({ block, animator, timeline, timelineBar } = e);
     controls.changed();
   });
   Mediator.onEvent<BlockUnselected>('blockUnselected', e => {
@@ -25,40 +29,53 @@ export const createBlockEditor = inlineComponent(controls => {
   });
   
   return () => !block ? `<span></span>` : [`
-<div>
-  <button class="block-editor_expand" type="button">Expand</button>
-  <button class="block-editor_reduce" type="button">Reduce</button>
-  <button class="block-editor_remove" type="button">Remove</button>
+<div class="block-editor_container">
+  <div class="block-editor_block-container">
+    <div class="block-editor_controls-container">
+      <div class="block-editor_left-controls">
+        <button type="button" class="block-editor_left-arrow"></button>
+        <button type="button" class="block-editor_handle"></button>    
+        <button type="button" class="block-editor_right-arrow"></button>
+      </div>
+      <div class="block-editor_right-controls">
+        <button type="button" class="block-editor_left-arrow"></button>
+        <button type="button" class="block-editor_handle"></button>    
+        <button type="button" class="block-editor_right-arrow"></button>
+      </div>
+    </div>
+    <div class="block-editor_block">
+      ${createThumbnailHTML(block)}
+    </div>
+  </div>
+  <div class="block-editor_buttons-container">
+    <button class="block-editor_remove" type="button">Remove</button>
+    <button class="block-editor_clear" type="button">Clear</button>
+  </div>
 </div>
 `, e => (
-  onClick(e, '.block-editor_expand', () => expandBlock(animator, timeline, block)),
-  onClick(e, '.block-editor_reduce', () => reduceBlock(animator, timeline, block)),
-  onClick(e, '.block-editor_remove', () => removeBlock(animator, timeline, block))
+  onClick(e, '.block-editor_left-controls .block-editor_left-arrow', emit(expandBlockLeft, animator, timeline, block, timelineBar)),
+  onClick(e, '.block-editor_left-controls .block-editor_right-arrow', emit(reduceBlockLeft, animator, timeline, block, timelineBar)),
+  onClick(e, '.block-editor_right-controls .block-editor_right-arrow', emit(expandBlock, animator, timeline, block, timelineBar)),
+  onClick(e, '.block-editor_right-controls .block-editor_left-arrow', emit(reduceBlock, animator, timeline, block)),
+  onClick(e, '.block-editor_remove', emit(removeBlock, animator, timeline, block)),
+  onClick(e, '.block-editor_clear', emit(clearBlock, animator, timeline, block, timelineBar))
   )];
 });
 
-function expandBlock(animator: Animator, timeline: Timeline, block: Block) {
-  const lastAction: TimelineAction = block.actions[block.actions.length - 1];
-
-  if (lastAction.type === ActionType.None) {
-    animator.expandTimelineAction(timeline, 1, lastAction);
-  } else {
-    animator.insertTimelineAction(timeline, block.frames, { type: ActionType.None, amount: 1 });
-  }
+function emit<T extends (...args: any[]) => EditorAction>(func: T, ...params: Parameters<T>): () => void {
+  return () => Mediator.raiseEvent<EditorDoActionEvent>('doEditorAction', func(...params));
 }
 
-function reduceBlock(animator: Animator, timeline: Timeline, block: Block): void {
-  const lastAction: TimelineAction = block.actions[block.actions.length - 1];
-
-  if (lastAction.type === ActionType.None && lastAction.amount > 1) {
-    animator.reduceTimelineAction(timeline, 1, lastAction);
-  } else {
-    animator.removeTimelineAction(timeline, lastAction);
+function createThumbnailHTML(block: Block): string {
+  if (block.type === BlockType.Image) {
+    return `<img
+        class = "block-editor_draw-thumbnail"
+        alt = "draw block image"
+        src = "${block.imageSrc}" / >`
   }
-}
 
-function removeBlock(animator: Animator, timeline: Timeline, block: Block): void {
-  block.actions.forEach(a => {
-    animator.removeTimelineAction(timeline, a);
-  });
+  return `<img
+        class = "block-editor_clear-thumbnail"
+        alt = "clear block image"
+        src = "./resources/clear.png" / >`
 }
