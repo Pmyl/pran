@@ -69,7 +69,7 @@ export const createBlockEditor = inlineComponent<{ animatorManager: AnimatorMana
     <button class="block-editor_remove" type="button">Remove</button>
     <button class="block-editor_clear" type="button">Clear</button>
     <button class="block-editor_split" type="button">Split</button>
-    <button class="block-editor_update-image" type="button">Update image</button>
+    ${block.type === BlockType.Image ? `<button class="block-editor_update-image" type="button">Update image</button>` : ''}
   </div>
 </div>
 `, e => (
@@ -80,7 +80,7 @@ export const createBlockEditor = inlineComponent<{ animatorManager: AnimatorMana
   onClick(e, '.block-editor_remove', emit(removeBlock, animator, timeline, block)),
   onClick(e, '.block-editor_clear', emit(clearBlock, animator, timeline, block, timelineBar)),
   onClick(e, '.block-editor_split', () => emit(splitBlock, animator, timeline, block, timelineBar, timelinePosition)()),
-  onClick(e, '.block-editor_update-image', () => openModal(inputs.animatorManager, animator, timeline, block))
+  block.type === BlockType.Image && onClick(e, '.block-editor_update-image', () => openModal(inputs.animatorManager, animator, timeline, block))
   )];
 });
 
