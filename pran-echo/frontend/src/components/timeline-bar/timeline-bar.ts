@@ -143,6 +143,9 @@ export const createTimelineBar = inlineComponent<TimelineBarInputs>(controls => 
       case TimelineChangeType.Reduce:
         timelineBar.findBlockWithAction(change.action).updateNoneFrames();
         break;
+      case TimelineChangeType.ReplaceSameType:
+        timelineBar.findBlockWithAction(change.actionToReplace).replaceAction(change.actionToReplace, change.replacement);
+        break;
       case TimelineChangeType.Insert:
         if (change.action.type === ActionType.None) {
           const block: Block = timelineBar.findBlockBeforeFrame(change.frame);

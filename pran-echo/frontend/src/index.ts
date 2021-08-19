@@ -5,8 +5,9 @@ import { createBlockEditor } from './components/block-editor/block-editor';
 import { Container } from './components/container/container';
 import { Player } from './components/player/player';
 import { createTimelineBoard } from './components/timeline-board/timeline-board';
-import { EditorActionsMemento, EditorRedoEvent, EditorUndoEvent } from './memento/editor-actions-memento';
+import { EditorQueue, EditorRedoEvent, EditorUndoEvent } from './editor-queue/editor-queue';
 import { Mediator } from './services/mediator';
+import { Modal } from './services/modal';
 import { PlayerController } from './services/player-controller';
 
 const draw = (id: string): ManagerTimelineAction => ({ type: ActionType.Draw, imageId: id });
@@ -16,6 +17,7 @@ const wait = (amount: number): ManagerTimelineAction => ({ type: ActionType.None
 document.addEventListener('DOMContentLoaded', async () => {
   const player = new Player();
   const body: Container = Container.CreateBody();
+  const modalSection: Container = Container.CreateEmptyElement(body, 'section', 'modal-section');
   const topSection: Container = Container.CreateEmptyElement(body, 'section', 'top-section');
   const topLeftContainer: Container = Container.CreateEmptyElement(topSection, 'div', 'top-left-container');
   const playerContainer: Container = Container.CreateEmptyElement(topSection, 'div', 'player-container');
@@ -84,13 +86,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   player.setInput('playerController', playerController)
     .appendTo(playerContainer);
 
-  createBlockEditor().appendTo(editControlsContainer);
+  createBlockEditor({ animatorManager: manager }).appendTo(editControlsContainer);
   
   createTimelineBoard().setInputs({ animator, playerController, frameWidth: 20 })
     .appendTo(bottomSection);
   
-  // TODO: this is horrible, do it differently
-  new EditorActionsMemento();
+  EditorQueue.init();
+  Modal.init(modalSection);
 
   document.addEventListener('keydown', e => {
     if (e.ctrlKey && !e.shiftKey && e.code === 'KeyZ') {

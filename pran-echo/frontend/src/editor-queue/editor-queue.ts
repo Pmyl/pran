@@ -42,7 +42,7 @@ export function noop(name: string): EditorAction {
   };
 }
 
-export class EditorActionsMemento {
+export class EditorQueue {
   public get actions(): readonly EditorAction[] {
     return this._actions;
   }
@@ -53,7 +53,7 @@ export class EditorActionsMemento {
   private _actions: EditorAction[] = [];
   private _index: number = 0;
   
-  public constructor(max: number = 50) {
+  private constructor(max: number = 50) {
     Mediator.onEvent<EditorDoActionEvent>('doEditorAction', a => {
       if (this._actions.length !== this._index) {
         this._actions.splice(this._index, this._actions.length - this._index);
@@ -85,5 +85,9 @@ export class EditorActionsMemento {
       this._index++;
       this._actions[this._index - 1].do();
     });
+  }
+  
+  public static init() {
+    new EditorQueue();
   }
 }

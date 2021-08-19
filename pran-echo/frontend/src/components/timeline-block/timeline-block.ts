@@ -1,4 +1,4 @@
-import { ActionType, Animator, NoneAction, Timeline, TimelineAction } from 'pran-animation-frontend';
+import { ActionType, Animator, DrawAction, NoneAction, Timeline, TimelineAction } from 'pran-animation-frontend';
 import { inlineComponent } from '../../framework/inline-component';
 import { onClick } from '../../framework/on-click';
 import './timeline-block.css';
@@ -55,6 +55,8 @@ export abstract class BaseBlock {
     this._notifyChanges();
   }
   
+  public abstract replaceAction<T extends TimelineAction>(actionToReplace: T, replacement: T);
+  
   public removeNoneAction(action: NoneAction) {
     this._frames -= action.amount;
     this._actions.splice(this._actions.indexOf(action), 1);
@@ -66,7 +68,7 @@ export abstract class BaseBlock {
     return () => this._onChangeSubscriptions.splice(this._onChangeSubscriptions.indexOf(cb), 1);
   }
   
-  private _notifyChanges() {
+  protected _notifyChanges() {
     this._onChangeSubscriptions.forEach(s => s());
   }
 
@@ -97,6 +99,12 @@ export class ImageBlock extends BaseBlock {
   }
   private _imageSrc: string;
 
+  public replaceAction<T extends TimelineAction>(actionToReplace: T, replacement: T) {
+    this._actions.splice(this._actions.indexOf(actionToReplace), 1, replacement);
+    this._imageSrc = (replacement as DrawAction).image.src;
+    this._notifyChanges();
+  }
+
   public static Builder() {
     const block = new ImageBlock();
 
@@ -109,6 +117,11 @@ export class ImageBlock extends BaseBlock {
 
 export class ClearBlock extends BaseBlock {
   public readonly type: BlockType.Clear = BlockType.Clear;
+
+  public replaceAction<T extends TimelineAction>(actionToReplace: T, replacement: T) {
+    this._actions.splice(this._actions.indexOf(actionToReplace), 1, replacement);
+    this._notifyChanges();
+  }
 
   public static Builder() {
     return BaseBlock.BaseBuilder(new ClearBlock());

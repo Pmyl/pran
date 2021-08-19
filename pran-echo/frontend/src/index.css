@@ -12,6 +12,11 @@ body {
     margin: 0;
 }
 
+.modal-section {
+    display: flex;
+    flex-direction: column;
+}
+
 .top-section {
     min-width: 0;
     display: flex;

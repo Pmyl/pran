@@ -38,6 +38,8 @@ class MediatorService {
     list.forEach(s => {
       s(event);
     });
+    
+    console.info(`-> ${eventName}`, event);
   }
 }
 

@@ -1,16 +1,18 @@
-import { TimelineAction } from '../../timeline/timeline-action';
+import { NoneAction, TimelineAction } from '../../timeline/timeline-action';
 
 export enum TimelineChangeType {
   Insert,
   Remove,
   Expand,
   Reduce,
+  ReplaceSameType,
 }
 
 export type TimelineChange = TimelineChangeInsert |
   TimelineChangeRemove |
   TimelineChangeExpand |
-  TimelineChangeReduce;
+  TimelineChangeReduce |
+  TimelineChangeReplaceSameType;
 
 export interface TimelineChangeInsert {
   type: TimelineChangeType.Insert;
@@ -33,4 +35,10 @@ export interface TimelineChangeReduce {
 export interface TimelineChangeRemove {
   type: TimelineChangeType.Remove;
   action: TimelineAction;
+}
+
+export interface TimelineChangeReplaceSameType {
+  type: TimelineChangeType.ReplaceSameType;
+  actionToReplace: TimelineAction;
+  replacement: TimelineAction;
 }

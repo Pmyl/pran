@@ -1,26 +1,30 @@
 import { Container } from '../components/container/container';
 
-export type RenderResult = string | Component | (string | Component)[];
+export type RenderResult = string | Component<object | null> | (string | Component<object | null>)[];
 
 export type Immutable<T> = {
   readonly [K in keyof T]: Immutable<T[K]>;
+};
+
+export type EmptyObject = {
+  [K in any] : never
 }
 
-export abstract class Component<T extends object = {}> {
+export abstract class Component<T extends object | null = EmptyObject> {
   public readonly selector: string;
   public componentElement: HTMLElement;
   public get inputs(): Immutable<T> {
     return this._inputs;
   }
-  private _lastRenderedItems: (string | Component)[] = [];
+  private _lastRenderedItems: (string | Component<object | null>)[] = [];
   private _holdRender: boolean;
   private _hasRenderedAtLeastOnce: boolean;
-  protected static _updatingInputsComponent: Component;
+  protected static _updatingInputsComponent: Component<object | null>;
   protected static _wantToRenderDuringUpdatingInputs: boolean = false;
   protected _isTemplate: boolean = false;
   protected _inputs: T = {} as T;
 
-  protected constructor(selector: string, initialClass?: string) {
+  constructor(selector: string, initialClass?: string) {
     this.selector = selector;
     this.componentElement = document.createElement(selector);
     if (initialClass) {
@@ -28,7 +32,7 @@ export abstract class Component<T extends object = {}> {
     }
   }
 
-  public render(): this {
+  public render(): this | null {
     if (this._holdRender) {
       Component._wantToRenderDuringUpdatingInputs = true;
       return this;
@@ -45,23 +49,20 @@ export abstract class Component<T extends object = {}> {
 
     if (this._lastRenderedItems.length === toRender.length) {
       for (let i = 0; i < toRender.length; i++){
-        const element: string | Component = toRender[i];
+        const element: string | Component<object | null> = toRender[i];
+        let newChild: HTMLElement | null;
 
         if (!this._isComponent(element)) {
-          this.componentElement.children[i].replaceWith(this._htmlToElement(element));
-        } else if (this._lastRenderedItems[i] === element && element._isTemplate) {
+          newChild = this._htmlToElement(element);
+        } else if (this._lastRenderedItems[i] === element) {
           continue;
-        } else if (this._lastRenderedItems[i] === element && !element._isTemplate) {
-          // element.render();
         } else if (element._isTemplate) {
-          this.componentElement.children[i].replaceWith(
-            element.render().componentElement.firstChild as HTMLElement
-          );
+          newChild = element.render()?.componentElement.firstChild as HTMLElement;
         } else {
-          this.componentElement.children[i].replaceWith(
-            element.render().componentElement
-          );
+          newChild = element.render()?.componentElement;
         }
+
+        newChild && this.componentElement.children[i].replaceWith(newChild);
       }
     } else {
       this.componentElement.innerHTML = '';
@@ -70,14 +71,17 @@ export abstract class Component<T extends object = {}> {
         let child: HTMLElement;
         if (this._isComponent(renderItem)) {
           if (renderItem._isTemplate) {
-            child = renderItem.render().componentElement.firstChild as HTMLElement;
+            child = renderItem.render()?.componentElement.firstChild as HTMLElement;
           } else {
-            child = renderItem.render().componentElement;
+            child = renderItem.render()?.componentElement;
           }
         } else {
           child = this._htmlToElement(renderItem);
         }
-        this.componentElement.append(child);
+        
+        if (child) {
+          this.componentElement.append(child);
+        }
       }
     }
 
@@ -130,7 +134,7 @@ export abstract class Component<T extends object = {}> {
     return template.content.firstChild as HTMLElement;
   }
 
-  private _isComponent(parent: unknown | Component): parent is Component {
+  private _isComponent(parent: unknown | Component<object | null>): parent is Component<object | null> {
     return parent instanceof Component;
   }
 

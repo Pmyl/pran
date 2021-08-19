@@ -102,6 +102,17 @@ export class Animator {
     this._notifyTimelineChanged(timeline, { type: TimelineChangeType.Reduce, amount, action });
   }
 
+  public replaceTimelineAction(timeline: Timeline, actionToReplace: TimelineAction, replacement: TimelineAction) {
+    timeline.replaceTimelineAction(actionToReplace, replacement);
+
+    this._recalculateTotalFrames();
+    this._notifyTimelineChanged(timeline, {
+      type: TimelineChangeType.ReplaceSameType,
+      actionToReplace: actionToReplace,
+      replacement: replacement
+    });
+  }
+
   private _restart(notify: boolean): void {
     for (let i = 0; i < this._timelines.length; i++) {
       this._timelines[i].restart();

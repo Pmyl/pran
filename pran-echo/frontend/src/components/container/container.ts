@@ -1,15 +1,15 @@
-import { Component, RenderResult } from '../../framework/component';
+import { Component, EmptyObject, RenderResult } from '../../framework/component';
 
-export class Container extends Component {
-  private _subComponents: (string | Component)[] = [];
+export class Container<T extends object | null = EmptyObject> extends Component<T> {
+  private _subComponents: (string | Component<object | null>)[] = [];
 
-  protected constructor(selector: string, initialClass?: string) {
+  constructor(selector: string, initialClass?: string) {
     super(selector, initialClass);
   }
 
   public clear(): void {
     for (let i = 0; i < this._subComponents.length; i++) {
-      const subComponent: string | Component = this._subComponents[i];
+      const subComponent: string | Component<object | null> = this._subComponents[i];
 
       if (subComponent instanceof Component) {
         subComponent.destroy();
@@ -28,9 +28,16 @@ export class Container extends Component {
     this.render();
   }
 
-  public append(component: string | Component) {
+  public remove(component: string | Component<object | null>) {
+    this._subComponents.splice(this._subComponents.indexOf(component), 1);
+    this.render();
+  }
+
+  public append(component: string | Component<object | null>): this {
     this._subComponents.push(component);
     this.render();
+    
+    return this;
   }
 
   protected _render(): RenderResult {

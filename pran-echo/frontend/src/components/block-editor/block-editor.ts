@@ -1,8 +1,10 @@
-import { ActionType, Animator, NoneAction, Timeline, TimelineAction } from 'pran-animation-frontend';
+import { Animator, AnimatorManager, Timeline } from 'pran-animation-frontend';
 import { inlineComponent } from '../../framework/inline-component';
 import { onClick } from '../../framework/on-click';
-import { EditorAction, EditorDoActionEvent } from '../../memento/editor-actions-memento';
+import { EditorAction, EditorDoActionEvent } from '../../editor-queue/editor-queue';
 import { Mediator } from '../../services/mediator';
+import { Modal } from '../../services/modal';
+import { createSelectImageModal } from '../select-image-modal/select-image-modal';
 import { BlockSelected, BlockUnselected, TimelineBar } from '../timeline-bar/timeline-bar';
 import { Block, BlockType } from '../timeline-block/timeline-block';
 import './block-editor.css';
@@ -14,25 +16,28 @@ import {
   reduceBlock,
   reduceBlockLeft,
   removeBlock,
-  splitBlock
+  splitBlock, updateImage
 } from './editor-actions';
 
-export const createBlockEditor = inlineComponent(controls => {
+export const createBlockEditor = inlineComponent<{ animatorManager: AnimatorManager }>(controls => {
   let block: Block,
     animator: Animator,
     timeline: Timeline,
     timelineBar: TimelineBar,
-    timelinePosition: number = 0;
+    timelinePosition: number = 0,
+    unsubscribeChanges: () => void;
 
   controls.setup('block-editor', 'block-editor');
   Mediator.onEvent<BlockSelected>('blockSelected', e => {
-    console.log('Selected:', e.block);
+    unsubscribeChanges?.();
     ({ block, animator, timeline, timelineBar } = e);
+    unsubscribeChanges = block.onChange(controls.changed);
     controls.changed();
   });
   Mediator.onEvent<BlockUnselected>('blockUnselected', e => {
     if (e.block === block) {
       console.log('Unselected:', e.block);
+      unsubscribeChanges?.();
       block = null;
       controls.changed();
     }
@@ -41,7 +46,7 @@ export const createBlockEditor = inlineComponent(controls => {
     timelinePosition = newPosition;
   });
   
-  return () => !block ? `<span></span>` : [`
+  return inputs => !block ? `<span></span>` : [`
 <div class="block-editor_container">
   <div class="block-editor_block-container">
     <div class="block-editor_controls-container">
@@ -64,6 +69,7 @@ export const createBlockEditor = inlineComponent(controls => {
     <button class="block-editor_remove" type="button">Remove</button>
     <button class="block-editor_clear" type="button">Clear</button>
     <button class="block-editor_split" type="button">Split</button>
+    <button class="block-editor_update-image" type="button">Update image</button>
   </div>
 </div>
 `, e => (
@@ -73,9 +79,16 @@ export const createBlockEditor = inlineComponent(controls => {
   onClick(e, '.block-editor_right-controls .block-editor_left-arrow', emit(reduceBlock, animator, timeline, block)),
   onClick(e, '.block-editor_remove', emit(removeBlock, animator, timeline, block)),
   onClick(e, '.block-editor_clear', emit(clearBlock, animator, timeline, block, timelineBar)),
-  onClick(e, '.block-editor_split', () => emit(splitBlock, animator, timeline, block, timelineBar, timelinePosition)())
+  onClick(e, '.block-editor_split', () => emit(splitBlock, animator, timeline, block, timelineBar, timelinePosition)()),
+  onClick(e, '.block-editor_update-image', () => openModal(inputs.animatorManager, animator, timeline, block))
   )];
 });
+
+function openModal(animatorManager: AnimatorManager, animator: Animator, timeline: Timeline, block: Block) {
+  Modal.open(createSelectImageModal({ animatorManager })).then(value => {
+    value && emit(updateImage, animator, timeline, block, value[1])();
+  });
+}
 
 function emit<T extends (...args: any[]) => EditorAction>(func: T, ...params: Parameters<T>): () => void {
   return () => Mediator.raiseEvent<EditorDoActionEvent>('doEditorAction', func(...params));

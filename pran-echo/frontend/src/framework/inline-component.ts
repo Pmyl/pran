@@ -1,4 +1,4 @@
-import { Component, Immutable, RenderResult } from './component';
+import { Component, EmptyObject, Immutable, RenderResult } from './component';
 import { mandatoryInput } from './mandatory-input';
 
 type InputChangeHooks<T> = {
@@ -20,7 +20,7 @@ export interface ComponentControls<T extends object, TE extends object = {}> {
   onDestroy?: () => void;
 }
 
-export function inlineComponent<T extends object, TS extends object = {}>(componentFunction: (controls: ComponentControls<T, TS>) => (inputs: T) => RenderResult | [RenderResult, (component: HTMLElement) => void]): (inputs?: T) => Component<T> {
+export function inlineComponent<T extends object = EmptyObject, TS extends object = null>(componentFunction: (controls: ComponentControls<T, TS>) => (inputs: T) => RenderResult | [RenderResult, (component: HTMLElement) => void]): (inputs?: T) => Component<T> {
   return (inputs?: T) => {
     let _selector, _initialClass, component: Component<T>, sideInputs: Partial<TS> = {};
 

@@ -1,5 +1,5 @@
 import { ActionType, Animator, DrawAction, NoneAction, Timeline, TimelineAction } from 'pran-animation-frontend';
-import { combine, EditorAction, invert, noop } from '../../memento/editor-actions-memento';
+import { combine, EditorAction, invert, noop } from '../../editor-queue/editor-queue';
 import { TimelineBar } from '../timeline-bar/timeline-bar';
 import { Block, BlockType, ClearBlock, ImageBlock } from '../timeline-block/timeline-block';
 
@@ -125,6 +125,21 @@ export function clearBlock(animator: Animator, timeline: Timeline, block: Block,
       .addAction({ type: ActionType.Clear })
       .addAction({ type: ActionType.None, amount: block.noneAmount }).build(), frame)
   );
+}
+
+export function updateImage(animator: Animator, timeline: Timeline, block: Block, image: HTMLImageElement): EditorAction {
+  const actionToReplace = block.actions[0],
+    replacement: TimelineAction = { type: ActionType.Draw, image: image };
+    
+  return {
+    name: 'Update image',
+    do() {
+      animator.replaceTimelineAction(timeline, actionToReplace, replacement);
+    },
+    undo() {
+      animator.replaceTimelineAction(timeline, replacement, actionToReplace);
+    }
+  };
 }
 
 export function splitBlock(animator: Animator, timeline: Timeline, block: Block, timelineBar: TimelineBar, frame: number): EditorAction {

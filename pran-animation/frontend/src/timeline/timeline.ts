@@ -1,5 +1,5 @@
 import { CanvasController } from 'pran-phonemes-frontend';
-import { ActionType, TimelineAction } from './timeline-action';
+import { ActionType, NoneAction, TimelineAction } from './timeline-action';
 
 export class Timeline {
   public get timelineActions(): readonly TimelineAction[] {
@@ -101,7 +101,16 @@ export class Timeline {
       throw new Error('Only None actions can be reduced');
     }
   }
-  
+
+  public replaceTimelineAction<T extends TimelineAction>(actionToReplace: T, replacement: T): void {
+    if (actionToReplace.type !== replacement.type) {
+      throw new Error('Actions can be replaced only with an action of the same type');
+    }
+
+    this.insertTimelineAction(this.getActionInitialFrame(actionToReplace), replacement);
+    this.removeTimelineAction(actionToReplace);
+  }
+
   public getActionInitialFrame(action: TimelineAction): number | undefined {
     const actions = this._timelineActions.slice();
     let amount = 0;
