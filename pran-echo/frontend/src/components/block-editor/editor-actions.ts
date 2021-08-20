@@ -1,5 +1,5 @@
 import { ActionType, Animator, DrawAction, NoneAction, Timeline, TimelineAction } from 'pran-animation-frontend';
-import { combine, combineLazy, EditorAction, invert, noop } from '../../editor-queue/editor-queue';
+import { combine, EditorAction, invert, lazy, noop } from '../../editor-queue/editor-queue';
 import { TimelineBar } from '../timeline-bar/timeline-bar';
 import { Block, BlockType, ClearBlock, ImageBlock } from '../timeline-block/timeline-block';
 
@@ -91,11 +91,7 @@ export function expandBlockLeft(animator: Animator, timeline: Timeline, block: B
   return combine('Expand block left', expandBlock(animator, timeline, block, timelineBar, amount), reduceBlock(animator, timeline, prevBlock, amount));
 }
 
-type FuncAndParams<T> = T extends (...args: infer A) => EditorAction ? [T, ...A] : never;
-
 export function reduceBlockLeft(animator: Animator, timeline: Timeline, block: Block, timelineBar: TimelineBar, amount: number = 1): EditorAction {
-  const a: FuncAndParams<typeof reduceBlock> = [reduceBlock, animator, timeline, block];
-
   if (block.visualFrames <= amount) {
     console.warn('Tried to reduce block', block, 'to disappear, something went wrong.');
     return noop('Reduce block left (Invalid)');
@@ -114,17 +110,17 @@ export function reduceBlockLeft(animator: Animator, timeline: Timeline, block: B
   }
 
   if (prevBlock) {
-    return combineLazy(`Reduce block left of ${amount}`)
-      .with(fillBlockVirtualFrames)
-      .with(reduceBlock, animator, timeline, block, amount)
-      .with(expandBlock, animator, timeline, prevBlock, timelineBar, amount)
-      .build();
+    return combine(`Reduce block left of ${amount}`,
+      fillBlockVirtualFrames,
+      lazy(() => reduceBlock(animator, timeline, block, amount)),
+      lazy(() => expandBlock(animator, timeline, prevBlock, timelineBar, amount))
+    );
   }
 
-  return combineLazy(`Reduce block left of ${amount}`)
-    .with(fillBlockVirtualFrames)
-    .with(reduceBlock, animator, timeline, block, amount)
-    .build();
+  return combine(`Reduce block left of ${amount}`,
+    fillBlockVirtualFrames,
+    lazy(() => reduceBlock(animator, timeline, block, amount))
+  );
 }
 
 export function insertBlock(animator, timeline, block, frame): EditorAction {
