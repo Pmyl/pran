@@ -62,7 +62,7 @@ export abstract class Component<T extends object | null = EmptyObject> {
           newChild = element.render()?.componentElement;
         }
 
-        newChild && this.componentElement.children[i].replaceWith(newChild);
+        this.componentElement.children[i].replaceWith(newChild);
       }
     } else {
       this.componentElement.innerHTML = '';
@@ -78,10 +78,8 @@ export abstract class Component<T extends object | null = EmptyObject> {
         } else {
           child = this._htmlToElement(renderItem);
         }
-        
-        if (child) {
-          this.componentElement.append(child);
-        }
+
+        this.componentElement.append(child);
       }
     }
 

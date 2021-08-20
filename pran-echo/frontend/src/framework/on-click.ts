@@ -1,10 +1,12 @@
 export function onClick(element: HTMLElement, selector: string, action: (e: MouseEvent & { target: HTMLInputElement}) => void) {
-  const elementsThatListens = element.querySelectorAll(selector);
-
-  elementsThatListens.forEach(elementThatListens => {
-    if (!elementThatListens.hasAttribute('data-click-listener')) {
-      elementThatListens.setAttribute('data-click-listener', 'true');
-      elementThatListens.addEventListener('click', action);
-    }
+  element.querySelectorAll(selector).forEach(elementThatListens => {
+    onClickElement(elementThatListens, action);
   });
+}
+
+export function onClickElement(element: Element, action: (e: MouseEvent & { target: HTMLInputElement}) => void) {
+  if (!element.hasAttribute('data-click-listener')) {
+    element.setAttribute('data-click-listener', 'true');
+    element.addEventListener('click', action);
+  }
 }

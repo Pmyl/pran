@@ -11,6 +11,8 @@ export interface EditorAction {
 }
 
 export function combine(name: string, ...editorActions: EditorAction[]): EditorAction {
+  editorActions = editorActions.filter(Boolean);
+
   return {
     name,
     do() {
@@ -22,6 +24,56 @@ export function combine(name: string, ...editorActions: EditorAction[]): EditorA
       editorActions.slice().reverse().forEach(a => {
         a.undo();
       });
+    }
+  };
+}
+
+type FuncAndParams<T> = T extends (...args: infer A) => EditorAction ? [T, [...A]] : never;
+interface CombineLazyBuilder {
+  with<T extends (...args: any) => any>(editorActionLazy: T, ...args: Parameters<T>): this;
+  with<T>(editorAction: EditorAction): this;
+  build(): EditorAction;
+}
+
+export function combineLazy(name: string): CombineLazyBuilder {
+  const lazyActions: (FuncAndParams<any> | EditorAction)[] = [];
+
+  return {
+    with<T>(editorActionLazy: T | EditorAction, ...args: any) {
+      if (!editorActionLazy) {
+        return this;
+      }
+
+      if (args.length > 0) {
+         lazyActions.push([editorActionLazy, args]);
+      } else {
+        lazyActions.push(editorActionLazy as EditorAction);
+      }
+
+      return this;
+    },
+    build(): EditorAction {
+      return {
+        name,
+        do() {
+          lazyActions.forEach((a: FuncAndParams<any> | EditorAction) => {
+            if (Array.isArray(a)) {
+              a[0].apply(a, a[1]).do();
+            } else {
+              a.do();
+            }
+          });
+        },
+        undo() {
+          lazyActions.slice().reverse().forEach((a: FuncAndParams<any> | EditorAction) => {
+            if (Array.isArray(a)) {
+              a[0].apply(a, a[1]).undo();
+            } else {
+              a.undo();
+            }
+          });
+        }
+      };
     }
   };
 }

@@ -42,3 +42,11 @@ body {
     background-color: lightgray;
     padding: 5px 0;
 }
+
+/* Reset button */
+button {
+    padding: 0;
+    box-sizing: content-box;
+    border: none;
+    background: none;
+}

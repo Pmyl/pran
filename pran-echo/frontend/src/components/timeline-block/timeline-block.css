@@ -1,5 +1,6 @@
 .timeline-block {
     display: block;
+    position: relative;
 }
 
 .timeline-block_draw-thumbnail {

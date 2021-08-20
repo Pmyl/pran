@@ -3,10 +3,6 @@
 .stop-button_button,
 .replay-button_button,
 .loop-toggle_button {
-    padding: 0;
-    box-sizing: content-box;
-    border: none;
-    background: none;
     width: 30px;
     height: 30px;
     vertical-align: top;

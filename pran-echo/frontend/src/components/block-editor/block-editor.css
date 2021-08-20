@@ -47,11 +47,6 @@
     align-self: center;
 }
 
-.block-editor_block-container button {
-    border: none;
-    background-color: transparent;
-}
-
 .block-editor_controls-container {
     display: flex;
     justify-content: space-between;

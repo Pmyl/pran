@@ -1,9 +1,12 @@
 import { ActionType, Animator, DrawAction, NoneAction, Timeline, TimelineAction } from 'pran-animation-frontend';
+import { Component } from '../../framework/component';
 import { inlineComponent } from '../../framework/inline-component';
 import { onClick } from '../../framework/on-click';
 import './timeline-block.css';
+import { staticElement } from '../../framework/static-element';
 import { Mediator } from '../../services/mediator';
 import { BlockSelected } from '../timeline-bar/timeline-bar';
+import { createTimelineBlockHandles } from './timeline-block-handles';
 
 export enum BlockType {
   Image,
@@ -16,6 +19,9 @@ export abstract class BaseBlock {
   }
   public get frames(): number {
     return this._frames;
+  }
+  public get virtualFrames(): number {
+    return this._virtualFrames;
   }
   public get actions(): readonly TimelineAction[] {
     return this._actions;
@@ -132,6 +138,8 @@ export type Block = ImageBlock | ClearBlock;
 
 export const createTimelineBlock = inlineComponent<{ block: Block, timeline: Timeline, animator: Animator, frameWidth: number, onSelect: () => void }>(controls => {
   controls.setup('timeline-block', 'timeline-block');
+
+  const handles = createTimelineBlockHandles();
   let unsubscribeOnChange: () => void,
     unsubscribeEvent: () => void,
     isSelected: boolean = false;
@@ -141,22 +149,27 @@ export const createTimelineBlock = inlineComponent<{ block: Block, timeline: Tim
       unsubscribeOnChange?.();
       unsubscribeOnChange = b.onChange(controls.changed);
       unsubscribeEvent?.();
-      unsubscribeEvent = Mediator.onEvent<BlockSelected>('blockSelected', ({ block: selectedBlock }) => (
+      unsubscribeEvent = Mediator.onEvent<BlockSelected>('blockSelected', ({ block: selectedBlock, animator, timeline, timelineBar }) => (
         isSelected = selectedBlock === b,
+        handles.setInputs({ isSelected, block: selectedBlock, animator, timeline, timelineBar }),
         controls.changed()
       ));
+      handles.setInput('block', b);
+    },
+    frameWidth: fw => {
+      handles.setInput('frameWidth', fw);
     }
   };
-  controls.onDestroy = () => unsubscribeOnChange?.();
 
+  controls.onDestroy = () => unsubscribeOnChange?.();
   return inputs => controls.mandatoryInput('block')
     && controls.mandatoryInput('frameWidth')
     && controls.mandatoryInput('animator')
     && controls.mandatoryInput('timeline')
-    && [`
+    && [[handles, `
 <div class="timeline-block_block${isSelected ? ' isSelected' : ''}" style="width:${inputs.block.visualFrames * inputs.frameWidth}px">
     ${createThumbnailHTML(inputs.block)}
-</div>`, el => onClick(el, '.timeline-block_block', () => inputs.onSelect())];
+</div>`], el => onClick(el, '.timeline-block_block', () => inputs.onSelect())];
 });
 
 function createThumbnailHTML(block: Block): string {

@@ -1,0 +1,29 @@
+.timeline-block-handles {
+    position: absolute;
+    z-index: 301;
+    width: 100%;
+}
+
+.timeline-block-handles_container {
+    position: relative;
+}
+
+.timeline-block-handles_right-handle,
+.timeline-block-handles_left-handle {
+    position: absolute;
+    top: -5px;
+    background-color: gray;
+    border-radius: 7px;
+    width: 15px;
+    height: 15px;
+    display: block;
+    cursor: grab;
+}
+
+.timeline-block-handles_right-handle {
+    right: -5px;
+}
+
+.timeline-block-handles_left-handle {
+    left: -5px;
+}

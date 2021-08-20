@@ -1,11 +1,11 @@
 import { ActionType, Animator, DrawAction, NoneAction, Timeline, TimelineAction } from 'pran-animation-frontend';
-import { combine, EditorAction, invert, noop } from '../../editor-queue/editor-queue';
+import { combine, combineLazy, EditorAction, invert, noop } from '../../editor-queue/editor-queue';
 import { TimelineBar } from '../timeline-bar/timeline-bar';
 import { Block, BlockType, ClearBlock, ImageBlock } from '../timeline-block/timeline-block';
 
 export function reduceBlock(animator: Animator, timeline: Timeline, block: Block, amount: number = 1): EditorAction {
   if (block.frames <= amount) {
-    console.warn('Tried to reduce block', block, 'to disappear, something went wrong.')
+    console.warn('Tried to reduce block', block, 'to disappear, something went wrong.');
     return noop('Reduce block (Invalid)');
   }
   
@@ -49,13 +49,15 @@ export function expandBlock(animator: Animator, timeline: Timeline, block: Block
   return {
     name: 'Expand block',
     do() {
-      const lastAction: TimelineAction = block.actions[block.actions.length - 1];
+      const isLastBlock = timelineBar.blocks[timelineBar.blocks.length - 1] === block,
+        lastAction: TimelineAction = block.actions[block.actions.length - 1],
+        amount: number = isLastBlock ? 1 + block.virtualFrames : 1;
 
       if (lastAction.type === ActionType.None) {
         actionExpanded = lastAction;
-        animator.expandTimelineAction(timeline, 1, lastAction);
+        animator.expandTimelineAction(timeline, amount, lastAction);
       } else {
-        actionExpanded = { type: ActionType.None, amount: 1 };
+        actionExpanded = { type: ActionType.None, amount };
         animator.insertTimelineAction(timeline, timelineBar.findBlockInitialFrame(block) + block.frames, actionExpanded);
       }
     },
@@ -69,24 +71,60 @@ export function expandBlock(animator: Animator, timeline: Timeline, block: Block
   };
 }
 
-export function expandBlockLeft(animator: Animator, timeline: Timeline, block: Block, timelineBar: TimelineBar) {
-  const prevBlock = timelineBar.blocks[timelineBar.blocks.indexOf(block) - 1];
-
-  if (prevBlock) {
-    return combine('Expand block left', expandBlock(animator, timeline, block, timelineBar), reduceBlock(animator, timeline, prevBlock));
+export function expandBlockLeft(animator: Animator, timeline: Timeline, block: Block, timelineBar: TimelineBar, amount: number = 1) {
+  if (amount > 1) {
+    return combine(`Expand block left of ${amount}`, ...Array(amount).fill(undefined).map(() => expandBlockLeft(animator, timeline, block, timelineBar)));
   }
 
-  return expandBlock(animator, timeline, block, timelineBar);
+  const prevBlock = timelineBar.blocks[timelineBar.blocks.indexOf(block) - 1];
+
+  if (!prevBlock) {
+    console.warn('Tried to expand block left', prevBlock, 'before the start of the timeline, something went wrong.');
+    return noop('Expand block left (Invalid)');
+  }
+
+  if (prevBlock.frames <= amount) {
+    console.warn('Tried to reduce block', prevBlock, 'to disappear, something went wrong.');
+    return noop('Expand block left (Invalid)');
+  }
+
+  return combine('Expand block left', expandBlock(animator, timeline, block, timelineBar, amount), reduceBlock(animator, timeline, prevBlock, amount));
 }
 
-export function reduceBlockLeft(animator: Animator, timeline: Timeline, block: Block, timelineBar: TimelineBar): EditorAction {
-  const prevBlock = timelineBar.blocks[timelineBar.blocks.indexOf(block) - 1];
+type FuncAndParams<T> = T extends (...args: infer A) => EditorAction ? [T, ...A] : never;
 
-  if (prevBlock) {
-    return combine('Reduce block left', reduceBlock(animator, timeline, block), expandBlock(animator, timeline, prevBlock, timelineBar));
+export function reduceBlockLeft(animator: Animator, timeline: Timeline, block: Block, timelineBar: TimelineBar, amount: number = 1): EditorAction {
+  const a: FuncAndParams<typeof reduceBlock> = [reduceBlock, animator, timeline, block];
+
+  if (block.visualFrames <= amount) {
+    console.warn('Tried to reduce block', block, 'to disappear, something went wrong.');
+    return noop('Reduce block left (Invalid)');
   }
 
-  return reduceBlock(animator, timeline, block);
+  if (amount > 1) {
+    return combine(`Reduce block left of ${amount}`, ...Array(amount).fill(undefined).map(() => reduceBlockLeft(animator, timeline, block, timelineBar)));
+  }
+  
+  const isLastBlock = timelineBar.blocks[timelineBar.blocks.length - 1] === block,
+    prevBlock = timelineBar.blocks[timelineBar.blocks.indexOf(block) - 1];
+  let fillBlockVirtualFrames: EditorAction | undefined;
+  
+  if (isLastBlock && block.virtualFrames > 0) {
+    fillBlockVirtualFrames = expandBlock(animator, timeline, block, timelineBar, block.virtualFrames);
+  }
+
+  if (prevBlock) {
+    return combineLazy(`Reduce block left of ${amount}`)
+      .with(fillBlockVirtualFrames)
+      .with(reduceBlock, animator, timeline, block, amount)
+      .with(expandBlock, animator, timeline, prevBlock, timelineBar, amount)
+      .build();
+  }
+
+  return combineLazy(`Reduce block left of ${amount}`)
+    .with(fillBlockVirtualFrames)
+    .with(reduceBlock, animator, timeline, block, amount)
+    .build();
 }
 
 export function insertBlock(animator, timeline, block, frame): EditorAction {
@@ -174,9 +212,9 @@ export function splitBlock(animator: Animator, timeline: Timeline, block: Block,
 
   return combine(
     'Split block',
-    adjustLeftBlockPart,
     insertBlock(animator, timeline, blockRightPartBuilder
       .addAction({ type: ActionType.None, amount: rightBlockPartFrames - 1 })
-      .build(), frame)
+      .build(), blockInitialFrame + block.frames),
+    adjustLeftBlockPart
   );
 }

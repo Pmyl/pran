@@ -18,7 +18,7 @@ export class Container<T extends object | null = EmptyObject> extends Component<
     this._subComponents = [];
   }
 
-  public insertAt(component: Component, index: number) {
+  public insertAt(component: Component<object | null>, index: number) {
     this._subComponents.splice(index, 0, component);
     this.render();
   }
