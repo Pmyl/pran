@@ -2,6 +2,7 @@ import './select-image-modal.css';
 import { AnimatorManager } from 'pran-animation-frontend';
 import { inlineComponent } from '../../framework/inline-component';
 import { onClick } from '../../framework/on-click';
+import { onDoubleClick } from '../../framework/on-double-click';
 import { ModalContentInputs } from '../modal-template/modal-template';
 
 type SelectImageModalInputs = ModalContentInputs<[string, HTMLImageElement]> & {
@@ -21,7 +22,7 @@ export const createSelectImageModal = inlineComponent<SelectImageModalInputs>(co
     `).join('')}
 </div>
 `, e => (onClick(e, '.select-image-modal_close-button', () => inputs.close()),
-    onClick(e, '.select-image-modal_image-container', e => inputs.close([
+    onDoubleClick(e, '.select-image-modal_image-container', e => inputs.close([
       // TODO: make this map public
       (e.currentTarget as HTMLElement).attributes.getNamedItem('data-imageId').value,
       (inputs.animatorManager as any)._imagesMap.get((e.currentTarget as HTMLElement).attributes.getNamedItem('data-imageId').value)
