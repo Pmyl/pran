@@ -1,6 +1,6 @@
 import './index.css';
 import { ActionType, AnimatorManager, ManagerTimelineAction } from 'pran-animation-frontend';
-import { CanvasControllerFactory, phonemesMapper } from 'pran-phonemes-frontend';
+import { CanvasControllerFactory, cmuPhonemesMap, phonemesMapper } from 'pran-phonemes-frontend';
 import { createBlockEditor } from './components/block-editor/block-editor';
 import { Container } from './components/container/container';
 import { Player } from './components/player/player';
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     ['eyes_semi_open', './resources/eyes/eyes_0001.png'],
     ['eyes_closed', './resources/eyes/eyes_0002.png'],
   ]);
-  const mouthMovementsImagesIds = phonemesMapper('h ə l ʊ , m aɪ n eɪ m z p r ɑ: l æ s ɑ: .'.split(' '), {
+  const mouthMovementsImagesIds = phonemesMapper('HH EH L OW , M AY N EY M ZH P R AH N EH S AH .'.split(' '), {
     fv: 'fv',
     ur: 'ur',
     stch: 'stch',
@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     ld: 'ld',
     pause: 'pause',
     smile: 'smile',
-  });
+  }, cmuPhonemesMap);
 
   const animator = manager.animate(
     [

@@ -8,6 +8,7 @@
     "install-phonemes": "npm i ../../pran-phonemes/frontend/dist/pran-phonemes-frontend-1.0.0.tgz",
     "build": "rimraf dist && mkdir dist && npm run ~copy-resources && microbundle src/index.ts --output dist/index.js --external none --format modern",
     "dev": "concurrently --kill-others \"npm run ~watch\" \"npm run ~server\"",
+    "watch": "npm run ~watch",
     "test": "jasmine-ts --config=jasmine.json",
     "~watch": "rimraf dist && mkdir dist && npm run ~copy-resources && microbundle watch src/index.ts --output dist/index.js --external none --format modern --sourcemap --no-compress",
     "~server": "lite-server --baseDir=dist",
