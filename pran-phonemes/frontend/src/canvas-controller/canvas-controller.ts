@@ -9,6 +9,7 @@ export interface CanvasController {
   dry_clear(): void;
   waitForMs(ms: number): Promise<void>;
   addLayer(id: string): CanvasController;
+  addLayerOnTop(id: string): CanvasController;
 }
 
 export class ParentCanvasController implements MainCanvasController {
@@ -23,6 +24,11 @@ export class ParentCanvasController implements MainCanvasController {
   public addLayer(id: string): CanvasController {
     this._layers.push(new ParentCanvasController.LayerCanvasControllerImpl(this._context2d, this, id));
     return this._layers[this._layers.length - 1];
+  }
+
+  public addLayerOnTop(id: string): CanvasController {
+    this._layers.unshift(new ParentCanvasController.LayerCanvasControllerImpl(this._context2d, this, id));
+    return this._layers[0];
   }
 
   public removeLayer(id: string): CanvasController {

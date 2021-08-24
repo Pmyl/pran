@@ -43,7 +43,7 @@ export class Animator {
   }
 
   public addTimeline(animations: TimelineAction[]) {
-    const timeline = new Timeline(this._canvasController.addLayer(uuidv4()), animations);
+    const timeline = new Timeline(this._canvasController.addLayerOnTop(uuidv4()), animations);
 
     this._timelines.push(timeline);
     this._recalculateTotalFrames();

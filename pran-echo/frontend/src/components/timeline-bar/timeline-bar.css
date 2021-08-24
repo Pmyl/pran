@@ -1,5 +1,5 @@
 .timeline-bar {
-    display: inline-block;
+    display: block;
 }
 
 .timeline-bar ~ .timeline-bar {

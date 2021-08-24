@@ -7,8 +7,6 @@ import { Block, BlockType } from '../../services/timeline-block';
 import { BlockSelected } from '../timeline-bar/timeline-bar';
 import { createTimelineBlockHandles } from './timeline-block-handles';
 
-
-
 export const createTimelineBlock = inlineComponent<{ block: Block, timeline: Timeline, animator: Animator, frameWidth: number, onSelect: () => void }>(controls => {
   controls.setup('timeline-block', 'timeline-block');
 

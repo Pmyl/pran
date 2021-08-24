@@ -8,7 +8,7 @@ import {
 import { inlineComponent } from '../../framework/inline-component';
 import { IEvent, Mediator } from '../../services/mediator';
 import { TimelineBar } from '../../services/timeline-bar';
-import { Block } from '../../services/timeline-block';
+import { Block, BlocksFilter } from '../../services/timeline-block';
 import { Container } from '../container/container';
 import { createTimelineBlock } from '../timeline-block/timeline-block';
 import './timeline-bar.css';
@@ -16,7 +16,6 @@ import './timeline-bar.css';
 export type BlockSelected = IEvent<'blockSelected', { block: Block, timeline: Timeline, animator: Animator, timelineBar: TimelineBar }>;
 export type BlockUnselected = IEvent<'blockUnselected', { block: Block }>;
 type TimelineBarInputs = { timeline: Timeline, animator: Animator, frameWidth: number };
-
 
 export const createTimelineBar = inlineComponent<TimelineBarInputs>(controls => {
   const timelineBlocksContainer = Container.CreateEmptyElement('div', 'timeline-bar_block-container');
@@ -34,8 +33,6 @@ export const createTimelineBar = inlineComponent<TimelineBarInputs>(controls => 
 
     timelineBlocksContainer.clear();
     createBlockComponents(timelineBar.blocks, inputs, timelineBlocksContainer, (block: Block) => onBlockSelect(block, inputs));
-    // TODO: remove this, used only to dev block controls
-    Mediator.raiseEvent<BlockSelected>('blockSelected', { block: timelineBar.blocks[0], timeline: inputs.timeline, animator: inputs.animator, timelineBar });
   };
 
   const updateBlocks = (inputs: TimelineBarInputs, change: TimelineChange) => {
@@ -52,13 +49,25 @@ export const createTimelineBar = inlineComponent<TimelineBarInputs>(controls => 
       case TimelineChangeType.InsertAction:
         if (change.action.type === ActionType.None) {
           const block: Block = timelineBar.findBlockBeforeFrame(change.frame);
-          block.addNoneAction(change.action);
+          if (BlocksFilter.isWithActions(block)) {
+            block.addNoneAction(change.action);
+          } else {
+            throw new Error(`Cannot add action to block without actions. Type: ${block.type}`);
+          }
         } else {
-          const block: Block = timelineBar.findBlockBeforeFrame(change.frame);
-          const blockIndex = timelineBar.blocks.indexOf(block);
-          block && block.removeVirtualFrames();
+          let blockIndex: number;
+
+          if (BlocksFilter.isNothingness(timelineBar.blocks[0])) {
+            blockIndex = 0;
+            timelineBar.removeBlockAt(blockIndex);
+            timelineBlocksContainer.removeAt(blockIndex);
+          } else {
+            const block: Block = timelineBar.findBlockBeforeFrame(change.frame);
+            blockIndex = timelineBar.blocks.indexOf(block);
+            block && block.removeVisualFrames();
+          }
+
           const newBlocks = timelineBar.generateAt(blockIndex + 1, [change.action]);
-          
           createBlockComponents(newBlocks, inputs, timelineBlocksContainer, (block: Block) => onBlockSelect(block, inputs), blockIndex + 1);
         }
         break;
@@ -73,7 +82,7 @@ export const createTimelineBar = inlineComponent<TimelineBarInputs>(controls => 
           timelineBlocksContainer.removeAt(blockIndex);
           Mediator.raiseEvent<BlockUnselected>('blockUnselected', { block: blockWithAction })
 
-          if (blockBefore) {
+          if (blockBefore && BlocksFilter.isWithActions(blockBefore)) {
             blockWithAction.actions.filter(a => a.type === ActionType.None).forEach(a => {
               blockBefore.addNoneAction(a as NoneAction);
             });
@@ -81,7 +90,7 @@ export const createTimelineBar = inlineComponent<TimelineBarInputs>(controls => 
         }
         break;
     }
-    timelineBar.adaptToTotalFrames(inputs.animator);
+    timelineBar.adaptToTotalFrames(inputs.animator.totalFrames);
   }
 
   controls.setup('timeline-bar', 'timeline-bar');
@@ -92,7 +101,7 @@ export const createTimelineBar = inlineComponent<TimelineBarInputs>(controls => 
     renderBlocks(inputs);
     unsubscribe?.();
     unsubscribe = inputs.animator.onTimelineChange((timeline: Timeline, change: TimelineChange) => (
-      timeline === inputs.timeline ? updateBlocks(inputs, change) : timelineBar.adaptToTotalFrames(inputs.animator),
+      timeline === inputs.timeline ? updateBlocks(inputs, change) : timelineBar.adaptToTotalFrames(inputs.animator.totalFrames),
       controls.changed()
     ));
   };

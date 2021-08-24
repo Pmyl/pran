@@ -1,12 +1,13 @@
-import './timeline-board.css';
 import { Animator, Timeline, TimelineChange, TimelineChangeType } from 'pran-animation-frontend';
-import { Component, Immutable } from '../../framework/component';
+import { Component } from '../../framework/component';
 import { inlineComponent } from '../../framework/inline-component';
 import { onClick } from '../../framework/on-click';
 import { staticElement } from '../../framework/static-element';
 import { IEvent, Mediator } from '../../services/mediator';
 import { PlayerController } from '../../services/player-controller';
+import { TimelineBar } from '../../services/timeline-bar';
 import { createTimelineBar } from '../timeline-bar/timeline-bar';
+import './timeline-board.css';
 
 export type TimelinePositionChanged = IEvent<'timelinePositionChanged', number>;
 
@@ -37,13 +38,13 @@ export const createTimelineBoard = inlineComponent<{ animator: Animator, playerC
       controls.changed()
     ),
     frameWidth: (width, inputs) => {
-      pickArea = createPickArea(inputs.animator.totalFrames, inputs.frameWidth);
+      pickArea = createPickArea(Math.max(inputs.animator.totalFrames, TimelineBar.minLength), inputs.frameWidth);
       controls.changed();
     }
   };
   controls.onSideInputChange = {
     totalFrames: (total, _, inputs) => {
-      pickArea = createPickArea(total, inputs.frameWidth);
+      pickArea = createPickArea(Math.max(total, TimelineBar.minLength), inputs.frameWidth);
       controls.changed();
     }
   }

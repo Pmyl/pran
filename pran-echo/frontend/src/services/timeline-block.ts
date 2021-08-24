@@ -2,10 +2,51 @@ import { ActionType, DrawAction, NoneAction, TimelineAction } from 'pran-animati
 
 export enum BlockType {
   Image,
-  Clear
+  Clear,
+  Nothingness
 }
 
 export abstract class BaseBlock {
+  public abstract type: BlockType;
+  public get visualFrames(): number {
+    return this._visualFrames;
+  }
+
+  protected _visualFrames: number = 0;
+
+  private _onChangeSubscriptions: (() => void)[] = [];
+
+  public addVisualFrames(amount: number) {
+    this._visualFrames += amount;
+    this._notifyChanges();
+  }
+
+  public removeVisualFrames(amount: number = this._visualFrames) {
+    this._visualFrames -= amount;
+    this._notifyChanges();
+  }
+
+  public onChange(cb: () => void): () => void {
+    this._onChangeSubscriptions.push(cb);
+    return () => this._onChangeSubscriptions.splice(this._onChangeSubscriptions.indexOf(cb), 1);
+  }
+
+  protected _notifyChanges() {
+    this._onChangeSubscriptions.forEach(s => s());
+  }
+
+  protected static BaseBuilder(block: BaseBlock) {
+    return {
+      addVisualFrames(amount: number) {
+        block._visualFrames += amount;
+        return this;
+      },
+      build: () => block
+    };
+  }
+}
+
+export abstract class BlockWithActions extends BaseBlock {
   public get visualFrames(): number {
     return this._frames + this._virtualFrames;
   }
@@ -26,15 +67,21 @@ export abstract class BaseBlock {
   protected _virtualFrames: number = 0;
   protected _actions: TimelineAction[] = [];
 
-  private _onChangeSubscriptions: (() => void)[] = [];
+  public addVisualFrames(amount: number) {
+    this.addVirtualFrames(amount);
+  }
 
   public addVirtualFrames(amount: number) {
     this._virtualFrames += amount;
     this._notifyChanges();
   }
 
-  public removeVirtualFrames() {
-    this._virtualFrames = 0;
+  public removeVisualFrames(amount: number = this._visualFrames) {
+    this.removeVirtualFrames(amount);
+  }
+
+  public removeVirtualFrames(amount: number = this._visualFrames) {
+    this._virtualFrames -= amount;
     this._notifyChanges();
   }
 
@@ -61,17 +108,12 @@ export abstract class BaseBlock {
     this._notifyChanges();
   }
 
-  public onChange(cb: () => void): () => void {
-    this._onChangeSubscriptions.push(cb);
-    return () => this._onChangeSubscriptions.splice(this._onChangeSubscriptions.indexOf(cb), 1);
-  }
-
-  protected _notifyChanges() {
-    this._onChangeSubscriptions.forEach(s => s());
-  }
-
-  protected static BaseBuilder(block: BaseBlock) {
+  protected static BlockWithActionsBuilder(block: BlockWithActions) {
     return {
+      ...BaseBlock.BaseBuilder(block),
+      addVisualFrames(amount: number) {
+        return this.addVirtualFrames(amount);
+      },
       addVirtualFrames(amount: number) {
         block._virtualFrames += amount;
         return this;
@@ -90,7 +132,7 @@ export abstract class BaseBlock {
   }
 }
 
-export class ImageBlock extends BaseBlock {
+export class ImageBlock extends BlockWithActions {
   public readonly type: BlockType.Image = BlockType.Image;
   public get imageSrc(): string {
     return this._imageSrc;
@@ -107,13 +149,13 @@ export class ImageBlock extends BaseBlock {
     const block = new ImageBlock();
 
     return {
-      ...BaseBlock.BaseBuilder(block),
+      ...BlockWithActions.BlockWithActionsBuilder(block),
       withImage(imageSrc: string) { block._imageSrc = imageSrc; return this; }
     };
   }
 }
 
-export class ClearBlock extends BaseBlock {
+export class ClearBlock extends BlockWithActions {
   public readonly type: BlockType.Clear = BlockType.Clear;
 
   public replaceAction<T extends TimelineAction>(actionToReplace: T, replacement: T) {
@@ -122,8 +164,28 @@ export class ClearBlock extends BaseBlock {
   }
 
   public static Builder() {
-    return BaseBlock.BaseBuilder(new ClearBlock());
+    return BlockWithActions.BlockWithActionsBuilder(new ClearBlock());
   }
 }
 
-export type Block = ImageBlock | ClearBlock;
+export class NothingnessBlock extends BaseBlock {
+  public readonly type: BlockType.Nothingness = BlockType.Nothingness;
+
+  public static Builder() {
+    return BaseBlock.BaseBuilder(new NothingnessBlock());
+  }
+}
+
+export type BlocksWithActions = ImageBlock | ClearBlock;
+export type Block = BlocksWithActions | NothingnessBlock;
+export const BlocksFilter = {
+  isWithActions(block: Block): block is BlocksWithActions {
+    return block.type === BlockType.Clear || block.type === BlockType.Image
+  },
+  isImage(block: Block): block is ImageBlock {
+    return block.type === BlockType.Image
+  },
+  isNothingness(block: Block): block is NothingnessBlock {
+    return block.type === BlockType.Nothingness
+  }
+};

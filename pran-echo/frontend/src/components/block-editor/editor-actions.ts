@@ -1,9 +1,14 @@
 import { ActionType, Animator, DrawAction, NoneAction, Timeline, TimelineAction } from 'pran-animation-frontend';
 import { combine, EditorAction, invert, lazy, noop } from '../../editor-queue/editor-queue';
 import { TimelineBar } from '../../services/timeline-bar';
-import { Block, BlockType, ClearBlock, ImageBlock } from '../../services/timeline-block';
+import { Block, BlocksFilter, BlockType, ClearBlock, ImageBlock } from '../../services/timeline-block';
 
 export function reduceBlock(animator: Animator, timeline: Timeline, block: Block, amount: number = 1): EditorAction {
+  if (BlocksFilter.isNothingness(block)) {
+    console.warn('Cannot resize a nothingness block');
+    return noop('Reduce block (Invalid)');
+  }
+
   if (block.frames <= amount) {
     console.warn('Tried to reduce block', block, 'to disappear, something went wrong.');
     return noop('Reduce block (Invalid)');
@@ -40,6 +45,11 @@ export function reduceBlock(animator: Animator, timeline: Timeline, block: Block
 }
 
 export function expandBlock(animator: Animator, timeline: Timeline, block: Block, timelineBar: TimelineBar, amount: number = 1) {
+  if (BlocksFilter.isNothingness(block)) {
+    console.warn('Cannot resize a nothingness block');
+    return noop('Expand block (Invalid)');
+  }
+
   if (amount > 1) {
     return combine(`Expand block of ${amount}`, ...Array(amount).fill(undefined).map(() => expandBlock(animator, timeline, block, timelineBar)));
   }
@@ -72,6 +82,11 @@ export function expandBlock(animator: Animator, timeline: Timeline, block: Block
 }
 
 export function expandBlockLeft(animator: Animator, timeline: Timeline, block: Block, timelineBar: TimelineBar, amount: number = 1) {
+  if (BlocksFilter.isNothingness(block)) {
+    console.warn('Cannot resize a nothingness block');
+    return noop('Expand block left (Invalid)');
+  }
+
   if (amount > 1) {
     return combine(`Expand block left of ${amount}`, ...Array(amount).fill(undefined).map(() => expandBlockLeft(animator, timeline, block, timelineBar)));
   }
@@ -83,7 +98,7 @@ export function expandBlockLeft(animator: Animator, timeline: Timeline, block: B
     return noop('Expand block left (Invalid)');
   }
 
-  if (prevBlock.frames <= amount) {
+  if (prevBlock.visualFrames <= amount) {
     console.warn('Tried to reduce block', prevBlock, 'to disappear, something went wrong.');
     return noop('Expand block left (Invalid)');
   }
@@ -92,10 +107,21 @@ export function expandBlockLeft(animator: Animator, timeline: Timeline, block: B
 }
 
 export function reduceBlockLeft(animator: Animator, timeline: Timeline, block: Block, timelineBar: TimelineBar, amount: number = 1): EditorAction {
+  if (BlocksFilter.isNothingness(block)) {
+    console.warn('Cannot resize a nothingness block');
+    return noop('Reduce block left (Invalid)');
+  }
+
   if (block.visualFrames <= amount) {
     console.warn('Tried to reduce block', block, 'to disappear, something went wrong.');
     return noop('Reduce block left (Invalid)');
   }
+
+  if (block === timelineBar.blocks[0]) {
+    console.warn('Tried to reduce block left', block, 'but it\'s the first block.');
+    return noop('Expand block left (Invalid)');
+  }
+
 
   if (amount > 1) {
     return combine(`Reduce block left of ${amount}`, ...Array(amount).fill(undefined).map(() => reduceBlockLeft(animator, timeline, block, timelineBar)));
@@ -145,6 +171,11 @@ export function insertBlock(animator, timeline, block, frame): EditorAction {
 }
 
 export function removeBlock(animator: Animator, timeline: Timeline, block: Block): EditorAction {
+  if (BlocksFilter.isNothingness(block)) {
+    console.warn('Cannot remove a nothingness block, it\'s already nothing');
+    return noop('Remove block (Invalid)');
+  }
+
   const blockInitialFrame: number = timeline.getActionInitialFrame(block.actions[0]);
   return invert('Remove block', insertBlock(animator, timeline, block, blockInitialFrame));
 }
@@ -157,11 +188,16 @@ export function clearBlock(animator: Animator, timeline: Timeline, block: Block,
     removeBlock(animator, timeline, block),
     insertBlock(animator, timeline, ClearBlock.Builder()
       .addAction({ type: ActionType.Clear })
-      .addAction({ type: ActionType.None, amount: block.noneAmount }).build(), frame)
+      .addAction({ type: ActionType.None, amount: block.visualFrames - 1 }).build(), frame)
   );
 }
 
 export function updateImage(animator: Animator, timeline: Timeline, block: Block, image: HTMLImageElement): EditorAction {
+  if (!BlocksFilter.isImage(block)) {
+    console.warn('Cannot update image of a non image block');
+    return noop('Update image (Invalid)');
+  }
+
   const actionToReplace = block.actions[0],
     replacement: TimelineAction = { type: ActionType.Draw, image: image };
     
@@ -177,6 +213,11 @@ export function updateImage(animator: Animator, timeline: Timeline, block: Block
 }
 
 export function splitBlock(animator: Animator, timeline: Timeline, block: Block, timelineBar: TimelineBar, frame: number): EditorAction {
+  if (!BlocksFilter.isWithActions(block)) {
+    console.warn('Cannot split a block with no actions');
+    return noop('Split block (Invalid)');
+  }
+
   const blockInitialFrame = timelineBar.findBlockInitialFrame(block);
 
   if (frame < blockInitialFrame) {

@@ -32,7 +32,7 @@ export class AnimatorManager {
     }
 
     const animator = new Animator(this._canvasController);
-    const allAnimations = [maybeAnimator, ...animations];
+    const allAnimations = maybeAnimator ? [maybeAnimator, ...animations] : [];
     for (let i = 0; i < allAnimations.length; i++) {
       animator.addTimeline(this._toAnimationDetails(allAnimations[i]));
     }
@@ -68,7 +68,7 @@ export class AnimatorManager {
     return map;
   }
 
-  private _toAnimationDetails(headAnimation: ManagerTimelineAction[]): TimelineAction[] {
-    return headAnimation.map(x => x.type === ActionType.Draw ? { type: ActionType.Draw, image: this._imagesMap.get(x.imageId) } : x);
+  private _toAnimationDetails(animation: ManagerTimelineAction[]): TimelineAction[] {
+    return animation.map(x => x.type === ActionType.Draw ? { type: ActionType.Draw, image: this._imagesMap.get(x.imageId) } : x);
   }
 }

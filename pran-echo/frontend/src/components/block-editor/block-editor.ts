@@ -12,9 +12,8 @@ import { TimelinePositionChanged } from '../timeline-board/timeline-board';
 import './block-editor.css';
 import { clearBlock, removeBlock, splitBlock, updateImage } from './editor-actions';
 
-export const createBlockEditor = inlineComponent<{ animatorManager: AnimatorManager }>(controls => {
+export const createBlockEditor = inlineComponent<{ animatorManager: AnimatorManager, animator: Animator }>(controls => {
   let block: Block,
-    animator: Animator,
     timeline: Timeline,
     timelineBar: TimelineBar,
     timelinePosition: number = 0,
@@ -23,7 +22,7 @@ export const createBlockEditor = inlineComponent<{ animatorManager: AnimatorMana
   controls.setup('block-editor', 'block-editor');
   Mediator.onEvent<BlockSelected>('blockSelected', e => {
     unsubscribeChanges?.();
-    ({ block, animator, timeline, timelineBar } = e);
+    ({ block, timeline, timelineBar } = e);
     unsubscribeChanges = block.onChange(controls.changed);
     controls.changed();
   });
@@ -39,7 +38,14 @@ export const createBlockEditor = inlineComponent<{ animatorManager: AnimatorMana
     timelinePosition = newPosition;
   });
   
-  return inputs => !block ? `<span></span>` : [`
+  return inputs => !block ? [`
+<div>
+    <button class="block-editor_add-timeline" type="button">Add timeline</button>
+    <button class="block-editor_remove-timeline" type="button">Remove timeline</button>
+</div>
+`, e => (
+  onClick(e, '.block-editor_add-timeline', () => addTimeline(inputs.animator))
+)] : [`
 <div class="block-editor_container">
   <div class="block-editor_block-container">
     <div class="block-editor_block">
@@ -59,12 +65,12 @@ export const createBlockEditor = inlineComponent<{ animatorManager: AnimatorMana
   </div>
 </div>
 `, e => (
-  onClick(e, '.block-editor_remove', emit(removeBlock, animator, timeline, block)),
-  onClick(e, '.block-editor_clear', emit(clearBlock, animator, timeline, block, timelineBar)),
-  onClick(e, '.block-editor_split', () => emit(splitBlock, animator, timeline, block, timelineBar, timelinePosition)()),
-  onClick(e, '.block-editor_add-timeline', () => addTimeline(animator)),
-  onClick(e, '.block-editor_remove-timeline', () => removeTimeline(animator, timeline)),
-  block.type === BlockType.Image && onClick(e, '.block-editor_block', () => openModal(inputs.animatorManager, animator, timeline, block))
+  onClick(e, '.block-editor_remove', emit(removeBlock, inputs.animator, timeline, block)),
+  onClick(e, '.block-editor_clear', emit(clearBlock, inputs.animator, timeline, block, timelineBar)),
+  onClick(e, '.block-editor_split', () => emit(splitBlock, inputs.animator, timeline, block, timelineBar, timelinePosition)()),
+  onClick(e, '.block-editor_add-timeline', () => addTimeline(inputs.animator)),
+  onClick(e, '.block-editor_remove-timeline', () => removeTimeline(inputs.animator, timeline)),
+  block.type === BlockType.Image && onClick(e, '.block-editor_block', () => openModal(inputs.animatorManager, inputs.animator, timeline, block))
   )];
 });
 

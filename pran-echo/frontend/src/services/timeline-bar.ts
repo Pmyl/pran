@@ -1,23 +1,22 @@
-import { ActionType, Animator, TimelineAction } from 'pran-animation-frontend';
-import { Block, ClearBlock, ImageBlock } from './timeline-block';
+import { ActionType, TimelineAction } from 'pran-animation-frontend';
+import { Block, BlocksFilter, BlocksWithActions, ClearBlock, ImageBlock, NothingnessBlock } from './timeline-block';
 
 export class TimelineBar {
+  public static minLength: number = 5;
   public blocks: Block[] = [];
 
-  public findBlockWithAction(action: TimelineAction): Block {
-    return this.blocks.find(b => b.actions.includes(action));
+  public findBlockWithAction(action: TimelineAction): BlocksWithActions {
+    return this.blocks
+      .filter(BlocksFilter.isWithActions)
+      .find(b => b.actions.includes(action));
   }
 
   public findBlockBeforeFrame(frame: number): Block {
     for (let i = 0; i < this.blocks.length; i++) {
       const block = this.blocks[i];
-      frame -= block.frames;
-      if (frame === 0) {
+      frame -= block.visualFrames;
+      if (frame <= 0) {
         return this.blocks[i];
-      }
-
-      if (frame < 0) {
-        // TODO: something weird happened and the timeline has to be re-rendered from scratch
       }
     }
 
@@ -36,15 +35,20 @@ export class TimelineBar {
   }
 
   public generateAt(blockIndex: number, actions: TimelineAction[]): readonly Block[] {
-    const newBlocks = this._identifyBlocks(actions, 1);
+    const newBlocks = this._identifyBlocks(actions);
     this.blocks.splice(blockIndex, 0, ...newBlocks);
 
     return newBlocks;
   }
 
+  public insertAt(blockIndex: number, block: Block): void {
+    this.blocks.splice(blockIndex, 0, block);
+  }
+
   public regenerate(timelineActions: readonly TimelineAction[], totalFrames: number): readonly Block[] {
     const removedBlocks = this.blocks.slice();
-    this.blocks = this._identifyBlocks(timelineActions, totalFrames);
+    this.blocks = this._identifyBlocks(timelineActions);
+    this.adaptToTotalFrames(totalFrames);
     return removedBlocks;
   }
 
@@ -52,18 +56,22 @@ export class TimelineBar {
     this.blocks.splice(blockIndex, 1);
   }
 
-  public adaptToTotalFrames(animator: Animator): void {
-    const totalFrames = this.blocks.reduce((sum, block) => {
+  public adaptToTotalFrames(animationFrames: number): void {
+    if (this.blocks.length === 0) {
+      this.insertAt(0, NothingnessBlock.Builder().addVisualFrames(TimelineBar.minLength).build());
+    }
+
+    const barFrames = this.blocks.reduce((sum, block) => {
       return sum + block.visualFrames;
     }, 0);
 
     const lastBlock: Block = this.blocks[this.blocks.length - 1];
-    lastBlock.addVirtualFrames(animator.totalFrames - totalFrames);
+    lastBlock.addVisualFrames(Math.max(TimelineBar.minLength, animationFrames) - barFrames);
   }
 
-  private _identifyBlocks(timelineActions: readonly TimelineAction[], totalFrames: number): Block[] {
+  private _identifyBlocks(timelineActions: readonly TimelineAction[]): Block[] {
     const blocks = [];
-    let currentBlock: ReturnType<typeof ClearBlock.Builder> | ReturnType<typeof ImageBlock.Builder> = null;
+    let currentBlock: ReturnType<typeof ClearBlock.Builder> | ReturnType<typeof ImageBlock.Builder> | null = null;
     let currentFrames: number = 0;
 
     timelineActions.forEach(a => {
@@ -95,10 +103,10 @@ export class TimelineBar {
       }
     });
 
-    if (currentFrames < totalFrames) {
-      currentBlock.addVirtualFrames(totalFrames - currentFrames);
+    if (currentBlock) {
+      blocks.push(currentBlock.build());
     }
-    blocks.push(currentBlock.build());
+
     return blocks;
   }
 }

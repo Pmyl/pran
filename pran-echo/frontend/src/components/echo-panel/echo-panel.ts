@@ -92,9 +92,9 @@ async function uploadAudio(filesChange: Event & { target: HTMLInputElement }, an
   }, cmuPhonemesMap);
 
   manager.animate(animator,
-    [
-      draw('head_idle'),
-    ],
+    mouthMovementsImagesIds.flatMap(id => (
+      [draw(id), wait(5)]
+    )),
     [
       draw('eyes_open'),
       wait(20),
@@ -106,8 +106,8 @@ async function uploadAudio(filesChange: Event & { target: HTMLInputElement }, an
       wait(3),
       draw('eyes_open'),
     ],
-    mouthMovementsImagesIds.flatMap(id => (
-      [draw(id), wait(5)]
-    ))
+    [
+      draw('head_idle'),
+    ]
   );
 }

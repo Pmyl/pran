@@ -1,7 +1,7 @@
 import './pran-editor.css';
 
-import { ActionType, Animator, AnimatorManager, ManagerTimelineAction } from 'pran-animation-frontend';
-import { CanvasControllerFactory, cmuPhonemesMap, phonemesMapper } from 'pran-phonemes-frontend';
+import { Animator, AnimatorManager } from 'pran-animation-frontend';
+import { CanvasControllerFactory } from 'pran-phonemes-frontend';
 import { EditorQueue, EditorRedoEvent, EditorUndoEvent } from '../../editor-queue/editor-queue';
 import { Component } from '../../framework/component';
 import { inlineComponent } from '../../framework/inline-component';
@@ -13,8 +13,6 @@ import { Player } from '../player/player';
 import { createTimelineBoard } from '../timeline-board/timeline-board';
 
 const componentName = 'editor';
-const draw = (id: string): ManagerTimelineAction => ({ type: ActionType.Draw, imageId: id });
-const wait = (amount: number): ManagerTimelineAction => ({ type: ActionType.None, amount });
 
 type PranEditorControls = {
   playerController: PlayerController;
@@ -50,6 +48,7 @@ export const createPranEditor = inlineComponent<{ customPanel?: Component<{ anim
 
   controls.onInputsChange = async inputs => {
     if (initialized) throw new Error(`Cannot provide inputs multiple times to '${componentName}'`);
+    initialized = true;
 
     const manager = await AnimatorManager.create(CanvasControllerFactory.createFrom(context), [
       ['fv', './resources/mouth/f,v.png'],
@@ -68,52 +67,16 @@ export const createPranEditor = inlineComponent<{ customPanel?: Component<{ anim
       ['eyes_open', './resources/eyes/eyes_0000.png'],
       ['eyes_semi_open', './resources/eyes/eyes_0001.png'],
       ['eyes_closed', './resources/eyes/eyes_0002.png'],
-    ])
-    
-    // TODO: Remove from here, editor should start fresh, just create an empty animator
-    const mouthMovementsImagesIds = phonemesMapper('HH EH L OW , M AY N EY M ZH P R AH N EH S AH .'.split(' '), {
-      fv: 'fv',
-      ur: 'ur',
-      stch: 'stch',
-      mbsilent: 'mbsilent',
-      p1: 'p1',
-      p2: 'p2',
-      e: 'e',
-      aah: 'aah',
-      o: 'o',
-      ld: 'ld',
-      pause: 'pause',
-      smile: 'smile',
-    }, cmuPhonemesMap);
-  
-    const animator = manager.animate(
-      [
-        draw('head_idle'),
-      ],
-      [
-        draw('eyes_open'),
-        wait(20),
-        draw('eyes_semi_open'),
-        wait(3),
-        draw('eyes_closed'),
-        wait(3),
-        draw('eyes_semi_open'),
-        wait(3),
-        draw('eyes_open'),
-      ],
-      mouthMovementsImagesIds.flatMap(id => (
-        [draw(id), wait(5)]
-      ))
-    );
-    // TODO: Remove to here
-  
+    ]);
+
+    const animator: Animator = manager.animate([]);
     const playerController = new PlayerController(animator);
     playerController.setFps(60);
   
     player.setInput('playerController', playerController)
       .appendTo(playerContainer);
   
-    createBlockEditor({ animatorManager: manager })
+    createBlockEditor({ animatorManager: manager, animator })
       .appendTo(editControlsContainer);
   
     createTimelineBoard().setInputs({ animator, playerController, frameWidth: 20 })
