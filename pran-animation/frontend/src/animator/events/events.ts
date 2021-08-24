@@ -1,44 +1,65 @@
-import { NoneAction, TimelineAction } from '../../timeline/timeline-action';
+import { TimelineAction } from '../../timeline/timeline-action';
 
 export enum TimelineChangeType {
-  Insert,
+  Add,
   Remove,
-  Expand,
-  Reduce,
+  Swap,
+  InsertAction,
+  RemoveAction,
+  ExpandAction,
+  ReduceAction,
   ReplaceSameType,
 }
 
-export type TimelineChange = TimelineChangeInsert |
-  TimelineChangeRemove |
-  TimelineChangeExpand |
-  TimelineChangeReduce |
-  TimelineChangeReplaceSameType;
+export type TimelineChange = 
+  TimelineAdd |
+  TimelineRemove |
+  TimelineInsertAction |
+  TimelineRemoveAction |
+  TimelineExpandAction |
+  TimelineReduceAction |
+  TimelineReplaceActionSameType;
 
-export interface TimelineChangeInsert {
-  type: TimelineChangeType.Insert;
+export interface TimelineInsertAction {
+  type: TimelineChangeType.InsertAction;
   frame: number;
   action: TimelineAction;
 }
 
-export interface TimelineChangeExpand {
-  type: TimelineChangeType.Expand;
+export interface TimelineExpandAction {
+  type: TimelineChangeType.ExpandAction;
   amount: number;
   action: TimelineAction;
 }
 
-export interface TimelineChangeReduce {
-  type: TimelineChangeType.Reduce;
+export interface TimelineReduceAction {
+  type: TimelineChangeType.ReduceAction;
   amount: number;
   action: TimelineAction;
 }
 
-export interface TimelineChangeRemove {
-  type: TimelineChangeType.Remove;
+export interface TimelineRemoveAction {
+  type: TimelineChangeType.RemoveAction;
   action: TimelineAction;
 }
 
-export interface TimelineChangeReplaceSameType {
+export interface TimelineReplaceActionSameType {
   type: TimelineChangeType.ReplaceSameType;
   actionToReplace: TimelineAction;
   replacement: TimelineAction;
+}
+
+export interface TimelineAdd {
+  type: TimelineChangeType.Add;
+}
+
+export interface TimelineRemove {
+  type: TimelineChangeType.Remove;
+  index: number;
+}
+
+export interface TimelineSwap {
+  type: TimelineChangeType.Swap;
+  index1: number;
+  index2: number;
 }

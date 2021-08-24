@@ -12,22 +12,27 @@ import pronouncing
 
 
 class AudioPhonemisedResponse:
-    def __init__(self, text, phonemes):
+    def __init__(self, text, phonemes, audio, samplerate):
         self.text = text
         self.phonemes = phonemes
+        self.seconds = len(audio) / samplerate
 
 
 def phonemise_audio(filepath):
-    text = audio_to_text(filepath)
+    audio, samplerate = fetch_audio(filepath)
+    text = audio_to_text(audio, samplerate)
     phonemes = text_to_phonemes(text)
-    return AudioPhonemisedResponse(text, phonemes)
+    return AudioPhonemisedResponse(text, phonemes, audio, samplerate)
 
 
-def audio_to_text(filepath):
-    r = sr.Recognizer()
-    data, samplerate = soundfile.read(filepath)
+def fetch_audio(filepath):
+    return soundfile.read(filepath)
+
+
+def audio_to_text(audio, samplerate):
     newfilename = str(uuid.uuid4()) + ".wav"
-    soundfile.write(newfilename, data, samplerate, subtype='PCM_16')
+    soundfile.write(newfilename, audio, samplerate, subtype='PCM_16')
+    r = sr.Recognizer()
     with sr.AudioFile(newfilename) as source:
         audio_data = r.record(source)
         text = r.recognize_google(audio_data)

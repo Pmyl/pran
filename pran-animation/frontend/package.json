@@ -18,7 +18,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "pran-phonemes-frontend": "file:../../pran-phonemes/frontend/dist/pran-phonemes-frontend-1.0.0.tgz"
+    "pran-phonemes-frontend": "file:../../pran-phonemes/frontend/dist/pran-phonemes-frontend-1.0.0.tgz",
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@types/dom-mediacapture-record": "^1.0.10",

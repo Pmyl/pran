@@ -2,6 +2,7 @@ import { MainCanvasController } from 'pran-phonemes-frontend';
 import { Timeline } from '../timeline/timeline';
 import { TimelineAction } from '../timeline/timeline-action';
 import { TimelineChange, TimelineChangeType } from './events/events';
+import { v4 as uuidv4 } from 'uuid';
 
 export class Animator {
   public get totalFrames(): number {
@@ -41,13 +42,26 @@ export class Animator {
     this._applyFrameChange(Math.min(this._currentFrame + amount, this._totalFrames), true);
   }
 
-  public addTimeline(timeline: Timeline) {
+  public addTimeline(animations: TimelineAction[]) {
+    const timeline = new Timeline(this._canvasController.addLayer(uuidv4()), animations);
+
     this._timelines.push(timeline);
     this._recalculateTotalFrames();
+    this._notifyTimelineChanged(timeline, {
+      type: TimelineChangeType.Add
+    });
   }
 
-  private _recalculateTotalFrames() {
-    this._applyTotalFramesChange(Math.max(...this._timelines.map(t => t.frames)));
+  public removeTimeline(timeline: Timeline) {
+    const index = this._timelines.indexOf(timeline);
+    this._canvasController.removeLayer(timeline.layer.id);
+
+    this._timelines.splice(index, 1);
+    this._recalculateTotalFrames();
+    this._notifyTimelineChanged(timeline, {
+      type: TimelineChangeType.Remove,
+      index
+    });
   }
 
   public restart(): void {
@@ -81,25 +95,25 @@ export class Animator {
   public insertTimelineAction(timeline: Timeline, frame: number, action: TimelineAction) {
     timeline.insertTimelineAction(frame, action);
     this._recalculateTotalFrames();
-    this._notifyTimelineChanged(timeline, { type: TimelineChangeType.Insert, frame, action });
+    this._notifyTimelineChanged(timeline, { type: TimelineChangeType.InsertAction, frame, action });
   }
 
   public expandTimelineAction(timeline: Timeline, amount: number, action: TimelineAction) {
     timeline.expandTimelineAction(amount, action);
     this._recalculateTotalFrames();
-    this._notifyTimelineChanged(timeline, { type: TimelineChangeType.Expand, amount, action });
+    this._notifyTimelineChanged(timeline, { type: TimelineChangeType.ExpandAction, amount, action });
   }
 
   public removeTimelineAction(timeline: Timeline, action: TimelineAction) {
     timeline.removeTimelineAction(action);
     this._recalculateTotalFrames();
-    this._notifyTimelineChanged(timeline, { type: TimelineChangeType.Remove, action });
+    this._notifyTimelineChanged(timeline, { type: TimelineChangeType.RemoveAction, action });
   }
 
   public reduceTimelineAction(timeline: Timeline, amount: number, action: TimelineAction) {
     timeline.reduceTimelineAction(amount, action);
     this._recalculateTotalFrames();
-    this._notifyTimelineChanged(timeline, { type: TimelineChangeType.Reduce, amount, action });
+    this._notifyTimelineChanged(timeline, { type: TimelineChangeType.ReduceAction, amount, action });
   }
 
   public replaceTimelineAction(timeline: Timeline, actionToReplace: TimelineAction, replacement: TimelineAction) {
@@ -111,6 +125,10 @@ export class Animator {
       actionToReplace: actionToReplace,
       replacement: replacement
     });
+  }
+
+  private _recalculateTotalFrames() {
+    this._applyTotalFramesChange(Math.max(...this._timelines.map(t => t.frames)));
   }
 
   private _restart(notify: boolean): void {

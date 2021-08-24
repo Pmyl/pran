@@ -24,12 +24,31 @@ export class AnimatorManager {
     return new AnimatorManager(canvasController, imagesMap);
   }
 
-  public animate(...animations: ManagerTimelineAction[][]): Animator {
-    const animator = new Animator(this._canvasController);
-    for (let i = 0; i < animations.length; i++) {
-      animator.addTimeline(new Timeline(this._canvasController.addLayer(i.toString()), this._toAnimationDetails(animations[i])));
+  public animate(animator: Animator, ...animations: ManagerTimelineAction[][]): Animator;
+  public animate(...animations: ManagerTimelineAction[][]): Animator;
+  public animate(maybeAnimator: Animator | ManagerTimelineAction[], ...animations: ManagerTimelineAction[][]): Animator {
+    if (maybeAnimator instanceof Animator) {
+      return this._replaceAnimation(maybeAnimator, ...animations);
     }
 
+    const animator = new Animator(this._canvasController);
+    const allAnimations = [maybeAnimator, ...animations];
+    for (let i = 0; i < allAnimations.length; i++) {
+      animator.addTimeline(this._toAnimationDetails(allAnimations[i]));
+    }
+
+    return animator;
+  }
+
+  private _replaceAnimation(animator: Animator, ...animations: ManagerTimelineAction[][]): Animator {
+    animator.timelines.slice().forEach(t => {
+      animator.removeTimeline(t);
+    });
+
+    for (let i = 0; i < animations.length; i++) {
+      animator.addTimeline(this._toAnimationDetails(animations[i]));
+    }
+    
     return animator;
   }
 

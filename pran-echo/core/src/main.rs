@@ -47,7 +47,8 @@ struct Upload<'f> {
 #[derive(FromPyObject)]
 struct AudioResult {
     text: String,
-    phonemes: String
+    phonemes: String,
+    seconds: f32
 }
 
 #[derive(Responder, Debug, Clone)]

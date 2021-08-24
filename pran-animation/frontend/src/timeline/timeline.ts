@@ -10,6 +10,9 @@ export class Timeline {
       return acc + (action.type === ActionType.None ? action.amount : 1);
     }, 0);
   }
+  public get layer(): CanvasController {
+    return this._layer;
+  }
 
   private _currentWait: number;
   private _timelineActionsQueue: TimelineAction[];

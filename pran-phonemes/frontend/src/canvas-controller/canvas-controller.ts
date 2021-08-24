@@ -25,6 +25,10 @@ export class ParentCanvasController implements MainCanvasController {
     return this._layers[this._layers.length - 1];
   }
 
+  public removeLayer(id: string): CanvasController {
+    return this._layers.splice(this._layers.findIndex(l => l.id === id), 1)[0];
+  }
+
   public clear(): void {
     this._context2d.clearRect(0, 0, this._context2d.canvas.width, this._context2d.canvas.height);
   }

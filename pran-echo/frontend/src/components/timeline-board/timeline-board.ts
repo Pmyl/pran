@@ -1,5 +1,5 @@
 import './timeline-board.css';
-import { Animator } from 'pran-animation-frontend';
+import { Animator, Timeline, TimelineChange, TimelineChangeType } from 'pran-animation-frontend';
 import { Component, Immutable } from '../../framework/component';
 import { inlineComponent } from '../../framework/inline-component';
 import { onClick } from '../../framework/on-click';
@@ -11,7 +11,7 @@ import { createTimelineBar } from '../timeline-bar/timeline-bar';
 export type TimelinePositionChanged = IEvent<'timelinePositionChanged', number>;
 
 export const createTimelineBoard = inlineComponent<{ animator: Animator, playerController: PlayerController, frameWidth: number }, { totalFrames: number }>(controls => {
-  let bars: Component[],
+  let bars: ReturnType<typeof createTimelineBar>[],
     currentFrame: number = 0,
     pickArea: Component;
 
@@ -22,6 +22,18 @@ export const createTimelineBoard = inlineComponent<{ animator: Animator, playerC
       currentFrame = animator.currentFrame,
       animator.onFrameChange((frame: number) => (currentFrame = frame, controls.changed())),
       animator.onTotalFramesChange(() => controls.setSideInput('totalFrames', animator.totalFrames)),
+      animator.onTimelineChange((t: Timeline, c: TimelineChange) => {
+        switch (c.type) {
+          case TimelineChangeType.Add:
+            bars.push(createTimelineBar({ timeline: t, animator, frameWidth: inputs.frameWidth }));
+            break;
+          case TimelineChangeType.Remove:
+            const removedBar = bars.splice(c.index, 1)[0];
+            removedBar.destroy();
+            break;
+        }
+        controls.setSideInput('totalFrames', animator.totalFrames)
+      }),
       controls.changed()
     ),
     frameWidth: (width, inputs) => {
@@ -69,7 +81,7 @@ function createFramesLines(frames: number, frameWidth: number): string {
   return result;
 }
 
-function createBars(animator: Animator, frameWidth: number): Component[] {
+function createBars(animator: Animator, frameWidth: number): ReturnType<typeof createTimelineBar>[] {
   return animator.timelines.map(timeline =>
      createTimelineBar().setInputs({ timeline, animator, frameWidth })
   );

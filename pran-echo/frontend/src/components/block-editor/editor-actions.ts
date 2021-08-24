@@ -1,7 +1,7 @@
 import { ActionType, Animator, DrawAction, NoneAction, Timeline, TimelineAction } from 'pran-animation-frontend';
 import { combine, EditorAction, invert, lazy, noop } from '../../editor-queue/editor-queue';
-import { TimelineBar } from '../timeline-bar/timeline-bar';
-import { Block, BlockType, ClearBlock, ImageBlock } from '../timeline-block/timeline-block';
+import { TimelineBar } from '../../services/timeline-bar';
+import { Block, BlockType, ClearBlock, ImageBlock } from '../../services/timeline-block';
 
 export function reduceBlock(animator: Animator, timeline: Timeline, block: Block, amount: number = 1): EditorAction {
   if (block.frames <= amount) {

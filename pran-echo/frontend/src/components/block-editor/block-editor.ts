@@ -1,24 +1,16 @@
-import { Animator, AnimatorManager, Timeline } from 'pran-animation-frontend';
-import { inlineComponent } from '../../framework/inline-component';
-import { onChange } from '../../framework/on-change';
-import { onClick } from '../../framework/on-click';
+import { ActionType, Animator, AnimatorManager, Timeline } from 'pran-animation-frontend';
 import { EditorAction, EditorDoActionEvent } from '../../editor-queue/editor-queue';
+import { inlineComponent } from '../../framework/inline-component';
+import { onClick } from '../../framework/on-click';
 import { Mediator } from '../../services/mediator';
 import { Modal } from '../../services/modal';
+import { TimelineBar } from '../../services/timeline-bar';
+import { Block, BlockType } from '../../services/timeline-block';
 import { createSelectImageModal } from '../select-image-modal/select-image-modal';
-import { BlockSelected, BlockUnselected, TimelineBar } from '../timeline-bar/timeline-bar';
-import { Block, BlockType } from '../timeline-block/timeline-block';
-import './block-editor.css';
+import { BlockSelected, BlockUnselected } from '../timeline-bar/timeline-bar';
 import { TimelinePositionChanged } from '../timeline-board/timeline-board';
-import {
-  clearBlock,
-  expandBlock,
-  expandBlockLeft,
-  reduceBlock,
-  reduceBlockLeft,
-  removeBlock,
-  splitBlock, updateImage
-} from './editor-actions';
+import './block-editor.css';
+import { clearBlock, removeBlock, splitBlock, updateImage } from './editor-actions';
 
 export const createBlockEditor = inlineComponent<{ animatorManager: AnimatorManager }>(controls => {
   let block: Block,
@@ -62,33 +54,26 @@ export const createBlockEditor = inlineComponent<{ animatorManager: AnimatorMana
     <button class="block-editor_remove" type="button">Remove</button>
     <button class="block-editor_clear" type="button">Clear</button>
     <button class="block-editor_split" type="button">Split</button>
-    <input type="file" id="upload_audio_input" hidden />
-    <button class="block-editor_upload_audio" type="button">Upload audio</button>
+    <button class="block-editor_add-timeline" type="button">Add timeline</button>
+    <button class="block-editor_remove-timeline" type="button">Remove timeline</button>
   </div>
 </div>
 `, e => (
   onClick(e, '.block-editor_remove', emit(removeBlock, animator, timeline, block)),
   onClick(e, '.block-editor_clear', emit(clearBlock, animator, timeline, block, timelineBar)),
   onClick(e, '.block-editor_split', () => emit(splitBlock, animator, timeline, block, timelineBar, timelinePosition)()),
-  onChange(e, "#upload_audio_input", uploadAudio),
-  onClick(e, '.block-editor_upload_audio', () => triggerFileBrowse()),
+  onClick(e, '.block-editor_add-timeline', () => addTimeline(animator)),
+  onClick(e, '.block-editor_remove-timeline', () => removeTimeline(animator, timeline)),
   block.type === BlockType.Image && onClick(e, '.block-editor_block', () => openModal(inputs.animatorManager, animator, timeline, block))
   )];
 });
 
-function triggerFileBrowse() {
-  document.getElementById("upload_audio_input").click();
+function addTimeline(animator: Animator) {
+  animator.addTimeline([{ type: ActionType.Clear }]);
 }
 
-async function uploadAudio(filesChange) {
-  const file = filesChange.target.files[0];
-  const formData = new FormData();
-  formData.append('recording', file);
-  
-  const response = await fetch('/api/audio', { method: 'POST', body: formData });
-
-  filesChange.target.value = '';
-  console.log(response);
+function removeTimeline(animator: Animator, timeline: Timeline) {
+  animator.removeTimeline(timeline);
 }
 
 function openModal(animatorManager: AnimatorManager, animator: Animator, timeline: Timeline, block: Block) {

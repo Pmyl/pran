@@ -20,7 +20,9 @@ export interface ComponentControls<T extends object, TE extends object = {}> {
   onDestroy?: () => void;
 }
 
-export function inlineComponent<T extends object = EmptyObject, TS extends object = null>(componentFunction: (controls: ComponentControls<T, TS>) => (inputs: T) => RenderResult | [RenderResult, (component: HTMLElement) => void]): (inputs?: T) => Component<T> {
+export function inlineComponent<T extends object = EmptyObject, TS extends object = null>(
+  componentFunction: (controls: ComponentControls<T, TS>) => (inputs: T) => RenderResult | [RenderResult, (component: HTMLElement) => void]
+): (inputs?: T) => Component<T> {
   return (inputs?: T) => {
     let _selector, _initialClass, component: Component<T>, sideInputs: Partial<TS> = {};
 
@@ -37,7 +39,7 @@ export function inlineComponent<T extends object = EmptyObject, TS extends objec
       }
     };
 
-    const renderFn = componentFunction(componentControls);
+    const renderFn = componentFunction(componentControls)
 
     component = new (class InlinedComponent extends Component<T> {
       private _postRenderFn: null | ((componentToRender: HTMLElement) => void);

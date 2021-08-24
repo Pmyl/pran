@@ -5,9 +5,9 @@ import { inlineComponent } from '../../framework/inline-component';
 import { onClick } from '../../framework/on-click';
 import { onDrag } from '../../framework/on-drag';
 import { Mediator } from '../../services/mediator';
+import { TimelineBar } from '../../services/timeline-bar';
+import { Block } from '../../services/timeline-block';
 import { expandBlock, expandBlockLeft, reduceBlock, reduceBlockLeft } from '../block-editor/editor-actions';
-import { TimelineBar } from '../timeline-bar/timeline-bar';
-import { Block } from './timeline-block';
 
 type HandlesInputs = { isSelected: boolean, frameWidth: number, animator: Animator, timeline: Timeline, block: Block, timelineBar: TimelineBar };
 

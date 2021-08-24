@@ -1,0 +1,4 @@
+.editor {
+    display: grid;
+    overflow-y: auto;
+}
