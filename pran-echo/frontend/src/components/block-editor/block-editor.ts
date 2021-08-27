@@ -5,12 +5,20 @@ import { onClick } from '../../framework/on-click';
 import { Mediator } from '../../services/mediator';
 import { Modal } from '../../services/modal';
 import { TimelineBar } from '../../services/timeline-bar';
-import { Block, BlockType } from '../../services/timeline-block';
+import { Block, BlockType, ImageBlock } from '../../services/timeline-block';
 import { createSelectImageModal } from '../select-image-modal/select-image-modal';
 import { BlockSelected, BlockUnselected } from '../timeline-bar/timeline-bar';
 import { TimelinePositionChanged } from '../timeline-board/timeline-board';
 import './block-editor.css';
-import { addTimeline, clearBlock, removeBlock, removeTimeline, splitBlock, updateImage } from './editor-actions';
+import {
+  addTimeline,
+  clearBlock, forceInsertBlock,
+  insertBlock,
+  removeBlock,
+  removeTimeline,
+  splitInTimeline,
+  updateImage
+} from './editor-actions';
 
 export const createBlockEditor = inlineComponent<{ animatorManager: AnimatorManager, animator: Animator }>(controls => {
   let block: Block,
@@ -62,14 +70,23 @@ export const createBlockEditor = inlineComponent<{ animatorManager: AnimatorMana
     <button class="block-editor_split" type="button">Split</button>
     <button class="block-editor_add-timeline" type="button">Add timeline</button>
     <button class="block-editor_remove-timeline" type="button">Remove timeline</button>
+    <button class="block-editor_insert-draw" type="button">Insert image</button>
   </div>
 </div>
 `, e => (
   onClick(e, '.block-editor_remove', emit(removeBlock, inputs.animator, timeline, block)),
   onClick(e, '.block-editor_clear', emit(clearBlock, inputs.animator, timeline, block, timelineBar)),
-  onClick(e, '.block-editor_split', () => emit(splitBlock, inputs.animator, timeline, block, timelineBar, timelinePosition)()),
+  onClick(e, '.block-editor_split', () => emit(splitInTimeline, inputs.animator, timeline, timelineBar, timelinePosition)()),
   onClick(e, '.block-editor_add-timeline', emit(addTimeline, inputs.animator)),
   onClick(e, '.block-editor_remove-timeline', emit(removeTimeline, inputs.animator, timeline)),
+  onClick(e, '.block-editor_insert-draw', () => {
+    let blockToInsert = ImageBlock
+      .Builder()
+      .addAction({ type: ActionType.Draw, image: inputs.animatorManager.imagesMap.values().next().value })
+      .build();
+
+    emit(forceInsertBlock, inputs.animator, timeline, blockToInsert, timelineBar, timelinePosition)();
+  }),
   block.type === BlockType.Image && onClick(e, '.block-editor_block', () => openModal(inputs.animatorManager, inputs.animator, timeline, block))
   )];
 });

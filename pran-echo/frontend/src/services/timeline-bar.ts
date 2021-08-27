@@ -11,6 +11,22 @@ export class TimelineBar {
       .find(b => b.actions.includes(action));
   }
 
+  public findBlockAtFrame(frame: number): Block {
+    for (let i = 0; i < this.blocks.length; i++) {
+      const block = this.blocks[i];
+      frame -= block.visualFrames;
+      if (frame == 0) {
+        return null;
+      }
+
+      if (frame < 0) {
+        return this.blocks[i];
+      }
+    }
+
+    return null;
+  }
+
   public findBlockBeforeFrame(frame: number): Block {
     for (let i = 0; i < this.blocks.length; i++) {
       const block = this.blocks[i];
@@ -88,7 +104,7 @@ export class TimelineBar {
           if (currentBlock) {
             blocks.push(currentBlock.build());
           }
-          currentBlock = ImageBlock.Builder().addAction(a).withImage(a.image.src);
+          currentBlock = ImageBlock.Builder().addAction(a);
           currentFrames++;
           break;
         case ActionType.Clear:

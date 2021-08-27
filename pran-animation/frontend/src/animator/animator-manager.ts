@@ -10,6 +10,9 @@ export interface ManagerTimelineDrawAction {
 }
 
 export class AnimatorManager {
+  public get imagesMap(): ReadonlyMap<string, HTMLImageElement> {
+    return this._imagesMap;
+  };
   private _imagesMap: Map<string, HTMLImageElement>;
   private _canvasController: MainCanvasController;
 

@@ -23,9 +23,8 @@ export const createSelectImageModal = inlineComponent<SelectImageModalInputs>(co
 </div>
 `, e => (onClick(e, '.select-image-modal_close-button', () => inputs.close()),
     onDoubleClick(e, '.select-image-modal_image-container', e => inputs.close([
-      // TODO: make this map public
       (e.currentTarget as HTMLElement).attributes.getNamedItem('data-imageId').value,
-      (inputs.animatorManager as any)._imagesMap.get((e.currentTarget as HTMLElement).attributes.getNamedItem('data-imageId').value)
+      inputs.animatorManager.imagesMap.get((e.currentTarget as HTMLElement).attributes.getNamedItem('data-imageId').value)
     ]))
   )];
 });

@@ -147,10 +147,18 @@ export class ImageBlock extends BlockWithActions {
 
   public static Builder() {
     const block = new ImageBlock();
+    const baseBuilder = BlockWithActions.BlockWithActionsBuilder(block);
 
     return {
-      ...BlockWithActions.BlockWithActionsBuilder(block),
-      withImage(imageSrc: string) { block._imageSrc = imageSrc; return this; }
+      ...baseBuilder,
+      addAction(action: TimelineAction) {
+        baseBuilder.addAction(action);
+        
+        if (action.type === ActionType.Draw) {
+          block._imageSrc = action.image.src;
+        }
+        return this;
+      }
     };
   }
 }

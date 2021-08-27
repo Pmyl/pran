@@ -1,7 +1,14 @@
 import { ActionType, Animator, DrawAction, NoneAction, Timeline, TimelineAction } from 'pran-animation-frontend';
 import { combine, EditorAction, invert, lazy, noop } from '../../editor-queue/editor-queue';
 import { TimelineBar } from '../../services/timeline-bar';
-import { Block, BlocksFilter, BlockType, ClearBlock, ImageBlock } from '../../services/timeline-block';
+import {
+  Block,
+  BlocksFilter,
+  BlockType,
+  BlockWithActions,
+  ClearBlock,
+  ImageBlock
+} from '../../services/timeline-block';
 
 export function reduceBlock(animator: Animator, timeline: Timeline, block: Block, amount: number = 1): EditorAction {
   if (BlocksFilter.isNothingness(block)) {
@@ -149,7 +156,15 @@ export function reduceBlockLeft(animator: Animator, timeline: Timeline, block: B
   );
 }
 
-export function insertBlock(animator, timeline, block, frame): EditorAction {
+export function forceInsertBlock(animator: Animator, timeline: Timeline, block: BlockWithActions, timelineBar: TimelineBar, frame: number): EditorAction {
+  return combine(
+    'Insert block',
+    splitInTimeline(animator, timeline, timelineBar, frame),
+    insertBlock(animator, timeline, block, frame)
+  );
+}
+
+export function insertBlock(animator: Animator, timeline: Timeline, block: BlockWithActions, frame: number): EditorAction {
   const actionsAdded: TimelineAction[] = block.actions.slice();
 
   return {
@@ -167,7 +182,7 @@ export function insertBlock(animator, timeline, block, frame): EditorAction {
         animator.removeTimelineAction(timeline, a);
       });
     }
-  }
+  };
 }
 
 export function removeBlock(animator: Animator, timeline: Timeline, block: Block): EditorAction {
@@ -212,7 +227,14 @@ export function updateImage(animator: Animator, timeline: Timeline, block: Block
   };
 }
 
-export function splitBlock(animator: Animator, timeline: Timeline, block: Block, timelineBar: TimelineBar, frame: number): EditorAction {
+export function splitInTimeline(animator: Animator, timeline: Timeline, timelineBar: TimelineBar, frame: number): EditorAction {
+  const block = timelineBar.findBlockAtFrame(frame);
+  
+  if (!block) {
+    console.warn('Cannot split where there is no block');
+    return noop('Split block (Invalid)');
+  }
+
   if (!BlocksFilter.isWithActions(block)) {
     console.warn('Cannot split a block with no actions');
     return noop('Split block (Invalid)');
