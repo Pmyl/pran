@@ -4,7 +4,7 @@ import { Component } from '../../framework/component';
 import { mandatoryInput } from '../../framework/mandatory-input';
 import { PlayerController } from '../../services/player-controller';
 import { Container } from '../container/container';
-import { createHalfPlaybackRateToggle } from './buttons/half-playback-rate-toggle';
+import { createPlaybackRateToggle } from './buttons/playback-rate-toggle';
 import { createPauseButton } from './buttons/pause-button';
 import { createPlayButton } from './buttons/play-button';
 import { createReplayButton } from './buttons/replay-button';
@@ -34,7 +34,7 @@ export class Player extends Component<{ playerController: PlayerController, show
       createPauseButton({ playerController: this._inputs.playerController }).appendTo(playerControlsContainer);
       createPlayButton({ playerController: this._inputs.playerController }).appendTo(playerControlsContainer);
       createLoopToggle({ playerController: this._inputs.playerController }).appendTo(playerControlsContainer);
-      createHalfPlaybackRateToggle({ playerController: this._inputs.playerController }).appendTo(playerControlsContainer);
+      createPlaybackRateToggle({ playerController: this._inputs.playerController }).appendTo(playerControlsContainer);
       
       elements.push(playerControlsContainer);
     }
