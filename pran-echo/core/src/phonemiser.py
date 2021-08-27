@@ -3,12 +3,12 @@ import soundfile
 import os
 import uuid
 import re
-import pronouncing
+from g2p_en import G2p
 
 # install speech_recognition
 # install soundfile
 # install numpy
-# install pronouncing
+# install g2p_en
 
 
 class AudioPhonemisedResponse:
@@ -21,8 +21,16 @@ class AudioPhonemisedResponse:
 def phonemise_audio(filepath):
     audio, samplerate = fetch_audio(filepath)
     text = audio_to_text(audio, samplerate)
-    phonemes = text_to_phonemes(text)
+    phonemes = phonemise_text(text)
     return AudioPhonemisedResponse(text, phonemes, audio, samplerate)
+
+
+def phonemise_text(text):
+    g2p = G2p()
+    word_to_phn = g2p(text)
+    sentence_phn = ' '.join([x for x in word_to_phn if x != ' '])
+    output = re.sub(r'\d+', '', sentence_phn)
+    return output
 
 
 def fetch_audio(filepath):
@@ -38,14 +46,3 @@ def audio_to_text(audio, samplerate):
         text = r.recognize_google(audio_data)
     os.remove(newfilename)
     return text
-
-
-def text_to_phonemes(text):
-    words = text.split()
-    sord_to_phn = []
-    for word in words:
-        pronunciation_list = pronouncing.phones_for_word(word)[0]
-        sord_to_phn.append(pronunciation_list)
-    sentence_phn = ' '.join(sord_to_phn)
-    output = re.sub(r'\d+', '', sentence_phn)
-    return output

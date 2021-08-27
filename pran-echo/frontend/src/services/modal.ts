@@ -1,3 +1,4 @@
+import './modal.css';
 import { Container } from '../components/container/container';
 import { createModal, ModalContentInputs } from '../components/modal-template/modal-template';
 import { Component } from '../framework/component';
@@ -5,9 +6,9 @@ import { Component } from '../framework/component';
 export class Modal {
   private static modalContainer: Container;
 
-  public static init(modalContainer: Container) {
+  public static init(mainContainer: Container) {
     if (Modal.modalContainer) throw new Error('Cannot initialize Modal multiple times');
-    Modal.modalContainer = modalContainer;
+    Modal.modalContainer = Container.CreateEmptyElement(mainContainer, 'section', 'modal-container');
   }
 
   public static open<TResult>(modalContent: Component<ModalContentInputs<TResult>>): Promise<TResult> {

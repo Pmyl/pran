@@ -24,13 +24,15 @@ export class Container<T extends object | null = EmptyObject> extends Component<
   }
 
   public removeAt(index: number) {
-    this._subComponents.splice(index, 1);
+    const subComponent = this._subComponents.splice(index, 1);
+    if (subComponent instanceof Component) {
+      subComponent.destroy();
+    }
     this.render();
   }
 
   public remove(component: string | Component<object | null>) {
-    this._subComponents.splice(this._subComponents.indexOf(component), 1);
-    this.render();
+    this.removeAt(this._subComponents.indexOf(component));
   }
 
   public append(component: string | Component<object | null>): this {

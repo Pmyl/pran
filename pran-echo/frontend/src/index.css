@@ -12,41 +12,44 @@ body {
     margin: 0;
 }
 
-.modal-section {
-    display: flex;
-    flex-direction: column;
-}
-
-.top-section {
-    min-width: 0;
-    display: flex;
-}
-
-.bottom-section {
-    overflow-x: auto;
-    overflow-y: auto;
-}
-
-.top-left-container,
-.player-container,
-.edit-controls-container {
-    flex: 1;
-}
-
-.player-container {
-    border: 1px solid gray;
-    text-align: center;
-}
-
-.player-controls-container {
-    background-color: lightgray;
-    padding: 5px 0;
-}
-
 /* Reset button */
 button {
     padding: 0;
     box-sizing: content-box;
     border: none;
     background: none;
+}
+
+.g-button {
+    font-size: 16px;
+    font-weight: 200;
+    letter-spacing: 1px;
+    padding: 8px 20px 8px;
+    outline: 0;
+    border: 1px solid black;
+    cursor: pointer;
+    position: relative;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.g-button.g-button-s {
+    font-size: 14px;
+    padding: 6px 15px 6px;
+}
+
+.g-button::after {
+    content: "";
+    background-color: #ffe54c;
+    width: 100%;
+    z-index: -1;
+    position: absolute;
+    height: 100%;
+    top: 7px;
+    left: 7px;
+    transition: 0.2s;
+}
+
+.g-button:hover::after {
+    top: 0;
+    left: 0;
 }

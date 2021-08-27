@@ -3,7 +3,7 @@ extern crate dotenv;
 
 use pyo3::prelude::*;
 use pyo3::types::{PyList};
-use rocket::fs::{FileServer, relative, TempFile};
+use rocket::fs::{FileServer, TempFile};
 use rocket::form::Form;
 use rocket::serde::{Serialize, json::Json};
 use dotenv::dotenv;
@@ -35,7 +35,7 @@ fn rocket() -> _ {
     rocket::build()
         .manage(config)
         .mount("/", FileServer::from(static_path))
-        .mount("/api", routes![upload])
+        .mount("/api", routes![phonemise_audio, phonemise_text])
 }
 
 #[derive(FromForm)]
@@ -62,7 +62,7 @@ impl fmt::Display for CustomError {
 }
 
 #[post("/audio", data = "<data>")]
-async fn upload(data: Form<Upload<'_>>, config: &State<Config>) -> Result<Json<AudioResult>, CustomError> {
+async fn phonemise_audio(data: Form<Upload<'_>>, config: &State<Config>) -> Result<Json<AudioResult>, CustomError> {
     match data.recording.path() {
         Some(path) => {
             let path_string = path.as_os_str().to_os_string().into_string().unwrap();
@@ -74,12 +74,45 @@ async fn upload(data: Form<Upload<'_>>, config: &State<Config>) -> Result<Json<A
                 syspath.insert(0, config.python_path.clone())
                     .unwrap();
 
-                let fibo: &PyModule = PyModule::import(py, "phonemiser")?;
-                let call_result: AudioResult = fibo.getattr("phonemise_audio")?.call1((path_string, ))?.extract()?;
+                let phonemiser: &PyModule = PyModule::import(py, "phonemiser")?;
+                let call_result: AudioResult = phonemiser.getattr("phonemise_audio")?.call1((path_string, ))?.extract()?;
                 Ok(call_result)
             });
             result.map(|audio_result| Json(audio_result)).map_err(|e| CustomError(format!("{:?}", e)))
         },
         None => Err(CustomError("Something went wrong, file was not saved in a temp location, try again".to_string()))
     }
+}
+
+#[derive(FromForm)]
+struct Text {
+    text: String
+}
+
+#[derive(Serialize)]
+#[derive(FromPyObject)]
+struct TextResult {
+    text: String,
+    phonemes: String
+}
+
+#[post("/text", data = "<data>")]
+async fn phonemise_text(data: Form<Text>, config: &State<Config>) -> Result<Json<TextResult>, CustomError> {
+    let result: PyResult<String> = Python::with_gil(|py| {
+        let syspath: &PyList = PyModule::import(py, "sys")?
+            .getattr("path")?
+            .try_into()?;
+
+        syspath.insert(0, config.python_path.clone())
+            .unwrap();
+
+        let phonemiser: &PyModule = PyModule::import(py, "phonemiser")?;
+        let call_result: String = phonemiser.getattr("phonemise_text")?.call1((data.text.clone(), ))?.extract()?;
+        Ok(call_result)
+    });
+
+    result
+        .map(|phonemes| TextResult { phonemes, text: data.text.clone() })
+        .map(|text_result| Json(text_result))
+        .map_err(|e| CustomError(format!("{:?}", e)))
 }

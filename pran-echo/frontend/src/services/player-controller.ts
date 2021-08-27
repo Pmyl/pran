@@ -3,7 +3,8 @@ import { Animator } from 'pran-animation-frontend';
 export enum PlayerState {
   Play,
   Stop,
-  Pause
+  Pause,
+  End
 }
 
 export class PlayerController {
@@ -11,11 +12,21 @@ export class PlayerController {
     return this._state;
   }
 
+  public get fps(): number {
+    return this._fps;
+  }
+
+  public get playbackRate(): number {
+    return this._playbackRate;
+  }
+
   private _animator: Animator;
   private _fps: number = 60;
+  private _playbackRate: number = 1;
   private _hasFullStopped: boolean = true;
   private _isLooping: boolean = false;
-  private _onStateChangeSubscribers: ((newState: PlayerState) => void)[] = [];
+  private _onStateChangeSubscribers: ((newState: PlayerState) => (Promise<void> | void))[] = [];
+  private _onFramePickedSubscribers: ((frame: number) => void)[] = [];
   private _state: PlayerState;
 
   constructor(animator: Animator) {
@@ -26,8 +37,8 @@ export class PlayerController {
     this._fps = fps;
   }
 
-  public play() {
-    this._applyStateChange(PlayerState.Play);
+  public async play() {
+    await this._applyStateChange(PlayerState.Play);
 
     if (!this._hasFullStopped) {
       return;
@@ -47,45 +58,63 @@ export class PlayerController {
       elapsed = now - then;
       if (elapsed > fpsInterval) {
         this._animator.tick();
-        if (this._isLooping && this._animator.totalFrames === this._animator.currentFrame) {
-          this._animator.restart();
+        if (this._animator.totalFrames === this._animator.currentFrame) {
+          this._applyStateChange(PlayerState.End);
+          if (this._isLooping) {
+            this._animator.restart();
+          }
         }
         then = now - (elapsed % fpsInterval);
       }
     };
 
-    fpsInterval = 1000 / this._fps;
+    fpsInterval = 1000 / (this._fps * this._playbackRate);
     then = performance.now();
     animate();
   }
 
-  public pause() {
-    this._applyStateChange(PlayerState.Pause);
+  public async setPlaybackRate(rate: number) {
+    this._playbackRate = rate;
   }
 
-  public stop() {
+  public async pause() {
+    await this._applyStateChange(PlayerState.Pause);
+  }
+
+  public async stop() {
     this._animator.restart();
-    this._applyStateChange(PlayerState.Stop);
+    await this._applyStateChange(PlayerState.Stop);
   }
 
   public setLoop(loop: boolean) {
     this._isLooping = loop;
   }
   
-  public onStateChange(cb: (newState: PlayerState) => void): () => void {
+  public onStateChange(cb: (newState: PlayerState) => (Promise<void> | void)): () => void {
     this._onStateChangeSubscribers.push(cb);
     return () => this._onStateChangeSubscribers.splice(this._onStateChangeSubscribers.indexOf(cb), 1);
   }
 
   public pickFrame(frame: number) {
     this._animator.pickFrame(frame);
+
+    for (const subscriber of this._onFramePickedSubscribers) {
+      subscriber(frame);
+    }
   }
 
-  private _applyStateChange(state: PlayerState) {
+  public onFramePicked(cb: (frame: number) => void): () => void {
+    this._onFramePickedSubscribers.push(cb);
+    return () => this._onFramePickedSubscribers.splice(this._onFramePickedSubscribers.indexOf(cb), 1);
+  }
+
+  private async _applyStateChange(state: PlayerState) {
+    if (this._state === state) return;
+
     this._state = state;
 
     for (const subscriber of this._onStateChangeSubscribers) {
-      subscriber(state);
+      await subscriber(state);
     }
   }
 }

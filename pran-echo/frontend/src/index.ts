@@ -6,8 +6,7 @@ import { Modal } from './services/modal';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const body: Container = Container.CreateBody();
-  const modalSection: Container = Container.CreateEmptyElement(body, 'section', 'modal-section');
-  Modal.init(modalSection);
+  Modal.init(body);
   const echoPanel = createEchoPanel();
   body.append(createPranEditor({ customPanel: echoPanel }));
 

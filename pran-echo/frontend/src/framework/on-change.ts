@@ -3,6 +3,6 @@ export function onChange(element: HTMLElement, selector: string, action: (e: Mou
 
   if (!elementThatListens.hasAttribute('data-change-listener')) {
     elementThatListens.setAttribute('data-change-listener', 'true');
-    elementThatListens.addEventListener('change', action);
+    elementThatListens.addEventListener('input', action);
   }
 }

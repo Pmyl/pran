@@ -1,61 +1,129 @@
-import { ActionType, Animator, AnimatorManager, ManagerTimelineAction } from 'pran-animation-frontend';
+import './echo-panel.css';
+import { ActionType, ManagerTimelineAction } from 'pran-animation-frontend';
 import { cmuPhonemesMap, phonemesMapper } from 'pran-phonemes-frontend';
-import { inlineComponent } from '../../framework/inline-component';
+import { ComponentControls, inlineComponent } from '../../framework/inline-component';
 import { onChange } from '../../framework/on-change';
 import { onClick } from '../../framework/on-click';
+import { Modal } from '../../services/modal';
+import { PlayerState } from '../../services/player-controller';
+import { PranEditorControls } from '../pran-editor/pran-editor';
+import { createEchoRecordingModal } from './echo-recording-modal';
+import { setupInitialAnimation } from './initial-animation';
 
-export const createEchoPanel = inlineComponent<{ animator: Animator, animatorManager: AnimatorManager }>(controls => {
+interface EchoPanelSideInputs {
+  audio: Audio;
+  text: string;
+  phonemes: string;
+  seconds: number;
+  isLoading: boolean;
+}
+
+type EchoPanelControls = ComponentControls<PranEditorControls, EchoPanelSideInputs>
+type AudioData = {
+  phonemes: string;
+  text: string;
+  seconds: number;
+};
+type Audio = AudioData & { controls: HTMLAudioElement; };
+
+export const createEchoPanel = inlineComponent<PranEditorControls, EchoPanelSideInputs>(controls => {
   controls.setup('echo-panel', 'echo-panel');
+  let audio: Audio,
+    text: string,
+    phonemes: string,
+    seconds: number,
+    isLoading: boolean;
 
-  // controls.onInputsChange = inputs => {
-  //   const mouthMovementsImagesIds = phonemesMapper('HH EH L OW , M AY N EY M ZH P R AH N EH S AH .'.split(' '), {
-  //     fv: 'fv',
-  //     ur: 'ur',
-  //     stch: 'stch',
-  //     mbsilent: 'mbsilent',
-  //     p1: 'p1',
-  //     p2: 'p2',
-  //     e: 'e',
-  //     aah: 'aah',
-  //     o: 'o',
-  //     ld: 'ld',
-  //     pause: 'pause',
-  //     smile: 'smile',
-  //   }, cmuPhonemesMap);
-  //
-  //   inputs.animatorManager.animate(
-  //     inputs.animator,
-  //     [
-  //       draw('head_idle'),
-  //     ],
-  //     [
-  //       draw('eyes_open'),
-  //       wait(20),
-  //       draw('eyes_semi_open'),
-  //       wait(3),
-  //       draw('eyes_closed'),
-  //       wait(3),
-  //       draw('eyes_semi_open'),
-  //       wait(3),
-  //       draw('eyes_open'),
-  //     ],
-  //     mouthMovementsImagesIds.flatMap(id => (
-  //       [draw(id), wait(5)]
-  //     ))
-  //   );
-  // };
+  controls.onInputChange = {
+    playerController: playerController => {
+      playerController.onStateChange(async state => {
+        if (!audio) return;
+
+        switch (state) {
+          case PlayerState.Play:
+            audio.controls.playbackRate = playerController.playbackRate;
+            await audio.controls.play();
+            break;
+          case PlayerState.Stop:
+            audio.controls.pause();
+            audio.controls.currentTime = 0;
+            break;
+          case PlayerState.Pause:
+            audio.controls.pause();
+            break;
+        }
+      });
+
+      playerController.onFramePicked(frame => {
+        if (!audio) return;
+
+        audio.controls.currentTime = frame * (1 / playerController.fps);
+      });
+    }
+  };
+  
+  controls.onSideInputChange = {
+    audio: a => {
+      audio = a;
+    },
+    text: t => {
+      text = t;
+    },
+    phonemes: p => {
+      phonemes = p;
+    },
+    seconds: s => {
+      seconds = s;
+    },
+    isLoading: i => {
+      isLoading = i;
+    }
+  };
+
+  controls.onInputsChange = inputs => {
+    setupInitialAnimation(inputs.animatorManager, inputs.animator);
+  };
 
   return inputs => controls.mandatoryInput('animatorManager')
     && controls.mandatoryInput('animator')
     && [`
-<div>
-  I'm the echo panel
+<div class="echo-panel_container">
+  ${!isLoading ? '' : `
+  <div class="echo-panel_loading-container">
+    <div class="echo-panel_loading">Loading...</div>  
+  </div>
+  `}
+  <h1 class="echo-panel_title">Pran Echo</h1>
   <input type="file" id="upload_audio_input" hidden />
-  <button class="editor_upload-audio" type="button">Upload audio</button>
+  <button class="echo-panel_upload-audio g-button" type="button">Upload audio</button>
+  <audio class="echo-panel_audio"></audio>
+  ${!audio ? '' : `
+    <hr class="echo-panel_divider" />
+    <div class="echo-panel_text-container">
+        <label class="echo-panel_text-label">Sentence</label>
+        <textarea class="echo-panel_text">${text}</textarea>
+        <button type="button" class="echo-panel_upload-text g-button g-button-s">Update phonemes</button>
+    </div>
+    <div class="echo-panel_phonemes-container">
+        <label class="echo-panel_phonemes-label">Phonemes</label>
+        <p class="echo-panel_phonemes">${phonemes}</p>
+    </div>
+    <div class="echo-panel_seconds-container">
+        <label class="echo-panel_seconds-label">Audio duration</label>
+        <p class="echo-panel_seconds">${seconds.toFixed(2)} Seconds</p>
+    </div>
+  `}
+  <div class="echo-panel_record-container">
+    <button class="echo-panel_record g-button" type="button">Record...</button>
+  </div>
 </div>
 `,
-    e => (onChange(e, "#upload_audio_input", change => uploadAudio(change, inputs.animator, inputs.animatorManager)),
-        onClick(e, '.editor_upload-audio', () => triggerFileBrowse()))
+    e => (
+      onChange(e, "#upload_audio_input", change => uploadAudio(change, getAudio(e), controls, inputs)),
+      onClick(e, '.echo-panel_upload-audio', () => triggerFileBrowse()),
+      onClick(e, '.echo-panel_upload-text', () => uploadText(getText(e), seconds, controls, inputs)),
+      onClick(e, '.echo-panel_record', () => recordVideo(inputs))
+    )
   ];
 });
 
@@ -63,20 +131,65 @@ const draw = (id: string): ManagerTimelineAction => ({ type: ActionType.Draw, im
 const clear = (): ManagerTimelineAction => ({ type: ActionType.Clear });
 const wait = (amount: number): ManagerTimelineAction => ({ type: ActionType.None, amount });
 
+function getAudio(element: HTMLElement): HTMLAudioElement {
+  return element.querySelector('.echo-panel_audio');
+}
+
+function getText(element: HTMLElement): string {
+  return (element.querySelector('.echo-panel_text') as HTMLInputElement).value;
+}
+
+function recordVideo(editorControls: PranEditorControls): void {
+  Modal.open(createEchoRecordingModal({
+    animatorManager: editorControls.animatorManager,
+    animator: editorControls.animator
+  })); // on close raise a message "Done!"?
+}
+
 function triggerFileBrowse() {
   document.getElementById("upload_audio_input").click();
 }
 
-async function uploadAudio(filesChange: Event & { target: HTMLInputElement }, animator: Animator, manager: AnimatorManager) {
+async function uploadText(text: string, seconds: number, controls: EchoPanelControls, inputs: PranEditorControls) {
+  controls.setSideInput('isLoading', true);
+  controls.changed();
+  const formData = new FormData();
+  formData.append('text', text);
+
+  const response: { text: string, phonemes: string } = await (await fetch('/api/text', { method: 'POST', body: formData })).json();
+
+  updateAnimationAndData({ text, phonemes: response.phonemes, seconds }, controls, inputs);
+  controls.setSideInput('isLoading', false);
+  controls.changed();
+}
+
+async function uploadAudio(filesChange: Event & { target: HTMLInputElement }, audioElement: HTMLAudioElement, controls: EchoPanelControls, editorControls: PranEditorControls): Promise<void> {
+  controls.setSideInput('isLoading', true);
+  controls.changed();
+
   const file = filesChange.target.files[0];
+
   const formData = new FormData();
   formData.append('recording', file);
+  const response: AudioData = await (await fetch('/api/audio', { method: 'POST', body: formData })).json();
 
-  const response: { phonemes: string, text: string } = await (await fetch('/api/audio', { method: 'POST', body: formData })).json();
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    audioElement.src = e.target.result as string;
+  };
+  reader.readAsDataURL(file);
+  controls.setSideInput('audio', { ...response, controls: audioElement });
 
   filesChange.target.value = '';
 
-  const mouthMovementsImagesIds = phonemesMapper(response.phonemes.split(' '), {
+  updateAnimationAndData(response, controls, editorControls);
+
+  controls.setSideInput('isLoading', false);
+  controls.changed();
+}
+
+function updateAnimationAndData(audioData: AudioData, controls: EchoPanelControls, editorControls: PranEditorControls) {
+  const mouthMovementsImagesIds = phonemesMapper(audioData.phonemes.split(' '), {
     fv: 'fv',
     ur: 'ur',
     stch: 'stch',
@@ -88,10 +201,10 @@ async function uploadAudio(filesChange: Event & { target: HTMLInputElement }, an
     o: 'o',
     ld: 'ld',
     pause: 'pause',
-    smile: 'smile',
+    smile: 'smile'
   }, cmuPhonemesMap);
 
-  manager.animate(animator,
+  editorControls.animatorManager.animate(editorControls.animator,
     mouthMovementsImagesIds.flatMap(id => (
       [draw(id), wait(5)]
     )),
@@ -104,10 +217,21 @@ async function uploadAudio(filesChange: Event & { target: HTMLInputElement }, an
       wait(3),
       draw('eyes_semi_open'),
       wait(3),
-      draw('eyes_open'),
+      draw('eyes_open')
     ],
     [
-      draw('head_idle'),
+      draw('head_idle')
     ]
   );
+
+  controls.setSideInput('text', audioData.text);
+  controls.setSideInput('phonemes', audioData.phonemes);
+  controls.setSideInput('seconds', audioData.seconds);
+  controls.changed();
+}
+
+declare global {
+  interface HTMLCanvasElement {
+    captureStream(frameRate?: number): MediaStream;
+  }
 }

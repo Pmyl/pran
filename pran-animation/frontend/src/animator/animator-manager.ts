@@ -1,6 +1,5 @@
 import { MainCanvasController } from 'pran-phonemes-frontend';
 import { Animator } from './animator';
-import { Timeline } from '../timeline/timeline';
 import { ActionType, ClearAction, NoneAction, TimelineAction } from '../timeline/timeline-action';
 
 export type ManagerTimelineAction = NoneAction | ManagerTimelineDrawAction | ClearAction;
@@ -38,6 +37,19 @@ export class AnimatorManager {
     }
 
     return animator;
+  }
+
+  public cloneInNewCanvas(canvasController: MainCanvasController): AnimatorManager {
+    return new AnimatorManager(canvasController, this._imagesMap);
+  }
+
+  public copyAnimatorFrom(animator: Animator): Animator {
+    const animatorCopy = new Animator(this._canvasController);
+    animator.timelines.forEach(t => {
+      animatorCopy.addTimeline(t.timelineActions.slice());
+    });
+
+    return animatorCopy;
   }
 
   private _replaceAnimation(animator: Animator, ...animations: ManagerTimelineAction[][]): Animator {

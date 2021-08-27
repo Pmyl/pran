@@ -1,0 +1,13 @@
+.echo-recording-modal {
+    display: flex;
+    flex-direction: column;
+}
+
+.echo-recording-modal_player-container {
+    border: 1px solid gray;
+    text-align: center;
+}
+
+.echo-recording-modal_record-button {
+    margin-top: 10px;
+}

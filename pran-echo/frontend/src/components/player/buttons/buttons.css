@@ -2,7 +2,8 @@
 .play-button_button,
 .stop-button_button,
 .replay-button_button,
-.loop-toggle_button {
+.loop-toggle_button,
+.half-playback-rate-toggle_button {
     width: 30px;
     height: 30px;
     vertical-align: top;
@@ -13,7 +14,8 @@
 .play-button_button:hover,
 .stop-button_button:hover,
 .replay-button_button:hover,
-.loop-toggle_button:hover {
+.loop-toggle_button:hover,
+.half-playback-rate-toggle_button:hover {
     filter: invert(1) brightness(20%) sepia(20) saturate(10) hue-rotate(240deg);
 }
 
@@ -22,7 +24,8 @@
 .play-button_button.is-active,
 .stop-button_button.is-active,
 .replay-button_button.is-active,
-.loop-toggle_button.is-active {
+.loop-toggle_button.is-active,
+.half-playback-rate-toggle_button.is-active {
     filter: invert(1) brightness(50%) sepia(100) saturate(100) hue-rotate(240deg);
 }
 

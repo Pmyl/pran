@@ -12,25 +12,25 @@ import { Container } from '../container/container';
 import { Player } from '../player/player';
 import { createTimelineBoard } from '../timeline-board/timeline-board';
 
-const componentName = 'editor';
+const componentName = 'pran-editor';
 
-type PranEditorControls = {
+export type PranEditorControls = {
   playerController: PlayerController;
   animatorManager: AnimatorManager;
   animator: Animator;
 };
 
-export const createPranEditor = inlineComponent<{ customPanel?: Component<{ animator: Animator, animatorManager: AnimatorManager }>, onInit?: (controls: PranEditorControls) => void }>(controls => {
+export const createPranEditor = inlineComponent<{ customPanel?: Component<PranEditorControls>, onInit?: (controls: PranEditorControls) => void }>(controls => {
   let initialized: boolean = false;
   controls.setup(componentName, componentName);
 
   const player = new Player();
-  const topSection: Container = Container.CreateEmptyElement('section', 'top-section');
-  const topLeftContainer: Container = Container.CreateEmptyElement(topSection, 'div', 'top-left-container');
-  const playerContainer: Container = Container.CreateEmptyElement(topSection, 'div', 'player-container');
+  const topSection: Container = Container.CreateEmptyElement('section', 'pran-editor_top-section');
+  const topLeftContainer: Container = Container.CreateEmptyElement(topSection, 'div', 'pran-editor_top-left-container');
+  const playerContainer: Container = Container.CreateEmptyElement(topSection, 'div', 'pran-editor_player-container');
   const context = (player.canvas.componentElement as HTMLCanvasElement).getContext('2d');
-  const editControlsContainer: Container = Container.CreateEmptyElement(topSection, 'div', 'edit-controls-container');
-  const bottomSection: Container = Container.CreateEmptyElement('section', 'bottom-section');
+  const editControlsContainer: Container = Container.CreateEmptyElement(topSection, 'div', 'pran-editor_edit-controls-container');
+  const bottomSection: Container = Container.CreateEmptyElement('section', 'pran-editor_bottom-section');
 
   EditorQueue.init();
 
@@ -84,7 +84,7 @@ export const createPranEditor = inlineComponent<{ customPanel?: Component<{ anim
 
     inputs.onInit?.({ playerController, animatorManager: manager, animator });
     inputs.customPanel && (
-      inputs.customPanel.setInputs({ animator: animator, animatorManager: manager }),
+      inputs.customPanel.setInputs({ animator: animator, animatorManager: manager, playerController }),
       topLeftContainer.append(inputs.customPanel)
     );
     controls.changed();

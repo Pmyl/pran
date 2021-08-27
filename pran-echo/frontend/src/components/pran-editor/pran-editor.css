@@ -1,4 +1,25 @@
-.editor {
+.pran-editor {
     display: grid;
     overflow-y: auto;
+}
+
+.pran-editor_top-section {
+    min-width: 0;
+    display: flex;
+}
+
+.pran-editor_bottom-section {
+    overflow-x: auto;
+    overflow-y: auto;
+}
+
+.pran-editor_top-left-container,
+.pran-editor_player-container,
+.pran-editor_edit-controls-container {
+    flex: 1;
+}
+
+.pran-editor_player-container {
+    border: 1px solid gray;
+    text-align: center;
 }
