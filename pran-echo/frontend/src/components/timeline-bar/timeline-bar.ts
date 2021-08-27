@@ -48,7 +48,7 @@ export const createTimelineBar = inlineComponent<TimelineBarInputs>(controls => 
         break;
       case TimelineChangeType.InsertAction:
         if (change.action.type === ActionType.None) {
-          const block: Block = timelineBar.findBlockBeforeFrame(change.frame);
+          const block: Block = timelineBar.findBlockBeforeFrame(change.frame) || timelineBar.findBlockAtFrame(change.frame);
           if (BlocksFilter.isWithActions(block)) {
             block.addNoneAction(change.action);
           } else {

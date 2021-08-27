@@ -229,12 +229,16 @@ export function updateImage(animator: Animator, timeline: Timeline, block: Block
 
 export function splitInTimeline(animator: Animator, timeline: Timeline, timelineBar: TimelineBar, frame: number): EditorAction {
   const block = timelineBar.findBlockAtFrame(frame);
-  
+
   if (!block) {
     console.warn('Cannot split where there is no block');
     return noop('Split block (Invalid)');
   }
+  
+  return splitBlock(animator, timeline, timelineBar, block, frame);
+}
 
+export function splitBlock(animator: Animator, timeline: Timeline, timelineBar: TimelineBar, block: Block, frame: number): EditorAction {
   if (!BlocksFilter.isWithActions(block)) {
     console.warn('Cannot split a block with no actions');
     return noop('Split block (Invalid)');

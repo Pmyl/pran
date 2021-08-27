@@ -33,8 +33,12 @@ export class TimelineBar {
     for (let i = 0; i < this.blocks.length; i++) {
       const block = this.blocks[i];
       frame -= block.visualFrames;
-      if (frame <= 0) {
+      if (frame == 0) {
         return this.blocks[i];
+      }
+
+      if (frame < 0) {
+        return null;
       }
     }
 

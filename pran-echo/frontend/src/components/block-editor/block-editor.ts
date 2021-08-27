@@ -15,7 +15,7 @@ import {
   clearBlock, forceInsertBlock,
   insertBlock,
   removeBlock,
-  removeTimeline,
+  removeTimeline, splitBlock,
   splitInTimeline,
   updateImage
 } from './editor-actions';
@@ -76,7 +76,7 @@ export const createBlockEditor = inlineComponent<{ animatorManager: AnimatorMana
 `, e => (
   onClick(e, '.block-editor_remove', emit(removeBlock, inputs.animator, timeline, block)),
   onClick(e, '.block-editor_clear', emit(clearBlock, inputs.animator, timeline, block, timelineBar)),
-  onClick(e, '.block-editor_split', () => emit(splitInTimeline, inputs.animator, timeline, timelineBar, timelinePosition)()),
+  onClick(e, '.block-editor_split', () => emit(splitBlock, inputs.animator, timeline, timelineBar, block, timelinePosition)()),
   onClick(e, '.block-editor_add-timeline', emit(addTimeline, inputs.animator)),
   onClick(e, '.block-editor_remove-timeline', emit(removeTimeline, inputs.animator, timeline)),
   onClick(e, '.block-editor_insert-draw', () => {
