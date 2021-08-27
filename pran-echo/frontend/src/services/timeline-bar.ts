@@ -12,6 +12,8 @@ export class TimelineBar {
   }
 
   public findBlockAtFrame(frame: number): Block {
+    if (frame === 0) return null;
+
     for (let i = 0; i < this.blocks.length; i++) {
       const block = this.blocks[i];
       frame -= block.visualFrames;
