@@ -125,6 +125,11 @@ export abstract class Component<T extends object | null = EmptyObject> {
     parent.append(this);
     return this;
   }
+  
+  public setData(id: string, value: string): this {
+    this.componentElement.setAttribute(id, value);
+    return this;
+  }
 
   private _htmlToElement(html: string): HTMLElement {
     const template = document.createElement('template');

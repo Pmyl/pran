@@ -1,8 +1,10 @@
-.select-image-modal_image-container {
-    cursor: pointer;
+.select-image-modal {
+    display: grid;
+    grid-template-columns: auto auto auto;
+    justify-content: space-around;
+    row-gap: 15px;
 }
 
-.select-image-modal_image {
-    height: 200px;
-    border: 1px solid lightgray;  
+.select-image-modal .image-to-select {
+    cursor: pointer;
 }

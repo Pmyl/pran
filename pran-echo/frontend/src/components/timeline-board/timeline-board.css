@@ -29,3 +29,9 @@
     height: 50%;
     top: 0;
 }
+
+.timeline-board_frame-pick-frame {
+    position: absolute;
+    transform: translate(-50%, 17px);
+    font-size: 12px;
+}

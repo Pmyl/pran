@@ -47,9 +47,11 @@ export const createBlockEditor = inlineComponent<{ animatorManager: AnimatorMana
   });
   
   return inputs => !block ? [`
-<div>
-    <button class="block-editor_add-timeline" type="button">Add timeline</button>
-    <button class="block-editor_remove-timeline" type="button">Remove timeline</button>
+<div class="block-editor_unselected-container">
+  <div class="block-editor_unselected-buttons-container">
+    <button class="block-editor_add-timeline g-button g-button-s" type="button">Add timeline</button>
+    <button class="block-editor_remove-timeline g-button g-button-s" type="button">Remove timeline</button>
+  </div>
 </div>
 `, e => (
   onClick(e, '.block-editor_add-timeline', () => addTimeline(inputs.animator))
@@ -65,12 +67,16 @@ export const createBlockEditor = inlineComponent<{ animatorManager: AnimatorMana
     <dd>${block.visualFrames}</dd>
   </dl>
   <div class="block-editor_buttons-container">
-    <button class="block-editor_remove" type="button">Remove</button>
-    <button class="block-editor_clear" type="button">Clear</button>
-    <button class="block-editor_split" type="button">Split</button>
-    <button class="block-editor_add-timeline" type="button">Add timeline</button>
-    <button class="block-editor_remove-timeline" type="button">Remove timeline</button>
-    <button class="block-editor_insert-draw" type="button">Insert image</button>
+    <div class="block-editor_block-buttons-container">
+      <button class="block-editor_remove g-button g-button-s" type="button">Remove</button>
+      <button class="block-editor_clear g-button g-button-s" type="button">Clear</button>
+      <button class="block-editor_split g-button g-button-s" type="button">Split</button>
+      <button class="block-editor_insert-draw g-button g-button-s" type="button">Insert image</button>
+    </div>
+    <div class="block-editor_timeline-buttons-container">
+      <button class="block-editor_add-timeline g-button g-button-s" type="button">Add timeline</button>
+      <button class="block-editor_remove-timeline g-button g-button-s" type="button">Remove timeline</button>
+    </div>
   </div>
 </div>
 `, e => (

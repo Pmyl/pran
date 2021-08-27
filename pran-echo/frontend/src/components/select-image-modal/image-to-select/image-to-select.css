@@ -1,0 +1,22 @@
+.image-to-select_container {
+    position: relative;
+    height: 202px;
+}
+
+.image-to-select_container.isSelected {
+    box-shadow: 0 0 0 2px darkorange;
+}
+
+.image-to-select_id {
+    display: block;
+    position: absolute;
+    padding: 5px;
+    box-sizing: border-box;
+    width: 100%;
+    background-color: rgba(0, 0, 0, .1);
+}
+
+.image-to-select_image {
+    height: 200px;
+    border: 1px solid lightgray;
+}
