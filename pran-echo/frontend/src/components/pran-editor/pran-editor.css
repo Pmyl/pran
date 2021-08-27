@@ -1,6 +1,8 @@
 .pran-editor {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     overflow-y: auto;
+    height: 100%;
 }
 
 .pran-editor_top-section {
@@ -11,6 +13,7 @@
 .pran-editor_bottom-section {
     overflow-x: auto;
     overflow-y: auto;
+    flex: 1px;
 }
 
 .pran-editor_top-left-container,
