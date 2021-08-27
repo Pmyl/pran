@@ -38,10 +38,10 @@ export const createTimelineBar = inlineComponent<TimelineBarInputs>(controls => 
   const updateBlocks = (inputs: TimelineBarInputs, change: TimelineChange) => {
     switch (change.type) {
       case TimelineChangeType.ExpandAction:
-        timelineBar.findBlockWithAction(change.action).updateNoneFrames();
+        timelineBar.findBlockWithAction(change.action).recalculateFrames();
         break;
       case TimelineChangeType.ReduceAction:
-        timelineBar.findBlockWithAction(change.action).updateNoneFrames();
+        timelineBar.findBlockWithAction(change.action).recalculateFrames();
         break;
       case TimelineChangeType.ReplaceSameType:
         timelineBar.findBlockWithAction(change.actionToReplace).replaceAction(change.actionToReplace, change.replacement);

@@ -252,16 +252,8 @@ export function splitInTimeline(animator: Animator, timeline: Timeline, timeline
 
   const rightBlockPartFrames: number = Math.max(1, blockInitialFrame + block.frames - frame);
 
-  let adjustLeftBlockPart: EditorAction;
-
-  if (block.frames + blockInitialFrame < frame) {
-    adjustLeftBlockPart = expandBlock(animator, timeline, block, timelineBar, frame - block.frames - blockInitialFrame);
-  } else {
-    adjustLeftBlockPart = reduceBlock(animator, timeline, block, rightBlockPartFrames);
-  }
-
   let blockRightPartBuilder: ReturnType<typeof ImageBlock.Builder | typeof ClearBlock.Builder>;
-  
+
   if (block.type === BlockType.Image) {
     blockRightPartBuilder = ImageBlock.Builder()
       .addAction({ type: ActionType.Draw, image: (block.actions[0] as DrawAction).image });
@@ -269,12 +261,19 @@ export function splitInTimeline(animator: Animator, timeline: Timeline, timeline
     blockRightPartBuilder = ClearBlock.Builder();
   }
 
+  const actions: EditorAction[] = [insertBlock(animator, timeline, blockRightPartBuilder
+    .addAction({ type: ActionType.None, amount: rightBlockPartFrames - 1 })
+    .build(), frame)];
+
+  if (block.frames + blockInitialFrame < frame) {
+    actions.push(expandBlock(animator, timeline, block, timelineBar, frame - block.frames - blockInitialFrame));
+  } else {
+    actions.unshift(reduceBlock(animator, timeline, block, rightBlockPartFrames));
+  }
+
   return combine(
     'Split block',
-    insertBlock(animator, timeline, blockRightPartBuilder
-      .addAction({ type: ActionType.None, amount: rightBlockPartFrames - 1 })
-      .build(), blockInitialFrame + block.frames),
-    adjustLeftBlockPart
+    ...actions
   );
 }
 

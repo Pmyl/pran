@@ -76,16 +76,17 @@ export abstract class BlockWithActions extends BaseBlock {
     this._notifyChanges();
   }
 
-  public removeVisualFrames(amount: number = this._visualFrames) {
+  public removeVisualFrames(amount: number = this._virtualFrames) {
     this.removeVirtualFrames(amount);
   }
 
-  public removeVirtualFrames(amount: number = this._visualFrames) {
+  public removeVirtualFrames(amount: number = this._virtualFrames) {
     this._virtualFrames -= amount;
     this._notifyChanges();
   }
 
-  public updateNoneFrames() {
+  public recalculateFrames() {
+    this._virtualFrames = 0;
     this._frames = 0;
     this._actions.forEach(action => {
       this._frames += action.type === ActionType.None ? action.amount : 1;
