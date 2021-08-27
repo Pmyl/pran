@@ -255,3 +255,31 @@ export function splitBlock(animator: Animator, timeline: Timeline, block: Block,
     adjustLeftBlockPart
   );
 }
+
+export function addTimeline(animator: Animator): EditorAction {
+  let addedTimeline: Timeline;
+
+  return {
+    name: 'Add timeline',
+    do() {
+      addedTimeline = animator.addTimeline([]);
+    },
+    undo() {
+      animator.removeTimeline(addedTimeline);
+    }
+  }
+}
+
+export function removeTimeline(animator: Animator, timeline: Timeline): EditorAction {
+  let index: number;
+
+  return {
+    name: 'Remove timeline',
+    do() {
+      index = animator.removeTimeline(timeline);
+    },
+    undo() {
+      timeline = animator.addTimelineAt(index, timeline.timelineActions.slice());
+    }
+  }
+}

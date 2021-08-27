@@ -1,7 +1,7 @@
 .timeline-board {
     position: relative;
     display: inline-block;
-    padding: 0 15px;
+    padding: 0 500px 0 15px;
 }
 
 .timeline-board_vertical-line {

@@ -42,17 +42,24 @@ export class Animator {
     this._applyFrameChange(Math.min(this._currentFrame + amount, this._totalFrames), true);
   }
 
-  public addTimeline(animations: TimelineAction[]) {
-    const timeline = new Timeline(this._canvasController.addLayerOnTop(uuidv4()), animations);
-
-    this._timelines.push(timeline);
-    this._recalculateTotalFrames();
-    this._notifyTimelineChanged(timeline, {
-      type: TimelineChangeType.Add
-    });
+  public addTimeline(animations: TimelineAction[]): Timeline {
+    return this.addTimelineAt(this.timelines.length, animations);
   }
 
-  public removeTimeline(timeline: Timeline) {
+  public addTimelineAt(index: number, animations: TimelineAction[]): Timeline {
+    const timeline = new Timeline(this._canvasController.addLayerAt(uuidv4(), index), animations);
+
+    this._timelines.splice(index, 0, timeline);
+    this._recalculateTotalFrames();
+    this._notifyTimelineChanged(timeline, {
+      type: TimelineChangeType.Add,
+      index
+    });
+
+    return timeline;
+  }
+
+  public removeTimeline(timeline: Timeline): number {
     const index = this._timelines.indexOf(timeline);
     this._canvasController.removeLayer(timeline.layer.id);
 
@@ -62,6 +69,8 @@ export class Animator {
       type: TimelineChangeType.Remove,
       index
     });
+
+    return index;
   }
 
   public restart(): void {

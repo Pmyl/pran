@@ -10,7 +10,7 @@ import { createSelectImageModal } from '../select-image-modal/select-image-modal
 import { BlockSelected, BlockUnselected } from '../timeline-bar/timeline-bar';
 import { TimelinePositionChanged } from '../timeline-board/timeline-board';
 import './block-editor.css';
-import { clearBlock, removeBlock, splitBlock, updateImage } from './editor-actions';
+import { addTimeline, clearBlock, removeBlock, removeTimeline, splitBlock, updateImage } from './editor-actions';
 
 export const createBlockEditor = inlineComponent<{ animatorManager: AnimatorManager, animator: Animator }>(controls => {
   let block: Block,
@@ -68,19 +68,11 @@ export const createBlockEditor = inlineComponent<{ animatorManager: AnimatorMana
   onClick(e, '.block-editor_remove', emit(removeBlock, inputs.animator, timeline, block)),
   onClick(e, '.block-editor_clear', emit(clearBlock, inputs.animator, timeline, block, timelineBar)),
   onClick(e, '.block-editor_split', () => emit(splitBlock, inputs.animator, timeline, block, timelineBar, timelinePosition)()),
-  onClick(e, '.block-editor_add-timeline', () => addTimeline(inputs.animator)),
-  onClick(e, '.block-editor_remove-timeline', () => removeTimeline(inputs.animator, timeline)),
+  onClick(e, '.block-editor_add-timeline', emit(addTimeline, inputs.animator)),
+  onClick(e, '.block-editor_remove-timeline', emit(removeTimeline, inputs.animator, timeline)),
   block.type === BlockType.Image && onClick(e, '.block-editor_block', () => openModal(inputs.animatorManager, inputs.animator, timeline, block))
   )];
 });
-
-function addTimeline(animator: Animator) {
-  animator.addTimeline([{ type: ActionType.Clear }]);
-}
-
-function removeTimeline(animator: Animator, timeline: Timeline) {
-  animator.removeTimeline(timeline);
-}
 
 function openModal(animatorManager: AnimatorManager, animator: Animator, timeline: Timeline, block: Block) {
   Modal.open(createSelectImageModal({ animatorManager })).then(value => {

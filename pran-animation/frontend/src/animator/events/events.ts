@@ -51,6 +51,7 @@ export interface TimelineReplaceActionSameType {
 
 export interface TimelineAdd {
   type: TimelineChangeType.Add;
+  index: number;
 }
 
 export interface TimelineRemove {

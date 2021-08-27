@@ -26,7 +26,7 @@ export const createTimelineBoard = inlineComponent<{ animator: Animator, playerC
       animator.onTimelineChange((t: Timeline, c: TimelineChange) => {
         switch (c.type) {
           case TimelineChangeType.Add:
-            bars.push(createTimelineBar({ timeline: t, animator, frameWidth: inputs.frameWidth }));
+            bars.splice(c.index, 0, createTimelineBar({ timeline: t, animator, frameWidth: inputs.frameWidth }));
             break;
           case TimelineChangeType.Remove:
             const removedBar = bars.splice(c.index, 1)[0];
