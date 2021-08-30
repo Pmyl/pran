@@ -1,0 +1,23 @@
+.block {
+    display: block;
+    position: relative;
+}
+
+.block_draw-thumbnail {
+    height: 100px;
+    width: auto;
+    position: -webkit-sticky;
+    position: sticky;
+    left: 0;
+}
+
+.block_block {
+    min-width: 0;
+    flex: 0 0;
+    box-shadow: inset 0 0 0 1px #ccc;
+    position: relative;
+}
+
+.block_block.isSelected {
+    background-color: darkorange;
+}

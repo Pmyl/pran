@@ -1,12 +1,14 @@
 import './echo-recording-modal.css';
+import {
+  Container,
+  inlineComponent,
+  ModalContentInputs,
+  onClick,
+  PlayerController,
+  PlayerState
+} from 'pran-animation-editor-frontend';
 import { Animator, AnimatorManager } from 'pran-animation-frontend';
 import { CanvasControllerFactory } from 'pran-phonemes-frontend';
-import { inlineComponent } from '../../framework/inline-component';
-import { onClick } from '../../framework/on-click';
-import { PlayerController, PlayerState } from '../../services/player-controller';
-import { Container } from '../container/container';
-import { ModalContentInputs } from '../modal-template/modal-template';
-import { Player } from '../player/player';
 
 type EchoRecordingModalInputs = { animatorManager: AnimatorManager, animator: Animator } & ModalContentInputs<void>;
 
@@ -17,22 +19,20 @@ export const createEchoRecordingModal = inlineComponent<EchoRecordingModalInputs
     animator: Animator,
     canvas: HTMLCanvasElement,
     playerController: PlayerController;
-  const player = new Player();
-  player.setInput('showControls', false);
-  const playerContainer = Container.CreateEmptyElement('div', 'echo-recording-modal_player-container');
+  const canvasContainer = Container.CreateEmptyElement('canvas');
+  const playerContainer = Container.CreateEmptyElement('div', 'echo-recording-modal_player-container')
+    .append(canvasContainer);
 
   controls.onInputsChange = inputs => {
     if (isInitialised) return;
     isInitialised = true;
 
-    canvas = player.canvas.componentElement as HTMLCanvasElement;
+    canvas = canvasContainer.componentElement as HTMLCanvasElement;
     const context2D = canvas.getContext('2d');
     const canvasController = CanvasControllerFactory.createFrom(context2D);
     animatorManager = inputs.animatorManager.cloneInNewCanvas(canvasController);
     animator = animatorManager.copyAnimatorFrom(inputs.animator);
     playerController = new PlayerController(animator);
-    player.setInput('playerController', playerController);
-    playerContainer.append(player);
   };
 
   return () => [[
@@ -44,7 +44,7 @@ export const createEchoRecordingModal = inlineComponent<EchoRecordingModalInputs
 });
 
 async function startRecording(canvas: HTMLCanvasElement, playerController: PlayerController, fps: number) {
-  const stream = canvas.captureStream(fps) as MediaStream;
+  const stream = canvas.captureStream(fps);
   const recordedChunks = [];
   const options: MediaRecorderOptions = {
     mimeType: "video/webm; codecs=vp9",

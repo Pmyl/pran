@@ -1,0 +1,1 @@
+export type ModalContentInputs<TResult> = { close?: (returnValue?: TResult) => void; };

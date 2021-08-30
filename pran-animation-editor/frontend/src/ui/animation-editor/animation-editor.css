@@ -1,0 +1,28 @@
+.animation-editor {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    height: 100%;
+}
+
+.animation-editor_top-section {
+    min-width: 0;
+    display: flex;
+}
+
+.animation-editor_bottom-section {
+    overflow-x: auto;
+    overflow-y: auto;
+    flex: 1px;
+}
+
+.animation-editor_top-left-container,
+.animation-editor_player-container,
+.animation-editor_edit-controls-container {
+    flex: 1;
+}
+
+.animation-editor_player-container {
+    border: 1px solid gray;
+    text-align: center;
+}

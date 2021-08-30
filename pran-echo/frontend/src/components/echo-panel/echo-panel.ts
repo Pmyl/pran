@@ -1,12 +1,13 @@
 import './echo-panel.css';
+import {
+  ComponentControls,
+  inlineComponent, Modal,
+  onChange, onClick,
+  PlayerState,
+  PranEditorControls
+} from 'pran-animation-editor-frontend';
 import { ActionType, ManagerTimelineAction } from 'pran-animation-frontend';
 import { cmuPhonemesMap, phonemesMapper } from 'pran-phonemes-frontend';
-import { ComponentControls, inlineComponent } from '../../framework/inline-component';
-import { onChange } from '../../framework/on-change';
-import { onClick } from '../../framework/on-click';
-import { Modal } from '../../services/modal';
-import { PlayerState } from '../../services/player-controller';
-import { PranEditorControls } from '../pran-editor/pran-editor';
 import { createEchoRecordingModal } from './echo-recording-modal';
 import { setupInitialAnimation } from './initial-animation';
 

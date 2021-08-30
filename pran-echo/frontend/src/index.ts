@@ -1,14 +1,13 @@
 import './index.css';
-import { Container } from './components/container/container';
+import 'pran-animation-editor-frontend/index.css';
+import { Container, createAnimationEditor, Modal } from 'pran-animation-editor-frontend';
 import { createEchoPanel } from './components/echo-panel/echo-panel';
-import { createPranEditor } from './components/pran-editor/pran-editor';
-import { Modal } from './services/modal';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const body: Container = Container.CreateBody();
   Modal.init(body);
   const echoPanel = createEchoPanel();
-  body.append(createPranEditor({ customPanel: echoPanel }));
+  body.append(createAnimationEditor({ customPanel: echoPanel }));
 
   body.render();
 });

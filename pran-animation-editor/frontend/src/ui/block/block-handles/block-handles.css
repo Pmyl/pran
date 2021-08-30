@@ -1,0 +1,29 @@
+.block-handles {
+    position: absolute;
+    z-index: 301;
+    width: 100%;
+}
+
+.block-handles_container {
+    position: relative;
+}
+
+.block-handles_right-handle,
+.block-handles_left-handle {
+    position: absolute;
+    top: -5px;
+    background-color: gray;
+    border-radius: 7px;
+    width: 15px;
+    height: 15px;
+    display: block;
+    cursor: grab;
+}
+
+.block-handles_right-handle {
+    right: -5px;
+}
+
+.block-handles_left-handle {
+    left: -5px;
+}
