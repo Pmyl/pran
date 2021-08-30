@@ -20,6 +20,8 @@ export const createEchoRecordingModal = inlineComponent<EchoRecordingModalInputs
     canvas: HTMLCanvasElement,
     playerController: PlayerController;
   const canvasContainer = Container.CreateEmptyElement('canvas');
+  (canvasContainer.componentElement as HTMLCanvasElement).width = 500;
+  (canvasContainer.componentElement as HTMLCanvasElement).height = 500;
   const playerContainer = Container.CreateEmptyElement('div', 'echo-recording-modal_player-container')
     .append(canvasContainer);
 
