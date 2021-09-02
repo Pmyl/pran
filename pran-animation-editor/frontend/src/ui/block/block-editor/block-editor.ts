@@ -49,11 +49,10 @@ export const createBlockEditor = inlineComponent<{ animatorManager: AnimatorMana
 <div class="block-editor_unselected-container">
   <div class="block-editor_unselected-buttons-container">
     <button class="block-editor_add-timeline g-button g-button-s" type="button">Add timeline</button>
-    <button class="block-editor_remove-timeline g-button g-button-s" type="button">Remove timeline</button>
   </div>
 </div>
 `, e => (
-  onClick(e, '.block-editor_add-timeline', () => addTimeline(inputs.animator))
+  onClick(e, '.block-editor_add-timeline', emit(addTimeline, inputs.animator))
 )] : [`
 <div class="block-editor_container">
   <div class="block-editor_block-container">

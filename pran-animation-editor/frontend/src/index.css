@@ -49,6 +49,15 @@
     background-color: var(--g-button_negative-bg-color, var(--g-button_bg-color));
 }
 
+.g-button.g-button-secondary {
+    border-color: var(--g-button_secondary-border-color, var(--g-button_border-color));
+    color: var(--g-button_secondary-text-color, var(--g-button_text-color));
+}
+
+.g-button.g-button-secondary::after {
+    background-color: var(--g-button_secondary-bg-color, var(--g-button_bg-color));
+}
+
 .g-button:hover::after {
     top: 0;
     left: 0;

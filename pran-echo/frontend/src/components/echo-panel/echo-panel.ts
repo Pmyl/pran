@@ -120,7 +120,7 @@ export const createEchoPanel = inlineComponent<PranEditorControls, EchoPanelSide
     </div>
   `}
   <div class="echo-panel_record-container">
-    <button class="echo-panel_record g-button" type="button">Record...</button>
+    <button class="echo-panel_record g-button g-button-secondary" type="button">Record...</button>
   </div>
 </div>
 `,
