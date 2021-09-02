@@ -84,21 +84,28 @@ export const createBlockEditor = inlineComponent<{ animatorManager: AnimatorMana
   onClick(e, '.block-editor_split', () => emit(splitBlock, inputs.animator, timeline, timelineBar, block, timelinePosition)()),
   onClick(e, '.block-editor_add-timeline', emit(addTimeline, inputs.animator)),
   onClick(e, '.block-editor_remove-timeline', emit(removeTimeline, inputs.animator, timeline)),
-  onClick(e, '.block-editor_insert-draw', () => {
-    let blockToInsert = ImageBlock
-      .Builder()
-      .addAction({ type: ActionType.Draw, image: inputs.animatorManager.imagesMap.values().next().value })
-      .build();
-
-    emit(forceInsertBlock, inputs.animator, timeline, blockToInsert, timelineBar, timelinePosition)();
-  }),
-  block.type === BlockType.Image && onClick(e, '.block-editor_block', () => openModal(inputs.animatorManager, inputs.animator, timeline, block))
+  onClick(e, '.block-editor_insert-draw', () => openInsertImageModal(inputs.animatorManager, inputs.animator, timeline, timelineBar, timelinePosition)),
+  block.type === BlockType.Image && onClick(e, '.block-editor_block', () => openChangeImageModal(inputs.animatorManager, inputs.animator, timeline, block))
   )];
 });
 
-function openModal(animatorManager: AnimatorManager, animator: Animator, timeline: Timeline, block: Block) {
+function openChangeImageModal(animatorManager: AnimatorManager, animator: Animator, timeline: Timeline, block: Block) {
   Modal.open(createSelectImageModal({ animatorManager })).then(value => {
     value && emit(updateImage, animator, timeline, block, value[1])();
+  });
+}
+
+function openInsertImageModal(animatorManager: AnimatorManager, animator: Animator, timeline: Timeline, timelineBar: TimelineBar, timelinePosition: number) {
+  Modal.open(createSelectImageModal({ animatorManager })).then(value => {
+    if (!value) return;
+
+    let blockToInsert = ImageBlock
+      .Builder()
+      .addAction({ type: ActionType.Draw, image: value[1] })
+      .addAction({ type: ActionType.None, amount: 4 })
+      .build();
+
+    emit(forceInsertBlock, animator, timeline, blockToInsert, timelineBar, timelinePosition)();
   });
 }
 

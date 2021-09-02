@@ -8,6 +8,7 @@
     "install-phonemes": "npm i ../../pran-phonemes/frontend/dist/pran-phonemes-frontend-1.0.0.tgz",
     "build-pack": "rimraf dist && microbundle src/index.ts --output dist/index.js --format modern,cjs && npm run ~copy-package && npm run ~pack-dist",
     "dev-pack": "rimraf dist && microbundle src/index.ts --output dist/index.js --format modern,cjs --sourcemap --no-compress && npm run ~copy-package && npm run ~pack-dist",
+    "test": "jasmine-ts --config=jasmine.json",
     "~copy-package": "ncp package.json dist/package.json && replace-content dist/package.json file:../../pran-phonemes file:../../../pran-phonemes && replace-content dist/package.json file:../../pran-animation file:../../../pran-animation",
     "~pack-dist": "cd dist && npm pack"
   },
@@ -18,7 +19,10 @@
     "ncp": "^2.0.0",
     "rimraf": "^3.0.2",
     "ts-node": "^10.2.0",
-    "typescript": "^4.3.5"
+    "typescript": "^4.3.5",
+    "@types/jasmine": "^3.8.2",
+    "jasmine": "^3.8.0",
+    "jasmine-ts": "^0.4.0"
   },
   "dependencies": {
     "pran-animation-frontend": "file:../../pran-animation/frontend/dist/pran-animation-frontend-1.0.0.tgz",

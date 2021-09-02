@@ -1,4 +1,7 @@
+.player {
+    background-color: var(--player_bg-color, white);
+}
 .player_controls-container {
-    background-color: lightgray;
+    background-color: var(--player_controls-bg-color, lightgray);
     padding: 5px 0;
 }

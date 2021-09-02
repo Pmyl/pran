@@ -8,6 +8,9 @@
     height: 30px;
     vertical-align: top;
     cursor: pointer;
+    border: none;
+    padding: 0;
+    background: none;
 }
 
 .pause-button_button:hover,
@@ -18,7 +21,6 @@
 .half-playback-rate-toggle_button:hover {
     filter: invert(1) brightness(20%) sepia(20) saturate(10) hue-rotate(240deg);
 }
-
 
 .pause-button_button.is-active,
 .play-button_button.is-active,

@@ -28,9 +28,17 @@ def phonemise_audio(filepath):
 def phonemise_text(text):
     g2p = G2p()
     word_to_phn = g2p(text)
-    sentence_phn = ' '.join([x for x in word_to_phn if x != ' '])
-    output = re.sub(r'\d+', '', sentence_phn)
-    return output
+    phonemes_words = []
+    current_word = []
+    phonemes_words.append(current_word)
+    for n, i in enumerate(word_to_phn):
+        if i == ' ':
+            current_word = []
+            phonemes_words.append(current_word)
+        else:
+            current_word.append(re.sub(r'\d+', '', i))
+
+    return phonemes_words
 
 
 def fetch_audio(filepath):

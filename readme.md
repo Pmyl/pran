@@ -38,3 +38,10 @@ Local server to listen to from browser, probably websocket.
 #### Functionality
 Configure animation frontend with very few animations but all the phonemes. Gets audio in input, sends it to [pran-echo#CORE](#pran-echo-core), wait for results back, sends results to [pran-animation#FRONTEND](#pran-animation-frontend). Ideally being able to choose animations to show at different times through an intuitive UI.
 Being able to output a gif/video of animation, use [MediaRecorder](https://developer.mozilla.org/en-US/docs/Web/API/MediaRecorder).
+
+
+- Riorganizzare tasti in alto a destra 
+- Metadata nelle azioni (fonemi)
+- Azioni draw contengono ID invece che path (mostrare ID in block editor)
+
+- IMPOSSIBILE: Taglia primo secondo video prima di export

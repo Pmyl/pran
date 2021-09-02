@@ -32,64 +32,17 @@ export const createTimelineBar = inlineComponent<TimelineBarInputs>(controls => 
     removedBlocks.forEach(b => Mediator.raiseEvent<BlockUnselected>('blockUnselected', { block: b }));
 
     timelineBlocksContainer.clear();
-    createBlockComponents(timelineBar.blocks, inputs, timelineBlocksContainer, (block: Block) => onBlockSelect(block, inputs));
+    createBlockComponents(timelineBar.blocks, inputs, timelineBlocksContainer, (block: Block) => onBlockSelect(block, inputs), false);
   };
 
   const updateBlocks = (inputs: TimelineBarInputs, change: TimelineChange) => {
-    switch (change.type) {
-      case TimelineChangeType.ExpandAction:
-        timelineBar.findBlockWithAction(change.action).recalculateFrames();
-        break;
-      case TimelineChangeType.ReduceAction:
-        timelineBar.findBlockWithAction(change.action).recalculateFrames();
-        break;
-      case TimelineChangeType.ReplaceSameType:
-        timelineBar.findBlockWithAction(change.actionToReplace).replaceAction(change.actionToReplace, change.replacement);
-        break;
-      case TimelineChangeType.InsertAction:
-        if (change.action.type === ActionType.None) {
-          const block: Block = timelineBar.findBlockBeforeFrame(change.frame) || timelineBar.findBlockAtFrame(change.frame);
-          if (BlocksFilter.isWithActions(block)) {
-            block.addNoneAction(change.action);
-          } else {
-            throw new Error(`Cannot add action to block without actions. Type: ${block.type}`);
-          }
-        } else {
-          let blockIndex: number;
-
-          if (BlocksFilter.isNothingness(timelineBar.blocks[0])) {
-            blockIndex = 0;
-            timelineBar.removeBlockAt(blockIndex);
-            timelineBlocksContainer.removeAt(blockIndex);
-          } else {
-            const block: Block = timelineBar.findBlockBeforeFrame(change.frame);
-            blockIndex = timelineBar.blocks.indexOf(block);
-            block && block.removeVisualFrames();
-          }
-
-          const newBlocks = timelineBar.generateAt(blockIndex + 1, [change.action]);
-          createBlockComponents(newBlocks, inputs, timelineBlocksContainer, (block: Block) => onBlockSelect(block, inputs), blockIndex + 1);
-        }
-        break;
-      case TimelineChangeType.RemoveAction:
-        if (change.action.type === ActionType.None) {
-          timelineBar.findBlockWithAction(change.action)?.removeNoneAction(change.action);
-        } else {
-          const blockWithAction = timelineBar.findBlockWithAction(change.action);
-          const blockIndex = timelineBar.blocks.indexOf(blockWithAction);
-          const blockBefore = timelineBar.blocks[blockIndex - 1];
-          timelineBar.removeBlockAt(blockIndex);
-          timelineBlocksContainer.removeAt(blockIndex);
-          Mediator.raiseEvent<BlockUnselected>('blockUnselected', { block: blockWithAction })
-
-          if (blockBefore && BlocksFilter.isWithActions(blockBefore)) {
-            blockWithAction.actions.filter(a => a.type === ActionType.None).forEach(a => {
-              blockBefore.addNoneAction(a as NoneAction);
-            });
-          }
-        }
-        break;
-    }
+    const blocksChanges = timelineBar.updateBlocks(change);
+    blocksChanges.added.forEach(added => {
+      createBlockComponents(added.blocks, inputs, timelineBlocksContainer, (block: Block) => onBlockSelect(block, inputs), true, added.index);
+    });
+    blocksChanges.removed.forEach(removed => {
+      timelineBlocksContainer.removeAt(removed.index);
+    });
     timelineBar.adaptToTotalFrames(inputs.animator.totalFrames);
   }
 
@@ -110,14 +63,15 @@ export const createTimelineBar = inlineComponent<TimelineBarInputs>(controls => 
   return () => timelineBlocksContainer;
 });
 
-function createBlockComponents(blocks: readonly Block[], inputs: TimelineBarInputs, timelineBlocksContainer: Container, onSelect: (block: Block) => void, index?: number): void {
+function createBlockComponents(blocks: readonly Block[], inputs: TimelineBarInputs, timelineBlocksContainer: Container, onSelect: (block: Block) => void, isHighlighted: boolean, index?: number): void {
   blocks.map(block => {
     const blockComponent = createBlock().setInputs({
       block,
       frameWidth: inputs.frameWidth,
       timeline: inputs.timeline,
       animator: inputs.animator,
-      onSelect: () => onSelect(block)
+      onSelect: () => onSelect(block),
+      isHighlighted
     });
 
     if (!index && index !== 0) {

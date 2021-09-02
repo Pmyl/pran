@@ -85,7 +85,7 @@ async function startRecording(canvas: HTMLCanvasElement, playerController: Playe
 }
 
 function stopMediaRecorder(mediaRecorder: MediaRecorder) {
-  // Wait an enough amount of time for the last frame to be recorder
+  // Wait an enough amount of time for the last frame to be recorded
   setTimeout(() => {
     mediaRecorder.stop();
   }, 1000);

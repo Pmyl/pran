@@ -76,8 +76,10 @@ function createFramesLines(frames: number, frameWidth: number): string {
   let result: string = '';
 
   for (let i = 0; i < frames; i++) {
-    result += `<div class="timeline-board_frame-pick-line" style="left: ${i * frameWidth}px">
-${i % 10 === 0 && i !== 0 ? `<span class="timeline-board_frame-pick-frame">${i}</span>` : ''}
+    const isHighlight = i % 10 === 0 && i !== 0;
+
+    result += `<div class="timeline-board_frame-pick-line${isHighlight ? ' isHighlight' : ''}" style="left: ${i * frameWidth}px">
+${isHighlight ? `<span class="timeline-board_frame-pick-frame">${i}</span>` : ''}
 </div>`
   }
   

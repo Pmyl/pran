@@ -35,12 +35,12 @@ export function splitBlock(animator: Animator, timeline: Timeline, timelineBar: 
 
   const actions: EditorAction[] = [insertBlock(animator, timeline, blockRightPartBuilder
     .addAction({ type: ActionType.None, amount: rightBlockPartFrames - 1 })
-    .build(), frame)];
+    .build(), blockInitialFrame + block.frames)];
 
   if (block.frames + blockInitialFrame < frame) {
     actions.push(expandBlock(animator, timeline, block, timelineBar, frame - block.frames - blockInitialFrame));
   } else {
-    actions.unshift(reduceBlock(animator, timeline, block, rightBlockPartFrames));
+    actions.push(reduceBlock(animator, timeline, block, rightBlockPartFrames));
   }
 
   return combine(

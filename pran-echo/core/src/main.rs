@@ -47,7 +47,7 @@ struct Upload<'f> {
 #[derive(FromPyObject)]
 struct AudioResult {
     text: String,
-    phonemes: String,
+    phonemes: Vec<Vec<String>>,
     seconds: f32
 }
 
@@ -93,12 +93,12 @@ struct Text {
 #[derive(FromPyObject)]
 struct TextResult {
     text: String,
-    phonemes: String
+    phonemes: Vec<Vec<String>>
 }
 
 #[post("/text", data = "<data>")]
 async fn phonemise_text(data: Form<Text>, config: &State<Config>) -> Result<Json<TextResult>, CustomError> {
-    let result: PyResult<String> = Python::with_gil(|py| {
+    let result: PyResult<Vec<Vec<String>>> = Python::with_gil(|py| {
         let syspath: &PyList = PyModule::import(py, "sys")?
             .getattr("path")?
             .try_into()?;
@@ -107,7 +107,7 @@ async fn phonemise_text(data: Form<Text>, config: &State<Config>) -> Result<Json
             .unwrap();
 
         let phonemiser: &PyModule = PyModule::import(py, "phonemiser")?;
-        let call_result: String = phonemiser.getattr("phonemise_text")?.call1((data.text.clone(), ))?.extract()?;
+        let call_result: Vec<Vec<String>> = phonemiser.getattr("phonemise_text")?.call1((data.text.clone(), ))?.extract()?;
         Ok(call_result)
     });
 

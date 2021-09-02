@@ -18,6 +18,7 @@ export class Timeline {
   private _timelineActionsQueue: TimelineAction[];
   private _timelineActions: TimelineAction[];
   private _layer: CanvasController;
+  private _currentFrame: number = 0;
 
   constructor(layer: CanvasController, animation: TimelineAction[]) {
     this._timelineActions = animation;
@@ -26,11 +27,13 @@ export class Timeline {
   }
 
   public restart(): void {
-    this._timelineActionsQueue = this._timelineActions.slice();
-    this._currentWait = 0;
+    this._currentFrame = 0;
+    this._refreshTimelineActionsQueue();
   }
 
   public tick(amount: number): void {
+    this._currentFrame += amount;
+
     if (this._timelineActionsQueue.length === 0) {
       return;
     }
@@ -50,6 +53,7 @@ export class Timeline {
   public updateAction(action: TimelineAction, newActions: TimelineAction[]): void {
     const actionIndex = this._timelineActions.indexOf(action);
     this._timelineActions.splice(actionIndex, Math.max(newActions.length, 1), ...newActions);
+    this._refreshTimelineActionsQueue();
   }
 
   public insertTimelineAction(frame: number, action: TimelineAction) {
@@ -78,11 +82,13 @@ export class Timeline {
     }
     
     this._timelineActions.splice(insertAfterCount, 0, action);
+    this._refreshTimelineActionsQueue();
   }
 
   public removeTimelineAction(action: TimelineAction) {
     const actionIndex = this._timelineActions.indexOf(action);
     this._timelineActions.splice(actionIndex, 1);
+    this._refreshTimelineActionsQueue();
   }
 
   public expandTimelineAction(amount: number, action: TimelineAction) {
@@ -91,6 +97,7 @@ export class Timeline {
     } else {
       throw new Error('Only None actions can be expanded');
     }
+    this._refreshTimelineActionsQueue();
   }
 
   public reduceTimelineAction(amount: number, action: TimelineAction) {
@@ -103,6 +110,7 @@ export class Timeline {
     } else {
       throw new Error('Only None actions can be reduced');
     }
+    this._refreshTimelineActionsQueue();
   }
 
   public replaceTimelineAction<T extends TimelineAction>(actionToReplace: T, replacement: T): void {
@@ -112,6 +120,7 @@ export class Timeline {
 
     this.insertTimelineAction(this.getActionInitialFrame(actionToReplace), replacement);
     this.removeTimelineAction(actionToReplace);
+    this._refreshTimelineActionsQueue();
   }
 
   public getActionInitialFrame(action: TimelineAction): number | undefined {
@@ -160,5 +169,11 @@ export class Timeline {
           break;
       }
     }
+  }
+
+  private _refreshTimelineActionsQueue() {
+    this._timelineActionsQueue = this._timelineActions.slice();
+    this._currentWait = 0;
+    this._executeActionAfter(this._currentFrame);
   }
 }

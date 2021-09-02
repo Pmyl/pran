@@ -23,6 +23,6 @@
 }
 
 .animation-editor_player-container {
-    border: 1px solid gray;
+    border: 1px solid var(--animation-editor_player-border-color, gray);
     text-align: center;
 }

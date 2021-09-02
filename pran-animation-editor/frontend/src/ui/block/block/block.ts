@@ -7,28 +7,50 @@ import './block.css';
 import { BlockSelected } from '../../timeline/timeline-bar/timeline-bar';
 import { createTimelineBlockHandles } from '../block-handles/block-handles';
 
-export const createBlock = inlineComponent<{ block: Block, timeline: Timeline, animator: Animator, frameWidth: number, onSelect: () => void }>(controls => {
+interface BlockInputs {
+  block: Block,
+  timeline: Timeline,
+  animator: Animator,
+  frameWidth: number,
+  onSelect: () => void,
+  isHighlighted: boolean
+}
+
+export const createBlock = inlineComponent<BlockInputs>(controls => {
   controls.setup('block', 'block');
 
   const handles = createTimelineBlockHandles();
   let unsubscribeOnChange: () => void,
     unsubscribeEvent: () => void,
-    isSelected: boolean = false;
+    isSelected: boolean = false,
+    isHighlighted: boolean = false;
 
   controls.onInputChange = {
     block: b => {
       unsubscribeOnChange?.();
       unsubscribeOnChange = b.onChange(controls.changed);
       unsubscribeEvent?.();
-      unsubscribeEvent = Mediator.onEvent<BlockSelected>('blockSelected', ({ block: selectedBlock, animator, timeline, timelineBar }) => (
-        isSelected = selectedBlock === b,
-        handles.setInputs({ isSelected, block: selectedBlock, animator, timeline, timelineBar }),
-        controls.changed()
-      ));
+      unsubscribeEvent = Mediator.onEvent<BlockSelected>('blockSelected', ({ block: selectedBlock, animator, timeline, timelineBar }) => {
+        const isNewlySelectedBlock = selectedBlock === b;
+
+        if (isSelected !== isNewlySelectedBlock) {
+          isSelected = isNewlySelectedBlock,
+          handles.setInputs({ isSelected, block: selectedBlock, animator, timeline, timelineBar }),
+          controls.changed()
+        }
+      });
       handles.setInput('block', b);
     },
     frameWidth: fw => {
       handles.setInput('frameWidth', fw);
+    },
+    isHighlighted: ih => {
+      if (ih) {
+        isHighlighted = true;
+        setTimeout(() => {
+          isHighlighted = false;
+        }, 100);
+      }
     }
   };
 
@@ -38,7 +60,7 @@ export const createBlock = inlineComponent<{ block: Block, timeline: Timeline, a
     && controls.mandatoryInput('animator')
     && controls.mandatoryInput('timeline')
     && [[handles, `
-<div class="block_block${isSelected ? ' isSelected' : ''}" style="width:${inputs.block.visualFrames * inputs.frameWidth}px">
+<div class="block_block${isSelected ? ' isSelected' : ''}${isHighlighted ? ' isHighlighted' : ''}" style="width:${inputs.block.visualFrames * inputs.frameWidth}px">
     ${createThumbnailHTML(inputs.block)}
 </div>`], el => onClick(el, '.block_block', () => inputs.onSelect())];
 });

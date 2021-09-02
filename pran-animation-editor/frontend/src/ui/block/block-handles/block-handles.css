@@ -12,12 +12,14 @@
 .block-handles_left-handle {
     position: absolute;
     top: -5px;
-    background-color: gray;
+    background-color: var(--block-handles_bg-color, gray);
+    border: none;
     border-radius: 7px;
     width: 15px;
     height: 15px;
     display: block;
     cursor: grab;
+    box-shadow: 0 0 2px 1px inset var(--block-handles_shadow-color, black);
 }
 
 .block-handles_right-handle {

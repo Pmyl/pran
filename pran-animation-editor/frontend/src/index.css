@@ -1,11 +1,12 @@
 .g-button {
+    color: var(--g-button_text-color, black);
     box-sizing: content-box;
     font-size: 16px;
-    font-weight: 200;
+    font-weight: bold;
     letter-spacing: 1px;
     padding: 8px 20px 8px;
     outline: 0;
-    border: 1px solid black;
+    border: 1px solid var(--g-button_border-color, black);;
     cursor: pointer;
     position: relative;
     background-color: rgba(0, 0, 0, 0);
@@ -18,13 +19,13 @@
 
 .g-button::after {
     content: "";
-    background-color: #ffe54c;
+    background-color: var(--g-button_bg-color, #ffe54c);
     width: 100%;
     z-index: -1;
     position: absolute;
     height: 100%;
-    top: 7px;
-    left: 7px;
+    top: 4px;
+    left: 4px;
     transition: 0.2s;
 }
 

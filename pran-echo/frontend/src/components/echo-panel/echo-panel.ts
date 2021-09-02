@@ -1,30 +1,34 @@
-import './echo-panel.css';
 import {
   ComponentControls,
-  inlineComponent, Modal,
-  onChange, onClick,
+  inlineComponent,
+  Modal,
+  onChange,
+  onClick,
   PlayerState,
   PranEditorControls
 } from 'pran-animation-editor-frontend';
-import { ActionType, ManagerTimelineAction } from 'pran-animation-frontend';
+import { ActionType, drawId, ManagerTimelineAction, wait } from 'pran-animation-frontend';
 import { cmuPhonemesMap, phonemesMapper } from 'pran-phonemes-frontend';
+import './echo-panel.css';
 import { createEchoRecordingModal } from './echo-recording-modal';
 import { setupInitialAnimation } from './initial-animation';
 
 interface EchoPanelSideInputs {
   audio: Audio;
   text: string;
-  phonemes: string;
+  phonemes: string[][];
   seconds: number;
   isLoading: boolean;
 }
 
 type EchoPanelControls = ComponentControls<PranEditorControls, EchoPanelSideInputs>
-type AudioData = {
-  phonemes: string;
+
+interface AudioData {
+  phonemes: string[][];
   text: string;
   seconds: number;
-};
+}
+
 type Audio = AudioData & { controls: HTMLAudioElement; };
 
 export const createEchoPanel = inlineComponent<PranEditorControls, EchoPanelSideInputs>(controls => {
@@ -46,6 +50,7 @@ export const createEchoPanel = inlineComponent<PranEditorControls, EchoPanelSide
             await audio.controls.play();
             break;
           case PlayerState.Stop:
+          case PlayerState.End:
             audio.controls.pause();
             audio.controls.currentTime = 0;
             break;
@@ -71,7 +76,7 @@ export const createEchoPanel = inlineComponent<PranEditorControls, EchoPanelSide
       text = t;
     },
     phonemes: p => {
-      phonemes = p;
+      phonemes = p.map(x => x.join('&nbsp;')).join(' • ');
     },
     seconds: s => {
       seconds = s;
@@ -128,10 +133,6 @@ export const createEchoPanel = inlineComponent<PranEditorControls, EchoPanelSide
   ];
 });
 
-const draw = (id: string): ManagerTimelineAction => ({ type: ActionType.Draw, imageId: id });
-const clear = (): ManagerTimelineAction => ({ type: ActionType.Clear });
-const wait = (amount: number): ManagerTimelineAction => ({ type: ActionType.None, amount });
-
 function getAudio(element: HTMLElement): HTMLAudioElement {
   return element.querySelector('.echo-panel_audio');
 }
@@ -157,7 +158,7 @@ async function uploadText(text: string, seconds: number, controls: EchoPanelCont
   const formData = new FormData();
   formData.append('text', text);
 
-  const response: { text: string, phonemes: string } = await (await fetch('/api/text', { method: 'POST', body: formData })).json();
+  const response: { text: string, phonemes: string[][] } = await (await fetch('/api/text', { method: 'POST', body: formData })).json();
 
   updateAnimationAndData({ text, phonemes: response.phonemes, seconds }, controls, inputs);
   controls.setSideInput('isLoading', false);
@@ -190,7 +191,7 @@ async function uploadAudio(filesChange: Event & { target: HTMLInputElement }, au
 }
 
 function updateAnimationAndData(audioData: AudioData, controls: EchoPanelControls, editorControls: PranEditorControls) {
-  const mouthMovementsImagesIds = phonemesMapper(audioData.phonemes.split(' '), {
+  const mouthMovementsImagesIds = phonemesMapper(audioData.phonemes.flatMap(x => x), {
     fv: 'fv',
     ur: 'ur',
     stch: 'stch',
@@ -207,21 +208,21 @@ function updateAnimationAndData(audioData: AudioData, controls: EchoPanelControl
 
   editorControls.animatorManager.animate(editorControls.animator,
     mouthMovementsImagesIds.flatMap(id => (
-      [draw(id), wait(5)]
+      [drawId(id), wait(5)]
     )),
     [
-      draw('eyes_open'),
+      drawId('eyes_open'),
       wait(20),
-      draw('eyes_semi_open'),
+      drawId('eyes_semi_open'),
       wait(3),
-      draw('eyes_closed'),
+      drawId('eyes_closed'),
       wait(3),
-      draw('eyes_semi_open'),
+      drawId('eyes_semi_open'),
       wait(3),
-      draw('eyes_open')
+      drawId('eyes_open')
     ],
     [
-      draw('head_idle')
+      drawId('head_idle')
     ]
   );
 

@@ -13,12 +13,12 @@
 .modal-template_backdrop {
     height: 100%;
     width: 100%;
-    background-color: rgba(50, 50, 50, .5);
+    background-color: rgba(0, 0, 0, .5);
     position: absolute;
 }
 
 .modal-template_container {
-    background: white;
+    background: var(--modal-template_bg-color, white);
     width: 40%;
     min-width: 400px;
     z-index: 1;
@@ -44,5 +44,5 @@
 .modal-template_container::-webkit-scrollbar-thumb {
     background-color: #c3c3c3;
     border-radius: 20px;
-    border: 3px solid white;
+    border: 3px solid var(--modal-template_bg-color, white);
 }

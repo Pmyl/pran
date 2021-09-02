@@ -59,9 +59,12 @@ export class PlayerController {
       if (elapsed > fpsInterval) {
         this._animator.tick();
         if (this._animator.totalFrames === this._animator.currentFrame) {
-          this._applyStateChange(PlayerState.End);
+          this._emitStateChange(PlayerState.End);
           if (this._isLooping) {
             this._animator.restart();
+            this._emitStateChange(PlayerState.Play);
+          } else {
+            this._applyStateChange(PlayerState.Stop);
           }
         }
         then = now - (elapsed % fpsInterval);
@@ -82,7 +85,7 @@ export class PlayerController {
   }
 
   public async stop() {
-    this._animator.restart();
+    this.pickFrame(0);
     await this._applyStateChange(PlayerState.Stop);
   }
 
@@ -113,6 +116,12 @@ export class PlayerController {
 
     this._state = state;
 
+    for (const subscriber of this._onStateChangeSubscribers) {
+      await subscriber(state);
+    }
+  }
+
+  private async _emitStateChange(state: PlayerState) {
     for (const subscriber of this._onStateChangeSubscribers) {
       await subscriber(state);
     }

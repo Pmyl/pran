@@ -4,7 +4,7 @@ import { Component } from '../../../framework/component';
 import { inlineComponent } from '../../../framework/inline-component';
 import { onClick } from '../../../framework/on-click';
 import { onDoubleClick } from '../../../framework/on-double-click';
-import { ModalContentInputs } from '../../../modal/modal-template/modal-template';
+import { ModalContentInputs } from '../../../modal/modal-content-inputs';
 import { createImageToSelect } from './image-to-select/image-to-select';
 
 type SelectImageModalInputs = ModalContentInputs<[string, HTMLImageElement]> & {

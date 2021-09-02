@@ -2,12 +2,13 @@
     position: relative;
     display: inline-block;
     padding: 0 500px 0 15px;
+    color: var(--timeline-board_text-color, black);
 }
 
 .timeline-board_vertical-line {
-    margin-left: 15px;
+    margin-left: 14px;
     position: absolute;
-    border-right: 1px solid black;
+    border-right: 3px solid var(--timeline-board_vertical-line-color, black);
     display: block;
     height: 100%;
     z-index: 300;
@@ -16,7 +17,7 @@
 
 .timeline-board_frame-pick-area {
     height: 35px;
-    background-color: lightcyan;
+    background-color: var(--timeline-board_pick-area-color, lightcyan);
     position: sticky;
     top: 0;
     z-index: 299
@@ -24,14 +25,18 @@
 
 .timeline-board_frame-pick-line {
     pointer-events: none;
-    border-right: 1px solid gray;
+    border-right: 1px solid var(--timeline-board_pick-line-color, gray);
     position: absolute;
     height: 50%;
     top: 0;
 }
 
+.timeline-board_frame-pick-line.isHighlight {
+    border-color: var(--timeline-board_pick-line-highlight-color, gray);
+}
+
 .timeline-board_frame-pick-frame {
     position: absolute;
-    transform: translate(-50%, 17px);
+    transform: translate(-50%, 19px);
     font-size: 12px;
 }

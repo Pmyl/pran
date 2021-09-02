@@ -10,10 +10,11 @@ export interface EditorAction {
   undo(): void;
 }
 
-export function combine(name: string, ...editorActions: EditorAction[]): EditorAction {
+export function combine(name: string, ...editorActions: EditorAction[]): EditorAction & { combinedActions: EditorAction[] } {
   editorActions = editorActions.filter(Boolean);
 
   return {
+    combinedActions: editorActions,
     name,
     do() {
       editorActions.forEach(a => {

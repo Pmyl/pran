@@ -1,10 +1,11 @@
 .image-to-select_container {
     position: relative;
     height: 202px;
+    background-color: var(--image-to-select_image-bg-color, white);
 }
 
 .image-to-select_container.isSelected {
-    box-shadow: 0 0 0 2px darkorange;
+    box-shadow: 0 0 0 2px var(--image-to-select_image-selected-border-color, darkorange);
 }
 
 .image-to-select_id {
@@ -13,10 +14,10 @@
     padding: 5px;
     box-sizing: border-box;
     width: 100%;
-    background-color: rgba(0, 0, 0, .1);
+    background-color: var(--image-to-select_name-bar-bg-color, rgba(0, 0, 0, .1));
 }
 
 .image-to-select_image {
     height: 200px;
-    border: 1px solid lightgray;
+    border: 1px solid var(--image-to-select_image-border-color, rgba(0, 0, 0, .1));
 }
