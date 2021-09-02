@@ -17,6 +17,17 @@
     padding: 6px 15px 6px;
 }
 
+.g-button.g-button-icon-s {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+}
+
+.g-button.g-button-icon-s::after {
+    top: 2px;
+    left: 2px;
+}
+
 .g-button::after {
     content: "";
     background-color: var(--g-button_bg-color, #ffe54c);
@@ -27,6 +38,15 @@
     top: 4px;
     left: 4px;
     transition: 0.2s;
+}
+
+.g-button.g-button-negative {
+    border-color: var(--g-button_negative-border-color, var(--g-button_border-color));
+    color: var(--g-button_negative-text-color, var(--g-button_text-color));
+}
+
+.g-button.g-button-negative::after {
+    background-color: var(--g-button_negative-bg-color, var(--g-button_bg-color));
 }
 
 .g-button:hover::after {

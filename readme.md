@@ -40,8 +40,7 @@ Configure animation frontend with very few animations but all the phonemes. Gets
 Being able to output a gif/video of animation, use [MediaRecorder](https://developer.mozilla.org/en-US/docs/Web/API/MediaRecorder).
 
 
-- Riorganizzare tasti in alto a destra 
-- Metadata nelle azioni (fonemi)
 - Azioni draw contengono ID invece che path (mostrare ID in block editor)
+- Muovere su e giu la timeline bar
 
 - IMPOSSIBILE: Taglia primo secondo video prima di export

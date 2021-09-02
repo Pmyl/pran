@@ -116,14 +116,21 @@ export interface MouthMapping<T = string> {
   smile: T;
 }
 
-export function phonemesMapper<TOutput = string>(inputPhonemes: string[], mouthMapping: MouthMapping<TOutput>, phonemesOverride?: Map<string, (keyof MouthMapping)[]>): TOutput[] {
+export interface MapOutput<TOutput = string> {
+  phoneme: string;
+  output: TOutput;
+}
+
+export function phonemesMapper<TOutput = string>(inputPhonemes: string[], mouthMapping: MouthMapping<TOutput>, phonemesOverride?: Map<string, (keyof MouthMapping)[]>): MapOutput<TOutput>[] {
   phonemesOverride = phonemesOverride || phonemes;
 
-  return inputPhonemes.flatMap(p => {
-    if (!phonemesOverride.has(p)) {
+  return inputPhonemes.flatMap(phoneme => {
+    if (!phonemesOverride.has(phoneme)) {
       throw new Error();
     }
 
-    return phonemesOverride.get(p);
-  }).map(m => mouthMapping[m]);
+    const ids: string[] = phonemesOverride.get(phoneme);
+
+    return ids.map(id => ({ phoneme, output: mouthMapping[id] }));
+  });
 }

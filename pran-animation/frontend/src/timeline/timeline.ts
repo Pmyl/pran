@@ -1,5 +1,5 @@
 import { CanvasController } from 'pran-phonemes-frontend';
-import { ActionType, NoneAction, TimelineAction } from './timeline-action';
+import { ActionType, TimelineAction } from './timeline-action';
 
 export class Timeline {
   public get timelineActions(): readonly TimelineAction[] {

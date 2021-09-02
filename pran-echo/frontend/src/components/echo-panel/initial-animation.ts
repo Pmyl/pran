@@ -1,12 +1,8 @@
-import { ActionType, Animator, AnimatorManager, ManagerTimelineAction } from 'pran-animation-frontend';
+import { ActionType, Animator, AnimatorManager, drawId, ManagerTimelineAction, wait } from 'pran-animation-frontend';
 import { cmuPhonemesMap, phonemesMapper } from 'pran-phonemes-frontend';
 
-const draw = (id: string): ManagerTimelineAction => ({ type: ActionType.Draw, imageId: id });
-const clear = (): ManagerTimelineAction => ({ type: ActionType.Clear });
-const wait = (amount: number): ManagerTimelineAction => ({ type: ActionType.None, amount });
-
 export const setupInitialAnimation = (animatorManager: AnimatorManager, animator: Animator) => {
-  const mouthMovementsImagesIds = phonemesMapper('HH EH L OW , M AY N EY M ZH P R AH N EH S AH .'.split(' '), {
+  const mouthMovementsMapping = phonemesMapper('HH EH L OW , M AY N EY M ZH P R AH N EH S AH .'.split(' '), {
     fv: 'fv',
     ur: 'ur',
     stch: 'stch',
@@ -23,22 +19,28 @@ export const setupInitialAnimation = (animatorManager: AnimatorManager, animator
 
   animatorManager.animate(
     animator,
-    mouthMovementsImagesIds.flatMap(id => (
-      [draw(id), wait(5)]
+    mouthMovementsMapping.flatMap(mapping => (
+      [drawWithMetadata(mapping.output, { id: mapping.output, phoneme: mapping.phoneme }), wait(5)]
     )),
     [
-      draw('eyes_open'),
+      drawId('eyes_open'),
       wait(20),
-      draw('eyes_semi_open'),
+      drawId('eyes_semi_open'),
       wait(3),
-      draw('eyes_closed'),
+      drawId('eyes_closed'),
       wait(3),
-      draw('eyes_semi_open'),
+      drawId('eyes_semi_open'),
       wait(3),
-      draw('eyes_open'),
+      drawId('eyes_open')
     ],
     [
-      draw('head_idle'),
+      drawId('head_idle')
     ]
   );
+}
+
+const drawWithMetadata = (id: string, metadata: { [key: string]: any }) => {
+  const action: ManagerTimelineAction = drawId(id);
+  action.metadata = metadata;
+  return action;
 }

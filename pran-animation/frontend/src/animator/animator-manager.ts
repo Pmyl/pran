@@ -7,6 +7,7 @@ export type ManagerTimelineAction = NoneAction | ManagerTimelineDrawAction | Cle
 export interface ManagerTimelineDrawAction {
   type: ActionType.Draw;
   imageId: string;
+  metadata?: { [key: string]: any };
 }
 
 export class AnimatorManager {
@@ -84,6 +85,6 @@ export class AnimatorManager {
   }
 
   private _toAnimationDetails(animation: ManagerTimelineAction[]): TimelineAction[] {
-    return animation.map(x => x.type === ActionType.Draw ? { type: ActionType.Draw, image: this._imagesMap.get(x.imageId) } : x);
+    return animation.map(x => x.type === ActionType.Draw ? { type: ActionType.Draw, image: this._imagesMap.get(x.imageId), metadata: x.metadata } : x);
   }
 }

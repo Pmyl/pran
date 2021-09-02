@@ -20,6 +20,9 @@ body {
     --g-button_bg-color: #117b77;
     --g-button_border-color: #0c5754;
     --g-button_text-color: #121212;
+    --g-button_negative-bg-color: #862931;
+    --g-button_negative-border-color: #5e1d23;
+    --g-button_negative-text-color: var(--g-button_text-color);
 
     --animation-editor_player-border-color: var(--g-button_border-color);
     --player_bg-color: var(--echo_bg-color);

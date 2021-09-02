@@ -7,7 +7,7 @@ import {
   PlayerState,
   PranEditorControls
 } from 'pran-animation-editor-frontend';
-import { ActionType, drawId, ManagerTimelineAction, wait } from 'pran-animation-frontend';
+import { drawId, ManagerTimelineAction, wait } from 'pran-animation-frontend';
 import { cmuPhonemesMap, phonemesMapper } from 'pran-phonemes-frontend';
 import './echo-panel.css';
 import { createEchoRecordingModal } from './echo-recording-modal';
@@ -191,7 +191,7 @@ async function uploadAudio(filesChange: Event & { target: HTMLInputElement }, au
 }
 
 function updateAnimationAndData(audioData: AudioData, controls: EchoPanelControls, editorControls: PranEditorControls) {
-  const mouthMovementsImagesIds = phonemesMapper(audioData.phonemes.flatMap(x => x), {
+  const mouthMovementsMapping = phonemesMapper(audioData.phonemes.flatMap(x => x), {
     fv: 'fv',
     ur: 'ur',
     stch: 'stch',
@@ -207,8 +207,8 @@ function updateAnimationAndData(audioData: AudioData, controls: EchoPanelControl
   }, cmuPhonemesMap);
 
   editorControls.animatorManager.animate(editorControls.animator,
-    mouthMovementsImagesIds.flatMap(id => (
-      [drawId(id), wait(5)]
+    mouthMovementsMapping.flatMap(mapping => (
+      [drawWithMetadata(mapping.output, { id: mapping.output, phoneme: mapping.phoneme }), wait(5)]
     )),
     [
       drawId('eyes_open'),
@@ -230,6 +230,12 @@ function updateAnimationAndData(audioData: AudioData, controls: EchoPanelControl
   controls.setSideInput('phonemes', audioData.phonemes);
   controls.setSideInput('seconds', audioData.seconds);
   controls.changed();
+}
+
+const drawWithMetadata = (id: string, metadata: { [key: string]: any }) => {
+  const action: ManagerTimelineAction = drawId(id);
+  action.metadata = metadata;
+  return action;
 }
 
 declare global {

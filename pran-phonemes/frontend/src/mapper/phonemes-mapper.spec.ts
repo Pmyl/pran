@@ -1,7 +1,7 @@
-import { MouthMapping, phonemesMapper } from './phonemes-mapper';
+import { MapOutput, MouthMapping, phonemesMapper } from './phonemes-mapper';
 
 describe('phonemes-mapper', () => {
-  function runMapper(input: string[]): string[] {
+  function runMapper(input: string[]): MapOutput[] {
     return phonemesMapper(input, {
       fv: 'url/to/fv.png',
       ur: 'url/to/ur.png',
@@ -18,7 +18,7 @@ describe('phonemes-mapper', () => {
     });
   }
 
-  function runMapperWithPhonemeMap(input: string[], phonemeMap: Map<string, (keyof MouthMapping)[]>): string[] {
+  function runMapperWithPhonemeMap(input: string[], phonemeMap: Map<string, (keyof MouthMapping)[]>): MapOutput[] {
     return phonemesMapper(input, {
       fv: 'url/to/fv.png',
       ur: 'url/to/ur.png',
@@ -84,16 +84,21 @@ describe('phonemes-mapper', () => {
   });
 
   it('should return the correct mapping based on input', () => {
-    expect(runMapperWithPhonemeMap(['v'], new Map<string, (keyof MouthMapping)[]>([['v', ['fv']]]))).toEqual(['url/to/fv.png']);
+    expect(runMapperWithPhonemeMap(['v'], new Map<string, (keyof MouthMapping)[]>([['v', ['fv']]]))).toEqual([{ phoneme: 'v', output: 'url/to/fv.png' }]);
   });
 
   it('should return the correct mapping based on input when a phoneme is mapped to multiple mouth positions', () => {
     expect(runMapperWithPhonemeMap(['v'], new Map<string, (keyof MouthMapping)[]>([['v', ['fv', 'aah']]])))
-      .toEqual(['url/to/fv.png', 'url/to/aah.png']);
+      .toEqual([{ phoneme: 'v', output: 'url/to/fv.png' }, { phoneme: 'v', output: 'url/to/aah.png' }]);
   });
 
   it('should return the correct mapping based on input when a phoneme is mapped to multiple mouth positions and there are more phonemes', () => {
     expect(runMapperWithPhonemeMap(['v', 'e'], new Map<string, (keyof MouthMapping)[]>([['v', ['fv', 'aah']], ['e', ['ur', 'stch']]])))
-      .toEqual(['url/to/fv.png', 'url/to/aah.png', 'url/to/ur.png', 'url/to/stch.png']);
+      .toEqual([
+        { phoneme: 'v', output: 'url/to/fv.png' },
+        { phoneme: 'v', output: 'url/to/aah.png' },
+        { phoneme: 'e', output: 'url/to/ur.png' },
+        { phoneme: 'e', output: 'url/to/stch.png' }
+      ]);
   });
 });

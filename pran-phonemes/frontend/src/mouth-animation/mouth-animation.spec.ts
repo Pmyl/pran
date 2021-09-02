@@ -13,6 +13,7 @@ function fakeCanvasController(actions: [string, any][]): CanvasController {
     dry_draw: () => {},
     dry_replace: () => {},
     addLayer(_: string): CanvasController { return this; },
+    addLayerAt(_: string, __: number): CanvasController { return this; },
     id: ''
   };
 }

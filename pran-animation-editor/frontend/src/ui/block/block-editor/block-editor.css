@@ -40,6 +40,31 @@
     align-self: center;
 }
 
+.block-editor_buttons-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
 .block-editor_timeline-buttons-container {
     margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.block-editor_add-timeline,
+.block-editor_remove-timeline {
+    margin-left: 8px;
+}
+
+.block-editor_add-timeline > img {
+    width: 14px;
+    height: 14px;
+}
+
+.block-editor_remove-timeline > img {
+    width: 16px;
+    height: 16px;
 }
