@@ -42,6 +42,7 @@ body {
 
     --block-editor_block-border-color: var(--block_border-color);
     --block-editor_block-bg-color: var(--block_bg-color);
+    --block-editor_block-hover-border-color: var(--timeline-board_vertical-line-color);
 
     --modal-template_bg-color: var(--echo_bg-color);
     --image-to-select_image-selected-border-color: var(--timeline-board_vertical-line-color);
