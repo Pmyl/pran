@@ -3,7 +3,7 @@ name: Deploy Pran Echo on Heroku
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   build:
