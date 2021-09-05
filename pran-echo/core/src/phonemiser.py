@@ -5,11 +5,6 @@ import uuid
 import re
 from g2p_en import G2p
 
-# install speech_recognition
-# install soundfile
-# install numpy
-# install g2p_en
-
 
 class AudioPhonemisedResponse:
     def __init__(self, text, phonemes, audio, samplerate):
