@@ -1,0 +1,11 @@
+{
+  "name": "pran",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "heroku-postbuild": "./scripts/heroku.build",
+    "build-pran-echo": "cd pran-echo/frontend && npm ci && npm build"
+  },
+  "author": "",
+  "license": "ISC"
+}
