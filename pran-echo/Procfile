@@ -1,1 +1,1 @@
-web: ROCKET_PORT=$PORT ROCKET_KEEP_ALIVE=0 STATIC_PATH=./frontend/src PYTHON_PATH=./core/src ./core/target/release/pran-echo-core
+web: ROCKET_PORT=$PORT ROCKET_ADDRESS=0.0.0.0 ROCKET_KEEP_ALIVE=0 STATIC_PATH=./frontend/src PYTHON_PATH=./core/src ./core/target/release/pran-echo-core
