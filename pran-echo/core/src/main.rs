@@ -35,7 +35,7 @@ fn rocket() -> _ {
     rocket::build()
         .manage(config)
         .mount("/", FileServer::from(static_path))
-        .mount("/api", routes![phonemise_audio, phonemise_text, python_check])
+        .mount("/api", routes![phonemise_audio, phonemise_text, python_check, python_check_identity])
 }
 
 #[derive(FromForm)]
@@ -130,6 +130,25 @@ async fn python_check(config: &State<Config>) -> Result<String, CustomError> {
 
         let phonemiser: &PyModule = PyModule::import(py, "check")?;
         let call_result: String = phonemiser.getattr("python_check")?.call0()?.extract()?;
+        Ok(call_result)
+    });
+
+    result.map_err(|e| CustomError(format!("{:?}", e)))
+}
+
+
+#[get("/pythoncheckidentity")]
+async fn python_check_identity(config: &State<Config>) -> Result<String, CustomError> {
+    let result: PyResult<String> = Python::with_gil(|py| {
+        let syspath: &PyList = PyModule::import(py, "sys")?
+            .getattr("path")?
+            .try_into()?;
+
+        syspath.insert(0, config.python_path.clone())
+            .unwrap();
+
+        let phonemiser: &PyModule = PyModule::import(py, "check")?;
+        let call_result: String = phonemiser.getattr("python_check_identity")?.call1(("identity works", ))?.extract()?;
         Ok(call_result)
     });
 
