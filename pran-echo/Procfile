@@ -1,1 +1,1 @@
-web: ./core/target/release/pran-echo-core
+web: ROCKET_PORT=$PORT ROCKET_KEEP_ALIVE=0 ./core/target/release/pran-echo-core
