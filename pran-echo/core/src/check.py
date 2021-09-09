@@ -1,6 +1,5 @@
 import os
-
-import speech_recognition as sr
+from g2p_en import G2p
 
 
 def python_check():
