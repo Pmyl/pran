@@ -1,5 +1,5 @@
 libasound2-dev
-libpython3-dev
+libpython3.7-dev
 python3-numpy
 python3-setuptools
 libsndfile-dev
