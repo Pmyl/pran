@@ -9,6 +9,7 @@ use rocket::serde::{Serialize, json::Json};
 use dotenv::dotenv;
 use std::{env, fmt};
 use rocket::State;
+use std::path::Path;
 
 struct Config {
     pub static_path: String,
@@ -121,15 +122,13 @@ async fn phonemise_text(data: Form<Text>, config: &State<Config>) -> Result<Json
 #[get("/pythoncheck")]
 async fn python_check(config: &State<Config>) -> Result<String, CustomError> {
     let result: PyResult<String> = Python::with_gil(|py| {
-        let syspath: &PyList = PyModule::import(py, "sys")?
-            .getattr("path")?
-            .try_into()?;
-
-        syspath.insert(0, config.python_path.clone())
-            .unwrap();
-
-        let phonemiser: &PyModule = PyModule::import(py, "check")?;
-        let call_result: String = phonemiser.getattr("python_check")?.call0()?.extract()?;
+        let module = PyModule::from_code(
+            py,
+            include_str!("check.py"),
+            "check.py",
+            "check"
+        )?;
+        let call_result: String = module.getattr("python_check")?.call0()?.extract()?;
         Ok(call_result)
     });
 
