@@ -15,7 +15,7 @@ jobs:
         with:
           usedocker: true,
           docker_heroku_process_type: "pran-echo"
-          docker_build_args: "--recursive --context-path ."
+          docker_build_args: "dummy1=\"none\" --recursive --context-path . --arg dummy2"
           heroku_api_key: ${{secrets.HEROKU_API_KEY}}
           heroku_app_name: "pran-echo"
           heroku_email: ${{secrets.HEROKU_EMAIL}}
