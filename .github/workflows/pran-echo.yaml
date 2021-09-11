@@ -11,10 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: pmyl/heroku-deploy@v1.0.1
+      - uses: pmyl/heroku-deploy@v1.0.2
         with:
-          usedocker: true,
-          justlogin: true,
+          usedocker: true
+          justlogin: true
           heroku_api_key: ${{secrets.HEROKU_API_KEY}}
           heroku_email: ${{secrets.HEROKU_EMAIL}}
       - name: Set up Docker Buildx
@@ -27,6 +27,9 @@ jobs:
           context: .
           push: true
           tags: registry.heroku.com/pran-echo/web
-      - name: Inspect image
-        run: |
-          docker image inspect ${{ env.DOCKER_IMAGE }}:${{ steps.meta.outputs.version }}
+      - uses: pmyl/heroku-deploy@v1.0.2
+        with:
+          usedocker: true
+          justrelease: true
+          docker_heroku_process_type: "web"
+          heroku_app_name: "pran-echo"
