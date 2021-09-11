@@ -10,7 +10,7 @@ use dotenv::dotenv;
 use std::{env, fmt};
 use rocket::State;
 use std::path::Path;
-use rocket::figment::Figment;
+use rocket::{ figment::Figment, Config as RocketConfig };
 
 struct Config {
     pub static_path: String,
@@ -36,7 +36,7 @@ fn rocket() -> _ {
     let static_path = config.static_path.clone();
 
     let figment = Figment::from(rocket::Config::default())
-        .merge((Config::PORT, config.port));
+        .merge((RocketConfig::PORT, config.port));
 
     pyo3::prepare_freethreaded_python();
     rocket::custom(figment)
