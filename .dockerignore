@@ -1,0 +1,4 @@
+**/.env
+**/target
+**/dist
+**/node_modules

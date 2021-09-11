@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "prepare-install": "npm run install-phonemes",
     "install-phonemes": "npm i ../../pran-phonemes/frontend/dist/pran-phonemes-frontend-1.0.0.tgz",
     "build-visual": "microbundle visual-test/main.ts --output visual-test/dist/index.js --external none --format modern,cjs",
     "dev-visual": "concurrently --kill-others \"npm run ~watch-visual\" \"npm run ~server-visual\"",
@@ -12,7 +13,7 @@
     "test": "jasmine-ts --config=jasmine.json",
     "~watch-visual": "microbundle watch visual-test/main.ts --output visual-test/dist/index.js --external none --format modern,cjs",
     "~server-visual": "lite-server --baseDir=visual-test",
-    "~copy-package": "ncp package.json dist/package.json && replace-content dist/package.json file:../../pran-phonemes file:../../../pran-phonemes",
+    "~copy-package": "ncp package.json dist/package.json && node ../../build-tools/replace-content/index.js dist/package.json file:../../pran-phonemes file:../../../pran-phonemes",
     "~pack-dist": "cd dist && npm pack"
   },
   "author": "",

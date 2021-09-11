@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "prepare-install": "npm run install-phonemes && npm run install-animation && npm run install-animation-editor",
     "install-animation-editor": "npm i ../../pran-animation-editor/frontend/dist/pran-animation-editor-frontend-1.0.0.tgz",
     "install-animation": "npm i ../../pran-animation/frontend/dist/pran-animation-frontend-1.0.0.tgz",
     "install-phonemes": "npm i ../../pran-phonemes/frontend/dist/pran-phonemes-frontend-1.0.0.tgz",

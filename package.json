@@ -3,8 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "heroku-postbuild": "./scripts/heroku.build",
-    "build-pran-echo": "cd pran-echo/frontend && npm ci && npm build"
+    "pran-echo:prepare-deploy": "npm run ~libs:build && npm run ~pran-echo:build",
+    "~libs:build": "npm run ~pran-phonemes:build && npm run ~pran-animation:build && npm run ~pran-animation-editor:build",
+    "~pran-echo:build": "npm --prefix ./pran-echo/frontend run prepare-install && npm --prefix ./pran-echo/frontend install ./pran-echo/frontend && npm --prefix ./pran-echo/frontend run build",
+    "~pran-phonemes:build": "npm --prefix ./pran-phonemes/frontend install ./pran-phonemes/frontend && npm --prefix ./pran-phonemes/frontend run build-pack",
+    "~pran-animation:build": "npm --prefix ./pran-animation/frontend run prepare-install && npm --prefix ./pran-animation/frontend install ./pran-animation/frontend && npm --prefix ./pran-animation/frontend run build-pack",
+    "~pran-animation-editor:build": "npm --prefix ./pran-animation-editor/frontend run prepare-install && npm --prefix ./pran-animation-editor/frontend install ./pran-animation-editor/frontend && npm --prefix ./pran-animation-editor/frontend run build-pack"
   },
   "author": "",
   "license": "ISC"
