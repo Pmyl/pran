@@ -10,10 +10,12 @@ use dotenv::dotenv;
 use std::{env, fmt};
 use rocket::State;
 use std::path::Path;
+use rocket::figment::Figment;
 
 struct Config {
     pub static_path: String,
-    pub python_path: String
+    pub python_path: String,
+    pub port: u16
 }
 
 impl Config {
@@ -22,7 +24,8 @@ impl Config {
 
         Config {
             static_path: env::var("STATIC_PATH").expect("STATIC_PATH missing in env variables. .env not existing?"),
-            python_path: env::var("PYTHON_PATH").expect("PYTHON_PATH missing in env variables. .env not existing?")
+            python_path: env::var("PYTHON_PATH").expect("PYTHON_PATH missing in env variables. .env not existing?"),
+            port: env::var("PORT").or(Ok("8000".to_string())).and_then(|port| port.parse::<u16>()).expect("PORT not a number")
         }
     }
 }
@@ -32,8 +35,11 @@ fn rocket() -> _ {
     let config = Config::new();
     let static_path = config.static_path.clone();
 
+    let figment = Figment::from(rocket::Config::default())
+        .merge((Config::PORT, config.port));
+
     pyo3::prepare_freethreaded_python();
-    rocket::build()
+    rocket::custom(figment)
         .manage(config)
         .mount("/", FileServer::from(static_path))
         .mount("/api", routes![phonemise_audio, phonemise_text, python_check, python_check_identity])

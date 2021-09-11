@@ -22,8 +22,6 @@ WORKDIR /pran-echo/core
 RUN pip3 install -r requirements.txt
 RUN cargo build --release
 
-# for testing: ENV ROCKET_PORT=8080
-ENV ROCKET_PORT=$PORT
 ENV ROCKET_ADDRESS=0.0.0.0
 ENV STATIC_PATH=../frontend/dist
 ENV PYTHON_PATH=./src
