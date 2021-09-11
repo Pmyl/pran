@@ -16,5 +16,5 @@ jobs:
           usedocker: true,
           docker_heroku_process_type: "pran-echo"
           heroku_api_key: ${{secrets.HEROKU_API_KEY}}
-          heroku_app_name: "pran-echo --recursive --context-path ."
+          heroku_app_name: "pran-echo"
           heroku_email: ${{secrets.HEROKU_EMAIL}}
