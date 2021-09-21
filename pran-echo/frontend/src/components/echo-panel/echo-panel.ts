@@ -100,7 +100,7 @@ export const createEchoPanel = inlineComponent<PranEditorControls, EchoPanelSide
   </div>
   `}
   <h1 class="echo-panel_title">Pran Echo</h1>
-  <input type="file" id="upload_audio_input" hidden />
+  <input type="file" id="upload_audio_input" accept=".wav" hidden />
   <button class="echo-panel_upload-audio g-button" type="button">Upload audio</button>
   <audio class="echo-panel_audio"></audio>
   ${!audio ? '' : `

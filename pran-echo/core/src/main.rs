@@ -9,7 +9,6 @@ use rocket::serde::{Serialize, json::Json};
 use dotenv::dotenv;
 use std::{env, fmt};
 use rocket::State;
-use std::path::Path;
 use rocket::{figment::{Figment, providers::Env}, Config as RocketConfig };
 
 struct Config {
@@ -43,7 +42,7 @@ fn rocket() -> _ {
     rocket::custom(figment)
         .manage(config)
         .mount("/", FileServer::from(static_path))
-        .mount("/api", routes![phonemise_audio, phonemise_text, python_check, python_check_identity])
+        .mount("/api", routes![phonemise_audio, phonemise_text])
 }
 
 #[derive(FromForm)]
@@ -123,40 +122,4 @@ async fn phonemise_text(data: Form<Text>, config: &State<Config>) -> Result<Json
         .map(|phonemes| TextResult { phonemes, text: data.text.clone() })
         .map(|text_result| Json(text_result))
         .map_err(|e| CustomError(format!("{:?}", e)))
-}
-
-
-#[get("/pythoncheck")]
-async fn python_check(config: &State<Config>) -> Result<String, CustomError> {
-    let result: PyResult<String> = Python::with_gil(|py| {
-        let module = PyModule::from_code(
-            py,
-            include_str!("check.py"),
-            "check.py",
-            "check"
-        )?;
-        let call_result: String = module.getattr("python_check")?.call0()?.extract()?;
-        Ok(call_result)
-    });
-
-    result.map_err(|e| CustomError(format!("{:?}", e)))
-}
-
-
-#[get("/pythoncheckidentity")]
-async fn python_check_identity(config: &State<Config>) -> Result<String, CustomError> {
-    let result: PyResult<String> = Python::with_gil(|py| {
-        let syspath: &PyList = PyModule::import(py, "sys")?
-            .getattr("path")?
-            .try_into()?;
-
-        syspath.insert(0, config.python_path.clone())
-            .unwrap();
-
-        let phonemiser: &PyModule = PyModule::import(py, "check")?;
-        let call_result: String = phonemiser.getattr("python_check_identity")?.call1(("identity works", ))?.extract()?;
-        Ok(call_result)
-    });
-
-    result.map_err(|e| CustomError(format!("{:?}", e)))
 }
