@@ -17,7 +17,6 @@ COPY ./pran-phonemes/ ./app/pran-phonemes/
 COPY ./pran-animation/ ./app/pran-animation/
 COPY ./pran-animation-editor/ ./app/pran-animation-editor/
 COPY ./pran-echo/ ./app/pran-echo/
-COPY ./build-tools/ ./app/build-tools/
 
 WORKDIR /app
 RUN npm run pran-echo:prepare-deploy
