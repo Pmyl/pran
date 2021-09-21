@@ -10,19 +10,19 @@ RUN apt-get install -y nodejs
 
 RUN npm -v
 
-COPY ./tsconfig.json ./
-COPY ./package-lock.json ./
-COPY ./package.json ./
-COPY ./pran-phonemes/ ./pran-phonemes/
-COPY ./pran-animation/ ./pran-animation/
-COPY ./pran-animation-editor/ ./pran-animation-editor/
-COPY ./pran-echo/ ./pran-echo/
-COPY ./build-tools/ ./build-tools/
+WORKDIR /app
+COPY ./tsconfig.json ./app/
+COPY ./package-lock.json ./app/
+COPY ./package.json ./app/
+COPY ./pran-phonemes/ ./app/pran-phonemes/
+COPY ./pran-animation/ ./app/pran-animation/
+COPY ./pran-animation-editor/ ./app/pran-animation-editor/
+COPY ./pran-echo/ ./app/pran-echo/
+COPY ./build-tools/ ./app/build-tools/
 
-RUN npm cache verify
 RUN npm run pran-echo:prepare-deploy
 
-WORKDIR /pran-echo/core
+WORKDIR /app/pran-echo/core
 
 RUN pip3 install -r requirements.txt
 RUN cargo build --release
