@@ -2,3 +2,4 @@
 .idea
 .env
 *.http
+node_modules

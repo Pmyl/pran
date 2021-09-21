@@ -4,14 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "prepare-install": "npm run install-phonemes && npm run install-animation",
-    "install-animation": "npm i ../../pran-animation/frontend/dist/pran-animation-frontend-1.0.0.tgz",
-    "install-phonemes": "npm i ../../pran-phonemes/frontend/dist/pran-phonemes-frontend-1.0.0.tgz",
-    "build-pack": "rimraf dist && microbundle src/index.ts --output dist/index.js --format modern,cjs && npm run ~copy-package && npm run ~pack-dist",
-    "dev-pack": "rimraf dist && microbundle src/index.ts --output dist/index.js --format modern,cjs --sourcemap --no-compress && npm run ~copy-package && npm run ~pack-dist",
-    "test": "jasmine-ts --config=jasmine.json",
-    "~copy-package": "ncp package.json dist/package.json && node ../../build-tools/replace-content/index.js dist/package.json file:../../pran-phonemes file:../../../pran-phonemes && node ../../build-tools/replace-content/index.js dist/package.json file:../../pran-animation file:../../../pran-animation",
-    "~pack-dist": "cd dist && npm pack"
+    "test": "jasmine-ts --config=jasmine.json"
   },
   "author": "",
   "license": "ISC",
@@ -26,7 +19,7 @@
     "typescript": "^4.3.5"
   },
   "dependencies": {
-    "pran-animation-frontend": "file:../../pran-animation/frontend/dist/pran-animation-frontend-1.0.0.tgz",
-    "pran-phonemes-frontend": "file:../../pran-phonemes/frontend/dist/pran-phonemes-frontend-1.0.0.tgz"
+    "pran-animation-frontend": "1.0.0",
+    "pran-phonemes-frontend": "1.0.0"
   }
 }

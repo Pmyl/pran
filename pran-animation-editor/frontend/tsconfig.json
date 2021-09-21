@@ -1,4 +1,5 @@
 {
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "module": "CommonJS",
     "target": "ES2019",
@@ -7,6 +8,5 @@
   },
   "exclude": [
     "node_modules"
-  ],
-  "include": ["node_modules/microbundle/index.d.ts"]
+  ]
 }

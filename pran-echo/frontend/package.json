@@ -4,10 +4,6 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "prepare-install": "npm run install-phonemes && npm run install-animation && npm run install-animation-editor",
-    "install-animation-editor": "npm i ../../pran-animation-editor/frontend/dist/pran-animation-editor-frontend-1.0.0.tgz",
-    "install-animation": "npm i ../../pran-animation/frontend/dist/pran-animation-frontend-1.0.0.tgz",
-    "install-phonemes": "npm i ../../pran-phonemes/frontend/dist/pran-phonemes-frontend-1.0.0.tgz",
     "build": "rimraf dist && mkdir dist && npm run ~copy-resources && microbundle src/index.ts --output dist/index.js --external none --format modern",
     "dev": "concurrently --kill-others \"npm run ~watch\" \"npm run ~server\"",
     "watch": "npm run ~watch",
@@ -31,8 +27,8 @@
     "typescript": "^4.3.5"
   },
   "dependencies": {
-    "pran-animation-editor-frontend": "file:../../pran-animation-editor/frontend/dist/pran-animation-editor-frontend-1.0.0.tgz",
-    "pran-animation-frontend": "file:../../pran-animation/frontend/dist/pran-animation-frontend-1.0.0.tgz",
-    "pran-phonemes-frontend": "file:../../pran-phonemes/frontend/dist/pran-phonemes-frontend-1.0.0.tgz"
+    "pran-animation-editor-frontend": "1.0.0",
+    "pran-animation-frontend": "1.0.0",
+    "pran-phonemes-frontend": "1.0.0"
   }
 }

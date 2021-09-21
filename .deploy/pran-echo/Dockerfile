@@ -8,6 +8,8 @@ RUN apt-get install -y libsndfile-dev libasound2-dev
 RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash
 RUN apt-get install -y nodejs
 
+COPY ./tsconfig.json ./
+COPY ./package-lock.json ./
 COPY ./package.json ./
 COPY ./pran-phonemes/ ./pran-phonemes/
 COPY ./pran-animation/ ./pran-animation/

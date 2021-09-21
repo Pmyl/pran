@@ -1,5 +1,4 @@
 import './index.css';
-import 'pran-animation-editor-frontend/index.css';
 import { Container, createAnimationEditor, Modal } from 'pran-animation-editor-frontend';
 import { createEchoPanel } from './components/echo-panel/echo-panel';
 

@@ -1,15 +1,16 @@
 {
   "name": "pran",
   "version": "1.0.0",
+  "author": "",
+  "license": "ISC",
   "description": "",
   "scripts": {
-    "pran-echo:prepare-deploy": "npm run ~libs:build && npm run ~pran-echo:build",
-    "~libs:build": "npm run ~pran-phonemes:build && npm run ~pran-animation:build && npm run ~pran-animation-editor:build",
-    "~pran-echo:build": "npm --prefix ./pran-echo/frontend run prepare-install && npm --prefix ./pran-echo/frontend install ./pran-echo/frontend && npm --prefix ./pran-echo/frontend run build",
-    "~pran-phonemes:build": "npm --prefix ./pran-phonemes/frontend install ./pran-phonemes/frontend && npm --prefix ./pran-phonemes/frontend run build-pack",
-    "~pran-animation:build": "npm --prefix ./pran-animation/frontend run prepare-install && npm --prefix ./pran-animation/frontend install ./pran-animation/frontend && npm --prefix ./pran-animation/frontend run build-pack",
-    "~pran-animation-editor:build": "npm --prefix ./pran-animation-editor/frontend run prepare-install && npm --prefix ./pran-animation-editor/frontend install ./pran-animation-editor/frontend && npm --prefix ./pran-animation-editor/frontend run build-pack"
+    "pran-echo:prepare-deploy": "npm ci && npm run build -w pran-echo/frontend"
   },
-  "author": "",
-  "license": "ISC"
+  "workspaces": [
+    "pran-phonemes/frontend",
+    "pran-animation/frontend",
+    "pran-animation-editor/frontend",
+    "pran-echo/frontend"
+  ]
 }
