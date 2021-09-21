@@ -10,7 +10,6 @@ RUN apt-get install -y nodejs
 
 RUN npm -v
 
-WORKDIR /app
 COPY ./tsconfig.json ./app/
 COPY ./package-lock.json ./app/
 COPY ./package.json ./app/
@@ -20,6 +19,7 @@ COPY ./pran-animation-editor/ ./app/pran-animation-editor/
 COPY ./pran-echo/ ./app/pran-echo/
 COPY ./build-tools/ ./app/build-tools/
 
+WORKDIR /app
 RUN npm run pran-echo:prepare-deploy
 
 WORKDIR /app/pran-echo/core
