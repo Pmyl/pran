@@ -19,6 +19,7 @@ COPY ./pran-animation-editor/ ./pran-animation-editor/
 COPY ./pran-echo/ ./pran-echo/
 COPY ./build-tools/ ./build-tools/
 
+RUN npm cache verify
 RUN npm run pran-echo:prepare-deploy
 
 WORKDIR /pran-echo/core
