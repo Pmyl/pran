@@ -71,14 +71,14 @@ async function startRecording(canvas: HTMLCanvasElement, playerController: Playe
 
   function download() {
     const blob = new Blob(recordedChunks, {
-      type: "video/mp4"
+      type: "video/webm"
     });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     document.body.appendChild(a);
     (a as any).style = "display: none";
     a.href = url;
-    a.download = "output.mp4";
+    a.download = "output.webm";
     a.click();
     window.URL.revokeObjectURL(url);
   }
