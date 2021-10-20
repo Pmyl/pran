@@ -8,8 +8,9 @@ use rocket::form::Form;
 use rocket::serde::{Serialize, json::Json};
 use dotenv::dotenv;
 use std::{env, fmt};
-use rocket::State;
+use rocket::{State};
 use rocket::{figment::{Figment, providers::Env}, Config as RocketConfig };
+use rocket::data::{Limits, ToByteUnit};
 
 struct Config {
     pub static_path: String,
@@ -33,8 +34,11 @@ impl Config {
 fn rocket() -> _ {
     let config = Config::new();
     let static_path = config.static_path.clone();
+    let limits = Limits::default()
+        .limit("file", 10.mebibytes());
 
-    let figment = Figment::from(rocket::Config::default())
+    let figment = Figment::from(RocketConfig::default())
+        .merge((RocketConfig::LIMITS, limits))
         .merge((RocketConfig::PORT, config.port))
         .merge(Env::prefixed("ROCKET_"));
 
