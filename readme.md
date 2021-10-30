@@ -1,3 +1,6 @@
+# -- pran --
+Random stuff to learn, what follows is old and incorrect but I'm not bothered to rewrite it.
+
 # -- pran-phonemes --
 ## <a name="pran-phonemes-core"></a> CORE
 | Language | Type | Dependencies |
@@ -38,9 +41,3 @@ Local server to listen to from browser, probably websocket.
 #### Functionality
 Configure animation frontend with very few animations but all the phonemes. Gets audio in input, sends it to [pran-echo#CORE](#pran-echo-core), wait for results back, sends results to [pran-animation#FRONTEND](#pran-animation-frontend). Ideally being able to choose animations to show at different times through an intuitive UI.
 Being able to output a gif/video of animation, use [MediaRecorder](https://developer.mozilla.org/en-US/docs/Web/API/MediaRecorder).
-
-
-- Azioni draw contengono ID invece che path (mostrare ID in block editor)
-- Muovere su e giu la timeline bar
-
-- IMPOSSIBILE: Taglia primo secondo video prima di export
