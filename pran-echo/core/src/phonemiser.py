@@ -36,6 +36,11 @@ def phonemise_text(text):
     return phonemes_words
 
 
+def transcribe_audio(filepath):
+    audio, samplerate = fetch_audio(filepath)
+    return audio_to_text(audio, samplerate)
+
+
 def fetch_audio(filepath):
     return soundfile.read(filepath)
 

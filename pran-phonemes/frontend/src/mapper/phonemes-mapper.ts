@@ -126,7 +126,8 @@ export function phonemesMapper<TOutput = string>(inputPhonemes: string[], mouthM
 
   return inputPhonemes.flatMap(phoneme => {
     if (!phonemesOverride.has(phoneme)) {
-      throw new Error();
+      console.warn('Phoneme', phoneme, 'has no match, returning no mouth positions.');
+      return [];
     }
 
     const ids: string[] = phonemesOverride.get(phoneme);

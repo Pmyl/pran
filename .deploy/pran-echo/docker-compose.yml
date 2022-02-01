@@ -1,0 +1,11 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: "app.Dockerfile"
+    ports:
+      - "8000:8000"
+  lowerquality-gentle:
+    image: "lowerquality/gentle"
+    ports:
+      - "8765:8765"
