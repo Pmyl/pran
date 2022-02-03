@@ -17,5 +17,7 @@ WORKDIR /pran
 ENV ROCKET_ADDRESS=0.0.0.0
 ENV STATIC_PATH=../frontend/dist
 ENV PYTHON_PATH=./src
+ENV GENTLE_ADDRESS=http://lowerquality-gentle
+ENV GENTLE_PORT=8765
 
-CMD ["git pull && npm run pran-echo:prepare-deploy && pip3 install -r requirements.txt && cargo build --release && ./pran-echo/core/target/release/pran-echo-core"]
+CMD git pull && npm run pran-echo:prepare-deploy && cd ./pran-echo/core && pip3 install -r requirements.txt && cargo build --release && ./target/release/pran-echo-core

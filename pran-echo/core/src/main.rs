@@ -25,6 +25,8 @@ use pyo3::basic::CompareOp::Ge;
 struct Config {
     pub static_path: String,
     pub python_path: String,
+    pub gentle_address: String,
+    pub gentle_port: u16,
     pub port: u16
 }
 
@@ -35,7 +37,9 @@ impl Config {
         Config {
             static_path: env::var("STATIC_PATH").expect("STATIC_PATH missing in env variables. .env not existing?"),
             python_path: env::var("PYTHON_PATH").expect("PYTHON_PATH missing in env variables. .env not existing?"),
-            port: env::var("PORT").or(Ok("8000".to_string())).and_then(|port| port.parse::<u16>()).expect("PORT not a number")
+            port: env::var("PORT").or(Ok("8000".to_string())).and_then(|port| port.parse::<u16>()).expect("PORT not a number"),
+            gentle_address: env::var("GENTLE_ADDRESS").unwrap_or("http://127.0.0.1".to_string()),
+            gentle_port: env::var("GENTLE_PORT").or(Ok("8765".to_string())).and_then(|port| port.parse::<u16>()).expect("GENTLE_PORT not a number")
         }
     }
 }
@@ -124,7 +128,7 @@ async fn phonemise_advanced(config: &Config, audio_path: String, transcript: Str
         .part("audio", file_part);
 
 
-    let mut result = client.post("http://127.0.0.1:8765/transcriptions?async=false")
+    let mut result = client.post(format!("{}:{}/transcriptions?async=false", config.gentle_address.clone(), config.gentle_port.clone()))
         .multipart(form)
         .send()
         .await.map_err(|_| CustomError("Couldn't contact lowerquality gentle".to_string()))?
