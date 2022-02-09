@@ -1,5 +1,5 @@
 import './image-to-select.css';
-import { inlineComponent } from '../../../../framework/inline-component';
+import { inlineComponent } from 'pran-gular-frontend';
 
 export const createImageToSelect = inlineComponent<{ id: string, imageSrc: string, isSelected: boolean }>(controls => {
   controls.setup('image-to-select', 'image-to-select');

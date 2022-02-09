@@ -1,4 +1,4 @@
-import { MainCanvasController } from 'pran-phonemes-frontend';
+import { MainCanvasController } from '../canvas-controller/main-canvas-controller';
 import { Timeline } from '../timeline/timeline';
 import { TimelineAction } from '../timeline/timeline-action';
 import { TimelineChange, TimelineChangeType } from './events/events';

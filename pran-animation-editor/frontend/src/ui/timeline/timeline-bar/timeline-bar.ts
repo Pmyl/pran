@@ -1,16 +1,12 @@
 import {
-  ActionType,
-  Animator, NoneAction,
-  Timeline,
-  TimelineChange,
-  TimelineChangeType
+  Animator, Timeline,
+  TimelineChange
 } from 'pran-animation-frontend';
-import { Block, BlocksFilter } from '../../../core/block/block';
+import { Container, inlineComponent } from 'pran-gular-frontend';
+import { Block} from '../../../core/block/block';
 import { IEvent, Mediator } from '../../../core/mediator/mediator';
 import { TimelineBar } from '../../../core/timeline/timeline-bar';
 import { createBlock } from '../../block/block/block';
-import { Container } from '../../framework/container';
-import { inlineComponent } from '../../framework/inline-component';
 import './timeline-bar.css';
 
 export type BlockSelected = IEvent<'blockSelected', { block: Block, timeline: Timeline, animator: Animator, timelineBar: TimelineBar }>;

@@ -20,6 +20,6 @@
   },
   "dependencies": {
     "pran-animation-frontend": "1.0.0",
-    "pran-phonemes-frontend": "1.0.0"
+    "pran-gular-frontend": "1.0.0"
   }
 }

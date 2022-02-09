@@ -1,15 +1,14 @@
 import {
-  ComponentControls,
-  inlineComponent,
   Modal,
-  onChange,
-  onClick,
   PlayerState,
   PranEditorControls
 } from 'pran-animation-editor-frontend';
 import { ActionType, drawId, ManagerTimelineAction, wait } from 'pran-animation-frontend';
-import { cmuPhonemesMap, phonemesMapper } from 'pran-phonemes-frontend';
+import { ComponentControls, inlineComponent, onChange, onClick } from 'pran-gular-frontend';
+import { phonemesMapper } from 'pran-phonemes-frontend';
 import './echo-panel.css';
+import { MouthMapping } from '../../mapping/mouth-mapping';
+import { createCustomMapping } from '../custom-mapping/custom-mapping';
 import { createEchoRecordingModal } from './echo-recording-modal';
 import { setupInitialAnimation } from './initial-animation';
 
@@ -22,7 +21,9 @@ interface EchoPanelSideInputs {
   isLoading: boolean;
 }
 
-type EchoPanelControls = ComponentControls<PranEditorControls, EchoPanelSideInputs>
+type EchoPanelInputs = PranEditorControls & { mouthMapping: MouthMapping };
+
+type EchoPanelControls = ComponentControls<EchoPanelInputs, EchoPanelSideInputs>
 
 interface AudioData {
   transcript: string;
@@ -40,7 +41,7 @@ interface AudioData {
 
 type Audio = AudioData & { controls: HTMLAudioElement; };
 
-export const createEchoPanel = inlineComponent<PranEditorControls, EchoPanelSideInputs>(controls => {
+export const createEchoPanel = inlineComponent<EchoPanelInputs, EchoPanelSideInputs>(controls => {
   controls.setup('echo-panel', 'echo-panel');
   let audio: Audio,
     audioFile: File,
@@ -77,7 +78,7 @@ export const createEchoPanel = inlineComponent<PranEditorControls, EchoPanelSide
       });
     }
   };
-  
+
   controls.onSideInputChange = {
     audioFile: a => {
       audioFile = a;
@@ -100,7 +101,10 @@ export const createEchoPanel = inlineComponent<PranEditorControls, EchoPanelSide
   };
 
   controls.onInputsChange = inputs => {
-    setupInitialAnimation(inputs.animatorManager, inputs.animator);
+    inputs.animatorManager
+      && inputs.animator
+      && inputs.mouthMapping
+      && setupInitialAnimation(inputs.animatorManager, inputs.animator, inputs.mouthMapping);
   };
 
   return inputs => controls.mandatoryInput('animatorManager')
@@ -112,7 +116,12 @@ export const createEchoPanel = inlineComponent<PranEditorControls, EchoPanelSide
     <div class="echo-panel_loading">Loading...</div>  
   </div>
   `}
-  <h1 class="echo-panel_title">Pran Echo</h1>
+  <header class="echo-panel_header">
+    <h1 class="echo-panel_title">Pran Echo</h1>
+    <div class="echo-panel_header-button-container">
+        <button type="button" class="echo-panel_header-button g-button g-button-s">Customise</button>
+    </div>
+  </header>
   <input type="file" id="upload_audio_input" accept=".wav" hidden />
   <button class="echo-panel_upload-audio g-button" type="button">Upload audio</button>
   <audio class="echo-panel_audio"></audio>
@@ -141,7 +150,8 @@ export const createEchoPanel = inlineComponent<PranEditorControls, EchoPanelSide
       onChange(e, "#upload_audio_input", change => uploadAudio(change, getAudio(e), controls, inputs)),
       onClick(e, '.echo-panel_upload-audio', () => triggerFileBrowse()),
       onClick(e, '.echo-panel_upload-text', () => uploadText(audioFile, getText(e), seconds, controls, inputs)),
-      onClick(e, '.echo-panel_record', () => recordVideo(inputs))
+      onClick(e, '.echo-panel_record', () => recordVideo(inputs)),
+      onClick(e, '.echo-panel_header-button', () => openCustomMappingModal(inputs))
     )
   ];
 });
@@ -165,7 +175,7 @@ function triggerFileBrowse() {
   document.getElementById("upload_audio_input").click();
 }
 
-async function uploadText(audioFile: File, text: string, seconds: number, controls: EchoPanelControls, inputs: PranEditorControls) {
+async function uploadText(audioFile: File, text: string, seconds: number, controls: EchoPanelControls, inputs: EchoPanelInputs) {
   controls.setSideInput('isLoading', true);
   controls.changed();
   const formData = new FormData();
@@ -179,7 +189,7 @@ async function uploadText(audioFile: File, text: string, seconds: number, contro
   controls.changed();
 }
 
-async function uploadAudio(filesChange: Event & { target: HTMLInputElement }, audioElement: HTMLAudioElement, controls: EchoPanelControls, editorControls: PranEditorControls): Promise<void> {
+async function uploadAudio(filesChange: Event & { target: HTMLInputElement }, audioElement: HTMLAudioElement, controls: EchoPanelControls, echoInputs: EchoPanelInputs): Promise<void> {
   controls.setSideInput('isLoading', true);
   controls.changed();
 
@@ -199,27 +209,14 @@ async function uploadAudio(filesChange: Event & { target: HTMLInputElement }, au
 
   filesChange.target.value = '';
 
-  updateAnimationAndData(response, controls, editorControls);
+  updateAnimationAndData(response, controls, echoInputs);
 
   controls.setSideInput('isLoading', false);
   controls.changed();
 }
 
-function updateAnimationAndData(audioData: AudioData, controls: EchoPanelControls, editorControls: PranEditorControls) {
-  const convertToMouthPosition = (phoneme: string) => phonemesMapper([phoneme], {
-    fv: 'fv',
-    ur: 'ur',
-    stch: 'stch',
-    mbsilent: 'mbsilent',
-    p1: 'p1',
-    p2: 'p2',
-    e: 'e',
-    aah: 'aah',
-    o: 'o',
-    ld: 'ld',
-    pause: 'pause',
-    smile: 'smile'
-  }, cmuPhonemesMap);
+function updateAnimationAndData(audioData: AudioData, controls: EchoPanelControls, echoInputs: EchoPanelInputs) {
+  const convertToMouthPosition = (phoneme: string) => phonemesMapper([phoneme], echoInputs.mouthMapping.getPhonemeToIdsMap());
 
   const normalisePhoneme = (phoneme: string) => phoneme.match(/^(\w*)_/)[1].toUpperCase();
 
@@ -282,7 +279,7 @@ function updateAnimationAndData(audioData: AudioData, controls: EchoPanelControl
     ];
   });
 
-  editorControls.animatorManager.animate(editorControls.animator,
+  echoInputs.animatorManager.animate(echoInputs.animator,
     mouthAnimations,
     eyesAnimations,
     [
@@ -294,6 +291,10 @@ function updateAnimationAndData(audioData: AudioData, controls: EchoPanelControl
   controls.setSideInput('phonemes', audioData.words.map(w => w.phones.map(p => normalisePhoneme(p.phone))));
   controls.setSideInput('seconds', totalDurationInSeconds);
   controls.changed();
+}
+
+function openCustomMappingModal(inputs: EchoPanelInputs): void {
+  Modal.open(createCustomMapping({ mouthMapping: inputs.mouthMapping }));
 }
 
 const drawWithMetadata = (id: string, metadata: { [key: string]: any }) => {

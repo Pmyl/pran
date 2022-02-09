@@ -1,9 +1,7 @@
 import './buttons/buttons.css';
 import './player.css';
+import { Component, Container, mandatoryInput } from 'pran-gular-frontend';
 import { PlayerController } from '../../core/player/player-controller';
-import { Component } from '../framework/component';
-import { Container } from '../framework/container';
-import { mandatoryInput } from '../framework/mandatory-input';
 import { createPlaybackRateToggle } from './buttons/playback-rate-toggle';
 import { createPauseButton } from './buttons/pause-button';
 import { createPlayButton } from './buttons/play-button';

@@ -1,21 +1,9 @@
-import { ActionType, Animator, AnimatorManager, drawId, ManagerTimelineAction, wait } from 'pran-animation-frontend';
-import { cmuPhonemesMap, phonemesMapper } from 'pran-phonemes-frontend';
+import { Animator, AnimatorManager, drawId, ManagerTimelineAction, wait } from 'pran-animation-frontend';
+import { phonemesMapper } from 'pran-phonemes-frontend';
+import { MouthMapping } from '../../mapping/mouth-mapping';
 
-export const setupInitialAnimation = (animatorManager: AnimatorManager, animator: Animator) => {
-  const mouthMovementsMapping = phonemesMapper('HH EH L OW , M AY N EY M ZH P R AH N EH S AH .'.split(' '), {
-    fv: 'fv',
-    ur: 'ur',
-    stch: 'stch',
-    mbsilent: 'mbsilent',
-    p1: 'p1',
-    p2: 'p2',
-    e: 'e',
-    aah: 'aah',
-    o: 'o',
-    ld: 'ld',
-    pause: 'pause',
-    smile: 'smile',
-  }, cmuPhonemesMap);
+export const setupInitialAnimation = (animatorManager: AnimatorManager, animator: Animator, mouthMapping: MouthMapping) => {
+  const mouthMovementsMapping = phonemesMapper('HH EH L OW , M AY N EY M ZH P R AH N EH S AH .'.split(' '), mouthMapping.getPhonemeToIdsMap());
 
   animatorManager.animate(
     animator,

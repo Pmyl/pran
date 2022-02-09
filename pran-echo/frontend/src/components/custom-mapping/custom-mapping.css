@@ -1,0 +1,17 @@
+.custom-mapping_top-explanation {
+    margin-top: 0;
+}
+
+.custom-mapping_go-button-container {
+    margin-top: 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+}
+
+.custom-mapping_upload-mapping-done,
+.custom-mapping_upload-images-done {
+    display: inline-block;
+    margin-left: 10px;
+    color: var(--echo_secondary-color);
+}

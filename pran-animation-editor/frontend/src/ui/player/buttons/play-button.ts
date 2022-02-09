@@ -1,6 +1,5 @@
+import { inlineComponent, onClick } from 'pran-gular-frontend';
 import { PlayerController, PlayerState } from '../../../core/player/player-controller';
-import { inlineComponent } from '../../framework/inline-component';
-import { onClick } from '../../framework/on-click';
 
 export const createPlayButton = inlineComponent<{ playerController: PlayerController }>(controls => {
   let isPlaying: boolean = false, unsubscribe: () => void;

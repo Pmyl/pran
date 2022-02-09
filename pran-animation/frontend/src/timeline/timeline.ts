@@ -1,4 +1,4 @@
-import { CanvasController } from 'pran-phonemes-frontend';
+import { CanvasController } from '../canvas-controller/canvas-controller';
 import { ActionType, TimelineAction } from './timeline-action';
 
 export class Timeline {

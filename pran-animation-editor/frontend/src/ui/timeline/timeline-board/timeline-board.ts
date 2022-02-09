@@ -1,11 +1,8 @@
 import { Animator, Timeline, TimelineChange, TimelineChangeType } from 'pran-animation-frontend';
+import { Component, inlineComponent, onClick, staticElement } from 'pran-gular-frontend';
 import { IEvent, Mediator } from '../../../core/mediator/mediator';
 import { PlayerController } from '../../../core/player/player-controller';
 import { TimelineBar } from '../../../core/timeline/timeline-bar';
-import { Component } from '../../framework/component';
-import { inlineComponent } from '../../framework/inline-component';
-import { onClick } from '../../framework/on-click';
-import { staticElement } from '../../framework/static-element';
 import { createTimelineBar } from '../timeline-bar/timeline-bar';
 import './timeline-board.css';
 

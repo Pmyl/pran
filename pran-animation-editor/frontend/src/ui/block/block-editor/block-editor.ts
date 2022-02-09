@@ -1,6 +1,7 @@
 import './block-editor.css';
 
 import { ActionType, Animator, AnimatorManager, Timeline } from 'pran-animation-frontend';
+import { inlineComponent, onClick } from 'pran-gular-frontend';
 import { Block, BlocksFilter, BlockType, ImageBlock } from '../../../core/block/block';
 import { addTimeline } from '../../../core/editor-queue/actions/add-timeline';
 import { clearBlock } from '../../../core/editor-queue/actions/clear-block';
@@ -12,8 +13,6 @@ import { updateImage } from '../../../core/editor-queue/actions/update-image';
 import { EditorAction, EditorDoActionEvent } from '../../../core/editor-queue/editor-queue';
 import { Mediator } from '../../../core/mediator/mediator';
 import { TimelineBar } from '../../../core/timeline/timeline-bar';
-import { inlineComponent } from '../../framework/inline-component';
-import { onClick } from '../../framework/on-click';
 import { Modal } from '../../modal/modal';
 import { BlockSelected, BlockUnselected } from '../../timeline/timeline-bar/timeline-bar';
 import { TimelinePositionChanged } from '../../timeline/timeline-board/timeline-board';
@@ -111,7 +110,7 @@ function renderMetadata(metadata: { [p: string]: any }) {
 
 function openChangeImageModal(animatorManager: AnimatorManager, animator: Animator, timeline: Timeline, block: Block) {
   Modal.open(createSelectImageModal({ animatorManager })).then(value => {
-    value && emit(updateImage, animator, timeline, block, value[1])();
+    value && emit(updateImage, animator, timeline, block, value[0], value[1])();
   });
 }
 

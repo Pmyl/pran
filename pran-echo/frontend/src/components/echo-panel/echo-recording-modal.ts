@@ -1,14 +1,11 @@
 import './echo-recording-modal.css';
 import {
-  Container,
-  inlineComponent,
   ModalContentInputs,
-  onClick,
   PlayerController,
   PlayerState
 } from 'pran-animation-editor-frontend';
-import { Animator, AnimatorManager } from 'pran-animation-frontend';
-import { CanvasControllerFactory } from 'pran-phonemes-frontend';
+import { Animator, AnimatorManager, CanvasControllerFactory } from 'pran-animation-frontend';
+import { Container, inlineComponent, onClick } from 'pran-gular-frontend';
 
 type EchoRecordingModalInputs = { animatorManager: AnimatorManager, animator: Animator } & ModalContentInputs<void>;
 

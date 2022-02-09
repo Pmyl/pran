@@ -1,9 +1,6 @@
 import './select-image-modal.css';
 import { AnimatorManager } from 'pran-animation-frontend';
-import { Component } from '../../../framework/component';
-import { inlineComponent } from '../../../framework/inline-component';
-import { onClick } from '../../../framework/on-click';
-import { onDoubleClick } from '../../../framework/on-double-click';
+import { Component, inlineComponent, onClick, onDoubleClick } from 'pran-gular-frontend';
 import { ModalContentInputs } from '../../../modal/modal-content-inputs';
 import { createImageToSelect } from './image-to-select/image-to-select';
 

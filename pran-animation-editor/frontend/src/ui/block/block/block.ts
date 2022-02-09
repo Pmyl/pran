@@ -1,8 +1,7 @@
 import { Animator, Timeline } from 'pran-animation-frontend';
+import { inlineComponent, onClick } from 'pran-gular-frontend';
 import { Block, BlockType } from '../../../core/block/block';
 import { Mediator } from '../../../core/mediator/mediator';
-import { inlineComponent } from '../../framework/inline-component';
-import { onClick } from '../../framework/on-click';
 import './block.css';
 import { BlockSelected } from '../../timeline/timeline-bar/timeline-bar';
 import { createTimelineBlockHandles } from '../block-handles/block-handles';

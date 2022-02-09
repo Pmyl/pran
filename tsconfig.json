@@ -5,7 +5,8 @@
     "paths": {
       "pran-phonemes-frontend": ["pran-phonemes/frontend/src"],
       "pran-animation-frontend": ["pran-animation/frontend/src"],
-      "pran-animation-editor-frontend": ["pran-animation-editor/frontend/src"]
+      "pran-animation-editor-frontend": ["pran-animation-editor/frontend/src"],
+      "pran-gular-frontend": ["pran-gular/frontend/src"]
     }
   }
 }

@@ -1,5 +1,6 @@
 import './block-handles.css';
 import { Animator, Timeline } from 'pran-animation-frontend';
+import { inlineComponent, onClick, onDrag } from 'pran-gular-frontend';
 import { Block } from '../../../core/block/block';
 import { expandBlock } from '../../../core/editor-queue/actions/expand-block';
 import { expandBlockLeft } from '../../../core/editor-queue/actions/expand-block-left';
@@ -8,9 +9,6 @@ import { reduceBlockLeft } from '../../../core/editor-queue/actions/reduce-block
 import { EditorAction, EditorDoActionEvent } from '../../../core/editor-queue/editor-queue';
 import { Mediator } from '../../../core/mediator/mediator';
 import { TimelineBar } from '../../../core/timeline/timeline-bar';
-import { inlineComponent } from '../../framework/inline-component';
-import { onClick } from '../../framework/on-click';
-import { onDrag } from '../../framework/on-drag';
 
 type HandlesInputs = { isSelected: boolean, frameWidth: number, animator: Animator, timeline: Timeline, block: Block, timelineBar: TimelineBar };
 

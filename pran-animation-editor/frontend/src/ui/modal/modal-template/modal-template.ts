@@ -1,21 +1,28 @@
 import './modal-template.css';
-import { Component } from '../../framework/component';
-import { Container } from '../../framework/container';
-import { inlineComponent } from '../../framework/inline-component';
-import { onClick } from '../../framework/on-click';
+import { Component, Container, inlineComponent, Keys, onClick, onKeydown } from 'pran-gular-frontend';
 import { ModalContentInputs } from '../modal-content-inputs';
 
 type ModalInputs<TResult, T extends ModalContentInputs<TResult> = ModalContentInputs<TResult>> = { component: Component<T>, close: (returnValue?: TResult) => void };
 
 export const createModalTemplate = inlineComponent<ModalInputs<unknown>>(controls => {
   controls.setup('modal-template', 'modal-template')
+
+  let removeEscBinding: () => void = null;
+
   controls.onInputsChange = inputs => {
     inputs.component.setInput('close', inputs.close);
+
+    removeEscBinding?.();
+    removeEscBinding = onKeydown(Keys.Escape, () => inputs.close());
   };
+
+  controls.onDestroy = () => removeEscBinding?.();
 
   return inputs => [[
     Container.CreateEmptyElement('div', 'modal-template_backdrop'),
     Container.CreateEmptyElement('div', 'modal-template_container')
       .append(inputs.component)
-  ], e => onClick(e, '.modal-template_backdrop', () => inputs.close())];
+  ], e => (
+    onClick(e, '.modal-template_backdrop', () => inputs.close())
+  )];
 });

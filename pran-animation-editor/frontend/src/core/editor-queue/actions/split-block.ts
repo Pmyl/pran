@@ -28,7 +28,7 @@ export function splitBlock(animator: Animator, timeline: Timeline, timelineBar: 
 
   if (block.type === BlockType.Image) {
     blockRightPartBuilder = ImageBlock.Builder()
-      .addAction({ type: ActionType.Draw, image: (block.actions[0] as DrawAction).image });
+      .addAction({ type: ActionType.Draw, image: (block.actions[0] as DrawAction).image, metadata: block.actions[0].metadata });
   } else {
     blockRightPartBuilder = ClearBlock.Builder();
   }

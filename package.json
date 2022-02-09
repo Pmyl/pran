@@ -8,9 +8,11 @@
     "pran-echo:prepare-deploy": "npm ci && npm run build -w pran-echo/frontend"
   },
   "workspaces": [
+    "pran-gular/frontend",
     "pran-phonemes/frontend",
     "pran-animation/frontend",
     "pran-animation-editor/frontend",
-    "pran-echo/frontend"
+    "pran-echo/frontend",
+    "pran-droid/frontend"
   ]
 }
