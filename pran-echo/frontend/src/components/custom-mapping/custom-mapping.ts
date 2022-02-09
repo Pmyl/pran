@@ -79,6 +79,8 @@ async function go(mappingFile: File, imagesFiles: FileList, mouthMapping: MouthM
     imagesBase64[imagesFiles.item(i).name] = await readImagePromise(imagesFiles.item(i));
   }
 
+  // todo: add check that the images are all provided
+
   mouthMapping.setNewMapping(mappingJson, imagesBase64);
   location.reload();
 }

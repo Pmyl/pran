@@ -69,10 +69,14 @@ export class AnimatorManager {
   }
 
   private static async _loadAllImages(imagesPath: [id: string, url: string][]): Promise<Map<string, HTMLImageElement>> {
-    let imagesWithPath = await Promise.all<[string, HTMLImageElement]>(imagesPath.map(imagePath => new Promise(r => {
+    let imagesWithPath = await Promise.all<[string, HTMLImageElement]>(imagesPath.map(imagePath => new Promise((r, rj) => {
       const image = new Image();
       image.src = imagePath[1];
       image.onload = () => r([imagePath[0], image]);
+      image.onerror = () => {
+        console.error('Image not found, wrong configuration')
+        r([imagePath[0], image]);
+      };
     })));
 
     const map: Map<string, HTMLImageElement> = new Map<string, HTMLImageElement>();
