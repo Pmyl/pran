@@ -89,6 +89,16 @@ export class AnimatorManager {
   }
 
   private _toAnimationDetails(animation: ManagerTimelineAction[]): TimelineAction[] {
-    return animation.map(x => x.type === ActionType.Draw ? { type: ActionType.Draw, image: this._imagesMap.get(x.imageId), metadata: x.metadata } : x);
+    return animation.map(x => x.type === ActionType.Draw ? { type: ActionType.Draw, image: this._getImage(x.imageId), metadata: x.metadata } : x);
+  }
+
+  private _getImage(imageId: string): HTMLImageElement {
+    if (this._imagesMap.has(imageId)) {
+      return this._imagesMap.get(imageId);
+    }
+
+    const fallbackId: string = this._imagesMap.keys().next().value;
+    console.warn('Tried to draw image with id >', imageId, '< but this id is not configured. (Fallback to >', fallbackId, '<)');
+    return this._imagesMap.get(fallbackId);
   }
 }

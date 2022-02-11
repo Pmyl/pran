@@ -28,10 +28,9 @@ type EchoPanelControls = ComponentControls<EchoPanelInputs, EchoPanelSideInputs>
 interface AudioData {
   transcript: string;
   words: Array<{
-    alignedWord: string;
-    end: number;
-    start: number;
     word: string;
+    start: number;
+    end: number;
     phones: Array<{
       duration: number;
       phone: string;
@@ -245,7 +244,8 @@ function updateAnimationAndData(audioData: AudioData, controls: EchoPanelControl
       return ([
         ...mouthPositions.map(mouthPosition => drawWithMetadata(mouthPosition.output, {
           id: mouthPosition.output,
-          phoneme: phoneme
+          phoneme: phoneme,
+          word: wordData.word
         })),
         ...(durationInFrames - mouthPositions.length > 0 ? [wait(durationInFrames - mouthPositions.length)] : [])
       ]);
