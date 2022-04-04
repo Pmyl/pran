@@ -32,7 +32,7 @@ export class PlayerController {
   constructor(animator: Animator) {
     this._animator = animator;
   }
-  
+
   public setFps(fps: number) {
     this._fps = fps;
   }
@@ -48,7 +48,7 @@ export class PlayerController {
     let fpsInterval, now, then, elapsed;
 
     const animate = () => {
-      if (this._state === PlayerState.Play) {
+      if (this._state === PlayerState.Play || this._state === PlayerState.End && this._animator.hasLoopingTimelines) {
         requestAnimationFrame(animate);
       } else {
         this._hasFullStopped = true;
@@ -58,12 +58,12 @@ export class PlayerController {
       elapsed = now - then;
       if (elapsed > fpsInterval) {
         this._animator.tick();
-        if (this._animator.totalFrames === this._animator.currentFrame) {
+        if (this._state !== PlayerState.End && this._animator.nonLoopingTotalFrames === this._animator.currentFrame) {
           this._emitStateChange(PlayerState.End);
           if (this._isLooping) {
             this._animator.restart();
             this._emitStateChange(PlayerState.Play);
-          } else {
+          } else if (!this._animator.hasLoopingTimelines) {
             this._applyStateChange(PlayerState.Stop);
           }
         }
@@ -92,7 +92,7 @@ export class PlayerController {
   public setLoop(loop: boolean) {
     this._isLooping = loop;
   }
-  
+
   public onStateChange(cb: (newState: PlayerState) => (Promise<void> | void)): () => void {
     this._onStateChangeSubscribers.push(cb);
     return () => this._onStateChangeSubscribers.splice(this._onStateChangeSubscribers.indexOf(cb), 1);

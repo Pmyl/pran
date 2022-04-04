@@ -10,6 +10,13 @@ export interface ManagerTimelineDrawAction {
   metadata?: { [key: string]: any };
 }
 
+export interface ManagerTimelineComplex {
+  actions: ManagerTimelineAction[];
+  loop: boolean;
+}
+
+export type ManagerTimelineConfig = ManagerTimelineAction[] | ManagerTimelineComplex;
+
 export class AnimatorManager {
   public get imagesMap(): ReadonlyMap<string, HTMLImageElement> {
     return this._imagesMap;
@@ -27,9 +34,9 @@ export class AnimatorManager {
     return new AnimatorManager(canvasController, imagesMap);
   }
 
-  public animate(animator: Animator, ...animations: ManagerTimelineAction[][]): Animator;
+  public animate(animator: Animator, ...animations: ManagerTimelineConfig[]): Animator;
   public animate(...animations: ManagerTimelineAction[][]): Animator;
-  public animate(maybeAnimator: Animator | ManagerTimelineAction[], ...animations: ManagerTimelineAction[][]): Animator {
+  public animate(maybeAnimator: Animator | ManagerTimelineAction[], ...animations: ManagerTimelineConfig[]): Animator {
     if (maybeAnimator instanceof Animator) {
       return this._replaceAnimation(maybeAnimator, ...animations);
     }
@@ -37,7 +44,7 @@ export class AnimatorManager {
     const animator = new Animator(this._canvasController);
     const allAnimations = maybeAnimator ? [maybeAnimator, ...animations] : [];
     for (let i = 0; i < allAnimations.length; i++) {
-      animator.addTimeline(this._toAnimationDetails(allAnimations[i]));
+      this._addTimeline(animator, allAnimations[i]);
     }
 
     return animator;
@@ -56,16 +63,24 @@ export class AnimatorManager {
     return animatorCopy;
   }
 
-  private _replaceAnimation(animator: Animator, ...animations: ManagerTimelineAction[][]): Animator {
+  private _replaceAnimation(animator: Animator, ...animations: ManagerTimelineConfig[]): Animator {
     animator.timelines.slice().forEach(t => {
       animator.removeTimeline(t);
     });
 
     for (let i = 0; i < animations.length; i++) {
-      animator.addTimeline(this._toAnimationDetails(animations[i]));
+      this._addTimeline(animator, animations[i]);
     }
     
     return animator;
+  }
+
+  private _addTimeline(animator: Animator, animation: ManagerTimelineComplex | ManagerTimelineAction[]) {
+    if (Array.isArray(animation)) {
+      animator.addTimeline(this._toAnimationDetails(animation));
+    } else {
+      animator.addTimeline({ actions: this._toAnimationDetails(animation.actions), loop: animation.loop });
+    }
   }
 
   private static async _loadAllImages(imagesPath: [id: string, url: string][]): Promise<Map<string, HTMLImageElement>> {

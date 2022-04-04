@@ -2,11 +2,11 @@
 extern crate dotenv;
 
 mod gentle;
-mod python;
 mod errors;
 mod core;
 mod api_structures;
 
+use pran_phonemes_core::phonemes::{phonemise_audio, phonemise_text, pran_phonemes, transcribe_audio};
 use rocket::fs::{FileServer};
 use rocket::form::Form;
 use rocket::serde::{json::Json};
@@ -18,22 +18,21 @@ use crate::api_structures::inputs::{AudioUpload, AudioWithTextUpload, Text};
 use crate::api_structures::outputs::PhonemisationResult;
 use crate::core::config::{Config};
 use crate::gentle::gentle_api::{phonemise_gentle};
-use crate::python::python_api::{phonemise_audio, phonemise_text, transcribe_audio};
 
 #[launch]
 fn rocket() -> _ {
+    pran_phonemes().ok();
     let config = Config::new();
     println!("{}", config);
     let static_path = config.static_path.clone();
     let limits = Limits::default()
-        .limit("file", 10.mebibytes());
+        .limit("file", 10_i32.mebibytes());
 
     let figment = Figment::from(RocketConfig::default())
         .merge((RocketConfig::LIMITS, limits))
         .merge((RocketConfig::PORT, config.port))
         .merge(Env::prefixed("ROCKET_"));
 
-    pyo3::prepare_freethreaded_python();
     rocket::custom(figment)
         .manage(config)
         .mount("/", FileServer::from(static_path))
@@ -41,8 +40,8 @@ fn rocket() -> _ {
 }
 
 #[post("/audio", data = "<data>")]
-async fn api_phonemise_audio(data: Form<AudioUpload<'_>>, config: &State<Config>) -> Result<Json<PhonemisationResult>, CustomError> {
-    phonemise_audio_local(data, config)
+async fn api_phonemise_audio(data: Form<AudioUpload<'_>>) -> Result<Json<PhonemisationResult>, CustomError> {
+    phonemise_audio_local(data)
 }
 
 #[post("/audio/advanced", data = "<data>")]
@@ -50,13 +49,13 @@ async fn api_phonemise_audio_advanced(data: Form<AudioUpload<'_>>, config: &Stat
     if config.use_gentle {
         phonemise_audio_gentle(data, config).await
     } else {
-        phonemise_audio_local(data, config)
+        phonemise_audio_local(data)
     }
 }
 
 #[post("/text", data = "<data>")]
-async fn api_phonemise_text(data: Form<Text>, config: &State<Config>) -> Result<Json<PhonemisationResult>, CustomError> {
-    phonemise_text_local(data, config)
+async fn api_phonemise_text(data: Form<Text>) -> Result<Json<PhonemisationResult>, CustomError> {
+    phonemise_text_local(data)
 }
 
 #[post("/text/advanced", data = "<data>")]
@@ -64,20 +63,20 @@ async fn api_phonemise_text_advanced(data: Form<AudioWithTextUpload<'_>>, config
     if config.use_gentle {
         phonemise_text_gentle(data, config).await
     } else {
-        phonemise_text_local(Form::from(Text { text: data.text.clone() }), config)
+        phonemise_text_local(Form::from(Text { text: data.text.clone() }))
     }
 }
 
-fn phonemise_text_local(data: Form<Text>, config: &State<Config>) -> Result<Json<PhonemisationResult>, CustomError> {
-    phonemise_text(config, data.text.clone())
+fn phonemise_text_local(data: Form<Text>) -> Result<Json<PhonemisationResult>, CustomError> {
+    phonemise_text(data.text.clone())
         .map(|result| Json(result.into()))
         .map_err(|e| CustomError(format!("{:?}", e)))
 }
 
-fn phonemise_audio_local(data: Form<AudioUpload>, config: &State<Config>) -> Result<Json<PhonemisationResult>, CustomError> {
+fn phonemise_audio_local(data: Form<AudioUpload>) -> Result<Json<PhonemisationResult>, CustomError> {
     match data.recording.path() {
         Some(path) => {
-            phonemise_audio(config, path.as_os_str().to_os_string().into_string().unwrap())
+            phonemise_audio(path.as_os_str().to_os_string().into_string().unwrap())
                 .map(|audio_result| Json(audio_result.into()))
                 .map_err(|e| CustomError(format!("{:?}", e)))
         },
@@ -88,7 +87,7 @@ fn phonemise_audio_local(data: Form<AudioUpload>, config: &State<Config>) -> Res
 async fn phonemise_audio_gentle(data: Form<AudioUpload<'_>>, config: &State<Config>) -> Result<Json<PhonemisationResult>, CustomError> {
     match data.recording.path() {
         Some(path) => {
-            match transcribe_audio(config, path.to_string_lossy().to_string()) {
+            match transcribe_audio(path.to_string_lossy().to_string()) {
                 Ok(transcription) => {
                     phonemise_gentle(
                         config,

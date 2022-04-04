@@ -1,8 +1,8 @@
+use pran_phonemes_core::phonemes::{PhonemiseAudioResult, PhonemiseTextResult};
 use rocket::serde::{Serialize, Deserialize};
 use crate::core::flat::flat;
 use crate::core::phoneme::cmu_to_gentle_phoneme;
 use crate::gentle::gentle_api::{GentlePhoneme, GentleResult, GentleWord};
-use crate::python::python_api::{PythonAudioResult, TextResult};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct PhonemisationResult {
@@ -53,8 +53,8 @@ impl From::<GentlePhoneme> for ResultPhoneme {
     }
 }
 
-impl From::<PythonAudioResult> for PhonemisationResult {
-    fn from(python_audio_result: PythonAudioResult) -> Self {
+impl From::<PhonemiseAudioResult> for PhonemisationResult {
+    fn from(python_audio_result: PhonemiseAudioResult) -> Self {
         let all_phonemes = flat(python_audio_result.phonemes);
         let phoneme_average_duration = python_audio_result.seconds / all_phonemes.len() as f32;
 
@@ -73,8 +73,8 @@ impl From::<PythonAudioResult> for PhonemisationResult {
     }
 }
 
-impl From::<TextResult> for PhonemisationResult {
-    fn from(text_result: TextResult) -> Self {
+impl From::<PhonemiseTextResult> for PhonemisationResult {
+    fn from(text_result: PhonemiseTextResult) -> Self {
         let phoneme_average_duration = 0.3;
 
         PhonemisationResult {

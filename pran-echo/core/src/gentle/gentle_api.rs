@@ -64,7 +64,7 @@ pub async fn phonemise_gentle(config: &Config, audio_path: String, transcript: S
     for word in result.words {
         if word.aligned_word == "<unk>" {
             let mut new_word = word.clone();
-            let phonemes = phonemise_text(config, word.word.clone()).map_err(|_| CustomError("Couldn't phonemise a word".to_string()))?;
+            let phonemes = phonemise_text(word.word.clone()).map_err(|_| CustomError("Couldn't phonemise a word".to_string()))?;
             new_word.aligned_word = word.word;
             let mut new_phonemes: Vec<GentlePhoneme> = vec![];
             let all_phonemes: Vec<String> = flat(phonemes.phonemes);

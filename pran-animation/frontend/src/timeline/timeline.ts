@@ -13,17 +13,24 @@ export class Timeline {
   public get layer(): CanvasController {
     return this._layer;
   }
+  public get isLoop(): boolean {
+    return this._isLoop;
+  }
 
   private _currentWait: number;
-  private _timelineActionsQueue: TimelineAction[];
   private _timelineActions: TimelineAction[];
   private _layer: CanvasController;
   private _currentFrame: number = 0;
+  private _currentActionIndex: number = 0;
+  private _isLoop: boolean;
 
   constructor(layer: CanvasController, animation: TimelineAction[]) {
     this._timelineActions = animation;
-    this._timelineActionsQueue = animation.slice();
     this._layer = layer;
+  }
+
+  public activateLoop(): void {
+    this._isLoop = true;
   }
 
   public restart(): void {
@@ -34,8 +41,12 @@ export class Timeline {
   public tick(amount: number): void {
     this._currentFrame += amount;
 
-    if (this._timelineActionsQueue.length === 0) {
-      return;
+    if (this._currentActionIndex === this._timelineActions.length) {
+      if (this._isLoop) {
+        this.restart();
+      } else {
+        return;
+      }
     }
 
     if (this._currentWait > 0) {
@@ -148,15 +159,23 @@ export class Timeline {
   }
 
   private _executeActionAfter(amount: number) {
-    while (amount > 0 && this._timelineActionsQueue.length) {
-      const action = this._timelineActionsQueue.shift();
+    while (amount > 0) {
+      if (this._currentActionIndex === this._timelineActions.length) {
+        if (this._isLoop) {
+          this.restart();
+        } else {
+          break;
+        }
+      }
+
+      const action = this._timelineActions[this._currentActionIndex];
       switch (action.type) {
         case ActionType.Clear:
-          this._layer.dry_clear();
+          this._layer.dryClear();
           amount--;
           break;
         case ActionType.Draw:
-          this._layer.dry_replace(action.image);
+          this._layer.dryReplace(action.image);
           amount--;
           break;
         case ActionType.None:
@@ -168,11 +187,13 @@ export class Timeline {
           }
           break;
       }
+
+      this._currentActionIndex++;
     }
   }
 
   private _refreshTimelineActionsQueue() {
-    this._timelineActionsQueue = this._timelineActions.slice();
+    this._currentActionIndex = 0;
     this._currentWait = 0;
     this._executeActionAfter(this._currentFrame);
   }

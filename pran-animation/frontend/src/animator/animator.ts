@@ -4,19 +4,36 @@ import { TimelineAction } from '../timeline/timeline-action';
 import { TimelineChange, TimelineChangeType } from './events/events';
 import { v4 as uuidv4 } from 'uuid';
 
+export interface TimelineConfig {
+  actions: TimelineAction[];
+  /**
+   * Set the timeline as looping, this ensures that the animation doesn't end even though the tick goes over the total
+   * frame count.
+   */
+  loop: boolean;
+}
+
 export class Animator {
   public get totalFrames(): number {
     return this._totalFrames;
   };
+  public get nonLoopingTotalFrames(): number {
+    return this._nonLoopingTotalFrames;
+  };
   public get currentFrame(): number {
     return this._currentFrame;
+  };
+  public get hasLoopingTimelines(): boolean {
+    return this._hasLoopingTimelines;
   };
   private _onFrameChangeSubscribers: ((frame: number) => void)[] = [];
   private _onTotalFramesChangeSubscribers: ((totalFrames: number) => void)[] = [];
   private _onTimelineChangeSubscribers: ((timeline: Timeline, change: TimelineChange) => void)[] = [];
   private _canvasController: MainCanvasController;
   private _totalFrames: number = 0;
+  private _nonLoopingTotalFrames: number = 0;
   private _currentFrame: number = 0;
+  private _hasLoopingTimelines: boolean = false;
 
   constructor(canvasController: MainCanvasController) {
     this._canvasController = canvasController;
@@ -29,7 +46,7 @@ export class Animator {
   private readonly _timelines: Timeline[] = [];
 
   public tick(amount: number = 1): void {
-    if (this._currentFrame === this._totalFrames) {
+    if (this._currentFrame === this._totalFrames && !this.hasLoopingTimelines) {
       this._canvasController.redraw();
       return;
     }
@@ -42,12 +59,26 @@ export class Animator {
     this._applyFrameChange(Math.min(this._currentFrame + amount, this._totalFrames), true);
   }
 
-  public addTimeline(animations: TimelineAction[]): Timeline {
-    return this.addTimelineAt(this.timelines.length, animations);
+  public addTimeline(config: TimelineAction[] | TimelineConfig): Timeline {
+    return this.addTimelineAt(this.timelines.length, config);
   }
 
-  public addTimelineAt(index: number, animations: TimelineAction[]): Timeline {
-    const timeline = new Timeline(this._canvasController.addLayerAt(uuidv4(), index), animations);
+  public addTimelineAt(index: number, config: TimelineAction[] | TimelineConfig): Timeline {
+    let animation: TimelineAction[],
+      loop: boolean;
+
+    if (Array.isArray(config)) {
+      animation = config;
+      loop = false;
+    } else {
+      animation = config.actions;
+      loop = config.loop;
+    }
+
+    const timeline = new Timeline(this._canvasController.addLayerAt(uuidv4(), index), animation);
+
+    loop && timeline.activateLoop();
+    this._hasLoopingTimelines = this._hasLoopingTimelines || loop;
 
     this._timelines.splice(index, 0, timeline);
     this._recalculateTotalFrames();
@@ -64,6 +95,7 @@ export class Animator {
     this._canvasController.removeLayer(timeline.layer.id);
 
     this._timelines.splice(index, 1);
+    this._hasLoopingTimelines = this._timelines.some(timeline => timeline.isLoop);
     this._recalculateTotalFrames();
     this._notifyTimelineChanged(timeline, {
       type: TimelineChangeType.Remove,
@@ -138,6 +170,7 @@ export class Animator {
 
   private _recalculateTotalFrames() {
     this._applyTotalFramesChange(Math.max(...this._timelines.map(t => t.frames)));
+    this._nonLoopingTotalFrames = Math.max(...this._timelines.map(t => t.isLoop ? 0 : t.frames));
   }
 
   private _restart(notify: boolean): void {
