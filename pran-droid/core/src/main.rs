@@ -3,7 +3,6 @@
 use pran_phonemes_core::phonemes::pran_phonemes;
 use std::fmt::{Debug};
 use std::sync::Arc;
-use rocket::fs::{FileServer};
 use rocket::{figment::{Figment, providers::Env}, Config as RocketConfig };
 use rocket::data::{Limits, ToByteUnit};
 use api::emotions::create::api_create_emotion;

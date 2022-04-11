@@ -12,15 +12,7 @@ pub enum ReactionInsertError {
 
 #[derive(Debug, Error)]
 pub enum ReactionUpdateError {
-    #[error("Unexpected error while updating the reaction")]
-    Unexpected,
     #[error("Trying to update a not existing reaction")]
-    Missing
-}
-
-#[derive(Debug, Error)]
-pub enum ReactionGetError {
-    #[error("Reaction with provided id does not exist")]
     Missing
 }
 

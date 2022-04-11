@@ -1,10 +1,7 @@
 use std::clone::Clone;
-use std::cmp::PartialEq;
 use std::fmt::Debug;
-use rocket::shield::Frame;
 use thiserror::Error;
-use crate::domain::images::image::{Image, ImageId};
-use crate::domain::reactions::reaction_domain_service::AddStepToReactionError;
+use crate::domain::images::image::{ImageId};
 
 #[derive(Clone)]
 pub struct Animation {

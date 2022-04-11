@@ -9,8 +9,8 @@ use crate::domain::reactions::reaction_repository::{ReactionRepository};
 pub enum CreateReactionError {
     #[error("Bad request")]
     BadRequest(String),
-    #[error("Reaction with trigger {0} already exists")]
-    Conflict(String),
+    #[error("Reaction with trigger {0:?} already exists")]
+    Conflict(ReactionTrigger),
     #[error("Unexpected error")]
     Unexpected,
 }
@@ -20,19 +20,17 @@ pub struct CreateReactionRequest {
 }
 
 pub fn create_reaction(request: CreateReactionRequest, repository: &Arc<dyn ReactionRepository>) -> Result<ReactionDto, CreateReactionError> {
-    match ReactionTrigger::new_chat(request.trigger.clone()) {
-        Ok(trigger) => {
-            match repository.exists_with_trigger(&trigger) {
-                false => {
-                    let reaction = Reaction::new_empty(repository.next_id(), trigger);
-                    repository.insert(&reaction).map_err(|_| CreateReactionError::Unexpected)?;
+    let trigger = ReactionTrigger::new_chat(request.trigger)
+        .map_err(|_| CreateReactionError::BadRequest(String::from("Provided `trigger` is invalid")))?;
 
-                    Ok(reaction.into())
-                },
-                true => Err(CreateReactionError::Conflict(request.trigger))
-            }
+    match repository.exists_with_trigger(&trigger) {
+        false => {
+            let reaction = Reaction::new_empty(repository.next_id(), trigger);
+            repository.insert(&reaction).map_err(|_| CreateReactionError::Unexpected)?;
+
+            Ok(reaction.into())
         },
-        _ => Err(CreateReactionError::BadRequest(String::from("Provided `trigger` is invalid")))
+        true => Err(CreateReactionError::Conflict(trigger))
     }
 }
 

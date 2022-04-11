@@ -1,4 +1,3 @@
-use std::error::Error;
 use std::sync::Mutex;
 use crate::domain::reactions::reaction::{Reaction, ReactionId, ReactionTrigger};
 use crate::domain::reactions::reaction_repository::{ReactionRepository, ReactionInsertError, ReactionUpdateError};
@@ -34,7 +33,7 @@ impl ReactionRepository for InMemoryReactionRepository {
     }
 
     fn exists_with_trigger(&self, trigger: &ReactionTrigger) -> bool {
-        let mut lock = self.reactions.lock().unwrap();
+        let lock = self.reactions.lock().unwrap();
 
         lock.iter().any(|stored_reaction| &stored_reaction.trigger == trigger)
     }

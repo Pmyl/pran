@@ -1,9 +1,7 @@
+use std::fmt::Debug;
 use std::clone::Clone;
 use std::cmp::PartialEq;
-use std::sync::Arc;
-use crate::domain::animations::animation::{Animation, AnimationFrame, AnimationFrames};
-use crate::domain::images::image::ImageId;
-use crate::ImageRepository;
+use crate::domain::animations::animation::{Animation};
 
 #[derive(Clone)]
 pub struct Reaction {
@@ -34,12 +32,12 @@ impl Reaction {
 #[derive(Clone, PartialEq)]
 pub struct ReactionId(pub String);
 
-#[derive(Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ReactionTrigger {
     Chat(ChatTrigger)
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ChatTrigger {
     pub text: String
 }
@@ -66,18 +64,18 @@ pub struct MovingReactionStep {
     pub skip: ReactionStepSkip
 }
 
-#[derive(Clone)]
-pub enum TalkingReactionStep {
-    Single(TalkingStep),
-    Composite(Vec<TalkingStep>)
-}
+// #[derive(Clone)]
+// pub enum TalkingReactionStep {
+//     Single(TalkingStep),
+//     Composite(Vec<TalkingStep>)
+// }
 
-#[derive(Clone)]
-pub struct TalkingStep {
-    pub animation: Animation,
-    pub skip: ReactionStepSkip,
-    pub text: ReactionStepText
-}
+// #[derive(Clone)]
+// pub struct TalkingStep {
+//     pub animation: Animation,
+//     pub skip: ReactionStepSkip,
+//     pub text: ReactionStepText
+// }
 
 #[derive(Clone)]
 pub enum ReactionStepSkip {
@@ -86,18 +84,18 @@ pub enum ReactionStepSkip {
     //AfterStep(AfterStep, Milliseconds)
 }
 
-#[derive(Clone)]
-pub enum ReactionStepText {
-    Instant(String),
-    LetterByLetter(String)
-}
+// #[derive(Clone)]
+// pub enum ReactionStepText {
+//     Instant(String),
+//     LetterByLetter(String)
+// }
 
-#[derive(Clone)]
-pub enum AfterStep {
-    Animation,
-    Text,
-    All
-}
+// #[derive(Clone)]
+// pub enum AfterStep {
+//     Animation,
+//     Text,
+//     All
+// }
 
 #[derive(Clone)]
 pub struct Milliseconds(pub u16);

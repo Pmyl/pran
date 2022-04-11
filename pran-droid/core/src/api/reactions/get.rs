@@ -7,9 +7,6 @@ use crate::domain::reactions::reaction_repository::{ReactionRepository};
 
 #[get("/reactions/<reaction_id>")]
 pub fn api_get_reaction(reaction_id: String, repo: &State<Arc<dyn ReactionRepository>>) -> Option<Json<ReactionResponse>> {
-    if let Some(reaction) = get_reaction(GetReactionRequest { id: reaction_id }, repo) { 
-        Some(Json(reaction.into())) 
-    } else {
-        None
-    }
+    get_reaction(GetReactionRequest { id: reaction_id }, repo)
+        .map(|reaction| Json(reaction.into()))
 }

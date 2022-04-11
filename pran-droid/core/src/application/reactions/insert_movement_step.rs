@@ -4,7 +4,7 @@ use thiserror::Error;
 use crate::application::reactions::dtos::reaction_step_dto::{AnimationFrameDto, ReactionStepDto, ReactionStepSkipDto};
 use crate::domain::animations::animation::{Animation, AnimationFrame, AnimationFrames, CreateAnimationError};
 use crate::domain::images::image::ImageId;
-use crate::domain::reactions::reaction::{ChatTrigger, Milliseconds, MovingReactionStep, Reaction, ReactionId, ReactionStep, ReactionStepSkip, ReactionTrigger};
+use crate::domain::reactions::reaction::{Milliseconds, MovingReactionStep, Reaction, ReactionId, ReactionStep, ReactionStepSkip};
 use crate::domain::reactions::reaction_domain_service::{add_step_to_reaction, AddStepToReactionError, replace_step_in_reaction};
 use crate::domain::reactions::reaction_repository::ReactionRepository;
 use crate::ImageRepository;
@@ -14,7 +14,7 @@ pub enum AddMovementStepToReactionError {
     #[error("Bad request")]
     BadRequest(String),
     #[error("Wrong animation details")]
-    BadAnimationRequest(#[from] CreateAnimationError),
+    WrongAnimationRequest(#[from] CreateAnimationError),
     #[error("Wrong image details")]
     BadImageRequest(#[from] AddStepToReactionError),
 }
@@ -27,24 +27,22 @@ pub struct InsertMovementStepToReactionRequest {
 }
 
 pub fn insert_movement_step_to_reaction(request: InsertMovementStepToReactionRequest, repository: &Arc<dyn ReactionRepository>, image_repository: &Arc<dyn ImageRepository>) -> Result<ReactionStepDto, AddMovementStepToReactionError> {
-    match repository.get(&ReactionId(request.reaction_id.clone())) {
-        Some(mut reaction) => {
-            let reaction_step = ReactionStep::Moving(MovingReactionStep {
-                skip: match request.skip {
-                    ReactionStepSkipDto::ImmediatelyAfter => ReactionStepSkip::ImmediatelyAfter,
-                    ReactionStepSkipDto::AfterMilliseconds(ms) => ReactionStepSkip::AfterMilliseconds(Milliseconds(ms))
-                },
-                animation: Animation {
-                    frames: AnimationFrames::new(map_frames(request.animation)?)?
-                }
-            });
-            insert_step_in_correct_index(&mut reaction, &reaction_step, request.step_index, image_repository)?;
-            repository.update(&reaction).unwrap();
+    let mut reaction = repository.get(&ReactionId(request.reaction_id.clone()))
+        .ok_or_else(|| AddMovementStepToReactionError::BadRequest(String::from("The requested reaction id does not exist")))?;
 
-            Ok(reaction_step.into())
+    let reaction_step = ReactionStep::Moving(MovingReactionStep {
+        skip: match request.skip {
+            ReactionStepSkipDto::ImmediatelyAfter => ReactionStepSkip::ImmediatelyAfter,
+            ReactionStepSkipDto::AfterMilliseconds(ms) => ReactionStepSkip::AfterMilliseconds(Milliseconds(ms))
         },
-        None => Err(AddMovementStepToReactionError::BadRequest(String::from("The requested reaction id does not exist")))
-    }
+        animation: Animation {
+            frames: AnimationFrames::new(map_frames(request.animation)?)?
+        }
+    });
+    insert_step_in_correct_index(&mut reaction, &reaction_step, request.step_index, image_repository)?;
+    repository.update(&reaction).unwrap();
+
+    Ok(reaction_step.into())
 }
 
 fn insert_step_in_correct_index(reaction: &mut Reaction, reaction_step: &ReactionStep, step_index: usize, image_repository: &Arc<dyn ImageRepository>) -> Result<(), AddMovementStepToReactionError> {
@@ -61,7 +59,7 @@ fn insert_step_in_correct_index(reaction: &mut Reaction, reaction_step: &Reactio
 
 fn map_frames(frames: Vec<AnimationFrameDto>) -> Result<Vec<AnimationFrame>, CreateAnimationError> {
     frames.into_iter()
-        .map(|frame_dto| AnimationFrame::new(frame_dto.frame_start, frame_dto.frame_end, ImageId(frame_dto.image_id.clone())))
+        .map(|frame_dto| AnimationFrame::new(frame_dto.frame_start, frame_dto.frame_end, ImageId(frame_dto.image_id)))
         .collect()
 }
 

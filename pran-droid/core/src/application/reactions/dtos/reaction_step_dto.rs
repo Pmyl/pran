@@ -58,7 +58,7 @@ impl From<AnimationFrame> for AnimationFrameDto {
         AnimationFrameDto {
             frame_start: frame.frame_start,
             frame_end: frame.frame_end,
-            image_id: frame.image_id.0.clone()
+            image_id: frame.image_id.0
         }
     }
 }

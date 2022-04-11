@@ -18,10 +18,10 @@ pub struct CreateReactionApiRequest {
     trigger: String
 }
 
-impl Into<CreateReactionRequest> for CreateReactionApiRequest {
-    fn into(self) -> CreateReactionRequest {
+impl From<CreateReactionApiRequest> for CreateReactionRequest {
+    fn from(request: CreateReactionApiRequest) -> CreateReactionRequest {
         CreateReactionRequest {
-            trigger: self.trigger
+            trigger: request.trigger
         }
     }
 }
@@ -38,7 +38,7 @@ impl<'r, 'o: 'r> Responder<'r, 'o> for Error {
             Error::CreateReactionError(error) => {
                 match error {
                     CreateReactionError::Unexpected => Status::InternalServerError.respond_to(req),
-                    CreateReactionError::Conflict(msg) => status::Conflict(Some(msg)).respond_to(req),
+                    CreateReactionError::Conflict(trigger) => status::Conflict(Some(format!("{:?}", trigger))).respond_to(req),
                     CreateReactionError::BadRequest(msg) => status::BadRequest(Some(msg)).respond_to(req)
                 }
             }

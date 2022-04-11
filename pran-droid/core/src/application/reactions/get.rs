@@ -1,8 +1,6 @@
 use std::sync::Arc;
-use std::fmt::Debug;
-use thiserror::Error;
 use crate::application::reactions::dtos::reaction_dto::ReactionDto;
-use crate::domain::reactions::reaction::{Reaction, ReactionId};
+use crate::domain::reactions::reaction::{ReactionId};
 use crate::domain::reactions::reaction_repository::{ReactionRepository};
 
 pub struct GetReactionRequest {
