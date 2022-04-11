@@ -1,7 +1,5 @@
 use crate::domain::images::image::Image;
-use rocket::serde::Serialize;
 
-#[derive(Serialize)]
 pub struct ImageDto {
     pub id: String,
     pub url: String

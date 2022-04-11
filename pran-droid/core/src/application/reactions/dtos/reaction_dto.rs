@@ -1,9 +1,8 @@
 use crate::domain::reactions::reaction::{Reaction, ReactionTrigger};
 use std::fmt::Debug;
-use rocket::serde::Serialize;
-use crate::application::reactions::dtos::reaction_step_dto::ReactionStepDto;
+use crate::application::reactions::dtos::reaction_step_dto::{ReactionStepDto};
 
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
 pub struct ReactionDto {
     pub id: String,
     pub trigger: ReactionTriggerDto,
@@ -11,12 +10,12 @@ pub struct ReactionDto {
 }
 
 impl From<Reaction> for ReactionDto {
-    fn from(value: Reaction) -> Self { // TODO: this has to be implemented to correctly map the reaction step dto
-        Self { id: value.id.0, trigger: value.trigger.into(), steps: value.steps.into_iter().map(|_| ReactionStepDto {}).collect() }
+    fn from(value: Reaction) -> Self {
+        Self { id: value.id.0, trigger: value.trigger.into(), steps: value.steps.into_iter().map(From::from).collect() }
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
 pub enum ReactionTriggerDto {
     Chat(String)
 }

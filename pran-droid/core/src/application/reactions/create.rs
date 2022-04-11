@@ -3,12 +3,12 @@ use std::fmt::Debug;
 use thiserror::Error;
 use crate::application::reactions::dtos::reaction_dto::ReactionDto;
 use crate::domain::reactions::reaction::{Reaction, ReactionTrigger};
-use crate::domain::reactions::reaction_repository::{ReactionRepository, ReactionInsertError};
+use crate::domain::reactions::reaction_repository::{ReactionRepository};
 
 #[derive(Debug, Error)]
 pub enum CreateReactionError {
     #[error("Bad request")]
-    BadRequest,
+    BadRequest(String),
     #[error("Reaction with trigger {0} already exists")]
     Conflict(String),
     #[error("Unexpected error")]
@@ -32,7 +32,7 @@ pub fn create_reaction(request: CreateReactionRequest, repository: &Arc<dyn Reac
                 true => Err(CreateReactionError::Conflict(request.trigger))
             }
         },
-        _ => Err(CreateReactionError::BadRequest)
+        _ => Err(CreateReactionError::BadRequest(String::from("Provided `trigger` is invalid")))
     }
 }
 
@@ -88,7 +88,7 @@ mod tests {
 
         match create_reaction(request, &repository) {
             Err(error) => match error {
-                CreateReactionError::BadRequest => {},
+                CreateReactionError::BadRequest(_) => {},
                 _ => unreachable!("expected create reaction to fail with bad request")
             },
             _ => unreachable!("expected create reaction to fail")

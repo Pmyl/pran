@@ -24,7 +24,7 @@ pub enum ReactionGetError {
     Missing
 }
 
-pub trait ReactionRepository {
+pub trait ReactionRepository: Send + Sync {
     fn next_id(&self) -> ReactionId;
     fn insert(&self, reaction: &Reaction) -> Result<(), ReactionInsertError>;
     fn exists_with_trigger(&self, trigger: &ReactionTrigger) -> bool;

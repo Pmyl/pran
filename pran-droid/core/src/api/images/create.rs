@@ -4,10 +4,15 @@ use rocket::{Request, response, State};
 use rocket::http::Status;
 use rocket::response::{Responder, status};
 use rocket::serde::json::Json;
+use crate::api::images::responses::image_response::ImageResponse;
 use crate::application::images::create::{create_image, CreateImageRequest, StoreImageError};
-use crate::application::images::dtos::image_dto::ImageDto;
 use crate::domain::images::image_repository::ImageRepository;
 use crate::domain::images::image_storage::ImageStorage;
+
+#[post("/images", format = "json", data = "<payload>")]
+pub fn api_create_image(payload: Json<CreateImageApiRequest>, repo: &State<Arc<dyn ImageRepository>>, storage: &State<Arc<dyn ImageStorage>>) -> Result<Json<ImageResponse>, Error> {
+    Ok(Json(create_image(payload.0.into(), repo, storage)?.into()))
+}
 
 #[derive(Deserialize)]
 pub struct CreateImageApiRequest {
@@ -43,9 +48,4 @@ impl<'r, 'o: 'r> Responder<'r, 'o> for Error {
             }
         }
     }
-}
-
-#[post("/images", format = "json", data = "<payload>")]
-pub fn api_create_image(payload: Json<CreateImageApiRequest>, repo: &State<Arc<dyn ImageRepository>>, storage: &State<Arc<dyn ImageStorage>>) -> Result<Json<ImageDto>, Error> {
-    Ok(Json(create_image(payload.0.into(), repo, storage)?.into()))
 }

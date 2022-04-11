@@ -1,7 +1,9 @@
 use std::clone::Clone;
 use std::cmp::PartialEq;
-use crate::domain::animations::animation::{Animation, AnimationFrame, AnimationFrames, AnimationId};
+use std::sync::Arc;
+use crate::domain::animations::animation::{Animation, AnimationFrame, AnimationFrames};
 use crate::domain::images::image::ImageId;
+use crate::ImageRepository;
 
 #[derive(Clone)]
 pub struct Reaction {
@@ -11,7 +13,7 @@ pub struct Reaction {
 }
 
 impl Reaction {
-    pub fn new_empty(id: ReactionId, trigger: ReactionTrigger) -> Self {
+    pub(crate) fn new_empty(id: ReactionId, trigger: ReactionTrigger) -> Self {
         Self {
             id,
             trigger,
@@ -19,8 +21,13 @@ impl Reaction {
         }
     }
 
-    pub fn add_step(&mut self, step: ReactionStep) {
+    pub(crate) fn add_step(&mut self, step: ReactionStep) {
         self.steps.push(step);
+    }
+
+    pub(crate) fn replace_step_at(&mut self, step: ReactionStep, index: usize) {
+        self.steps.remove(index);
+        self.steps.insert(index, step);
     }
 }
 
@@ -50,7 +57,7 @@ impl ReactionTrigger {
 #[derive(Clone)]
 pub enum ReactionStep {
     Moving(MovingReactionStep),
-    Talking(TalkingReactionStep)
+    //Talking(TalkingReactionStep)
 }
 
 #[derive(Clone)]
@@ -74,8 +81,9 @@ pub struct TalkingStep {
 
 #[derive(Clone)]
 pub enum ReactionStepSkip {
+    ImmediatelyAfter,
     AfterMilliseconds(Milliseconds),
-    AfterStep(AfterStep, Milliseconds)
+    //AfterStep(AfterStep, Milliseconds)
 }
 
 #[derive(Clone)]
