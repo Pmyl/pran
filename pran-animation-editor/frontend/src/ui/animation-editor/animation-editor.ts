@@ -70,6 +70,17 @@ export const createAnimationEditor = inlineComponent<AnimationEditorInput>(contr
 
 const setupShortcuts = (playerController: PlayerController) => {
   document.addEventListener('keydown', e => {
+    const activeElement = document.activeElement;
+    
+    if (!!activeElement) {
+      if (['a', 'button'].includes(activeElement.tagName.toLowerCase())) {
+        document.body.focus();
+        e.preventDefault();
+      } else if (['input', 'select', 'textarea'].includes(activeElement.tagName.toLowerCase())) {
+        return;
+      }
+    }
+
     if (e.ctrlKey && !e.shiftKey && e.code === 'KeyZ') {
       Mediator.raiseEvent<EditorUndoEvent>('undoEditorAction');
     }
