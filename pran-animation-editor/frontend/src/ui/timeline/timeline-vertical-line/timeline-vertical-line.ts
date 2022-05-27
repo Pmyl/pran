@@ -1,5 +1,5 @@
 import { PlayerController, PlayerState } from 'pran-animation-editor-frontend';
-import { Immutable, inlineComponent, setProperty, staticElement } from 'pran-gular-frontend';
+import { Immutable, inlineComponent, setProperty, setPropertyElement, staticElement } from 'pran-gular-frontend';
 import './timeline-vertical-line.css';
 
 export type TimelineVerticalLineInputs = { playerController: Immutable<PlayerController>, currentFrame: number, frameWidth: number };
@@ -14,15 +14,12 @@ export const createTimelineVerticalLine = inlineComponent<TimelineVerticalLineIn
   };
 
   controls.onInputChange = {
-    playerController: pc => playerController = pc
+    playerController: pc => playerController = pc,
+    currentFrame: (cf, inputs) => setPropertyElement(lineTemplate.staticContent, 'left', `${cf * inputs.frameWidth}px`),
+    frameWidth: (fw, inputs) => setPropertyElement(lineTemplate.staticContent, 'left', `${inputs.currentFrame * fw}px`)
   };
   
-  return inputs => controls.mandatoryInput('playerController') && [
-    lineTemplate,
-    e => (
-      setProperty(e, '.timeline-vertical-line_line', 'left', `${inputs.currentFrame * inputs.frameWidth}px`)
-    )
-  ];
+  return _ => controls.mandatoryInput('playerController') && lineTemplate;
 });
 
 function hookVerticalLineOnPlay(lineElement: HTMLElement, playerController: Immutable<PlayerController>) {
