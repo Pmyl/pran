@@ -2,7 +2,7 @@ import { Container } from './container';
 
 export type RenderResult = string | Component<object | null> | (string | Component<object | null>)[];
 
-export type Immutable<T> = {
+export type Immutable<T> = T extends Function ? T : {
   readonly [K in keyof T]: Immutable<T[K]>;
 };
 
@@ -14,7 +14,7 @@ export abstract class Component<T extends object | null = EmptyObject> {
   public readonly selector: string;
   public componentElement: HTMLElement;
   public get inputs(): Immutable<T> {
-    return this._inputs;
+    return this._inputs as Immutable<T>;
   }
   private _lastRenderedItems: (string | Component<object | null>)[] = [];
   private _holdRender: boolean;
@@ -42,6 +42,7 @@ export abstract class Component<T extends object | null = EmptyObject> {
 
     this._hasRerendered = true;
 
+    const isFirstRender = !this._hasRenderedAtLeastOnce;
     this._hasRenderedAtLeastOnce = true;
     let toRender = this._render();
     
@@ -102,6 +103,10 @@ export abstract class Component<T extends object | null = EmptyObject> {
     this._lastRenderedItems = toRender.slice();
     this._postRender(this.componentElement);
     
+    if (isFirstRender) {
+      this._afterFirstRender();
+    }
+    
     return this;
   }
   
@@ -156,6 +161,8 @@ export abstract class Component<T extends object | null = EmptyObject> {
   private _isComponent(element: unknown | Component<object | null>): element is Component<object | null> {
     return element instanceof Component;
   }
+
+  protected _afterFirstRender(): void {}
 
   protected _onInputChange(name: string): void {}
 

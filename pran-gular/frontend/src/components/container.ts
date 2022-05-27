@@ -1,7 +1,7 @@
 import { Component, EmptyObject, RenderResult } from './component';
 
 export class Container<T extends object | null = EmptyObject> extends Component<T> {
-  private _subComponents: (string | Component<object | null>)[] = [];
+  protected _subComponents: (string | Component<object | null>)[] = [];
 
   constructor(selector: string, initialClass?: string) {
     super(selector, initialClass);

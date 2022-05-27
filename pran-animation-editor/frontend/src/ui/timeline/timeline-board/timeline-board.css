@@ -5,16 +5,6 @@
     color: var(--timeline-board_text-color, black);
 }
 
-.timeline-board_vertical-line {
-    margin-left: 14px;
-    position: absolute;
-    border-right: 3px solid var(--timeline-board_vertical-line-color, black);
-    display: block;
-    height: 100%;
-    z-index: 300;
-    pointer-events: none;
-}
-
 .timeline-board_frame-pick-area {
     height: 35px;
     background-color: var(--timeline-board_pick-area-color, lightcyan);

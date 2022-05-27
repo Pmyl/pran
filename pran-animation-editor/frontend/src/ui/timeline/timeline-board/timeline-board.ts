@@ -4,6 +4,7 @@ import { IEvent, Mediator } from '../../../core/mediator/mediator';
 import { PlayerController } from '../../../core/player/player-controller';
 import { TimelineBar } from '../../../core/timeline/timeline-bar';
 import { createTimelineBar } from '../timeline-bar/timeline-bar';
+import { createTimelineVerticalLine, TimelineVerticalLineInputs } from '../timeline-vertical-line/timeline-vertical-line';
 import './timeline-board.css';
 
 export type TimelinePositionChanged = IEvent<'timelinePositionChanged', number>;
@@ -11,14 +12,19 @@ export type TimelinePositionChanged = IEvent<'timelinePositionChanged', number>;
 export const createTimelineBoard = inlineComponent<{ animator: Animator, playerController: PlayerController, frameWidth: number }, { totalFrames: number }>(controls => {
   let bars: ReturnType<typeof createTimelineBar>[],
     currentFrame: number = 0,
-    pickArea: Component;
+    pickArea: Component,
+    verticalLine: Component<TimelineVerticalLineInputs>;
 
   controls.setup('timeline-board', 'timeline-board');
   controls.onInputChange = {
     animator: (animator, inputs) => (
       bars = createBars(animator, inputs.frameWidth),
       currentFrame = animator.currentFrame,
-      animator.onFrameChange((frame: number) => (currentFrame = frame, controls.changed())),
+      animator.onFrameChange((frame: number) => (
+        currentFrame = frame,
+        verticalLine?.setInput('currentFrame', currentFrame),
+        controls.changed()
+      )),
       animator.onTotalFramesChange(() => controls.setSideInput('totalFrames', animator.totalFrames)),
       animator.onTimelineChange((t: Timeline, c: TimelineChange) => {
         switch (c.type) {
@@ -36,6 +42,7 @@ export const createTimelineBoard = inlineComponent<{ animator: Animator, playerC
     ),
     frameWidth: (width, inputs) => {
       pickArea = createPickArea(Math.max(inputs.animator.totalFrames, TimelineBar.minLength), inputs.frameWidth);
+      verticalLine = createTimelineVerticalLine({ currentFrame, frameWidth: inputs.frameWidth, playerController: inputs.playerController });
       controls.changed();
     }
   };
@@ -44,14 +51,14 @@ export const createTimelineBoard = inlineComponent<{ animator: Animator, playerC
       pickArea = createPickArea(Math.max(total, TimelineBar.minLength), inputs.frameWidth);
       controls.changed();
     }
-  }
+  };
 
   return inputs => {
     controls.mandatoryInput('animator');
     controls.mandatoryInput('playerController');
 
     return [[
-      `<span class="timeline-board_vertical-line" style="left: ${currentFrame * inputs.frameWidth}px"></span>`,
+      verticalLine,
       pickArea,
       ...bars
     ], element => onClick(element, '.timeline-board_frame-pick-area', e => {

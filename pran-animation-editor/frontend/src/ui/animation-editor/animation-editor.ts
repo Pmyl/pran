@@ -1,13 +1,12 @@
-import './animation-editor.css';
-
 import { Animator, AnimatorManager, CanvasControllerFactory } from 'pran-animation-frontend';
 import { Component, Container, inlineComponent } from 'pran-gular-frontend';
 import { EditorQueue, EditorRedoEvent, EditorUndoEvent } from '../../core/editor-queue/editor-queue';
 import { Mediator } from '../../core/mediator/mediator';
-import { PlayerController } from '../../core/player/player-controller';
+import { PlayerController, PlayerState } from '../../core/player/player-controller';
 import { createBlockEditor } from '../block/block-editor/block-editor';
 import { Player } from '../player/player';
 import { createTimelineBoard } from '../timeline/timeline-board/timeline-board';
+import './animation-editor.css';
 
 const componentName = 'animation-editor';
 
@@ -37,18 +36,6 @@ export const createAnimationEditor = inlineComponent<AnimationEditorInput>(contr
 
   EditorQueue.init();
 
-  document.addEventListener('keydown', e => {
-    if (e.ctrlKey && !e.shiftKey && e.code === 'KeyZ') {
-      Mediator.raiseEvent<EditorUndoEvent>('undoEditorAction');
-    }
-  });
-
-  document.addEventListener('keydown', e => {
-    if (e.ctrlKey && e.shiftKey && e.code === 'KeyZ') {
-      Mediator.raiseEvent<EditorRedoEvent>('redoEditorAction');
-    }
-  });
-
   controls.onInputsChange = async inputs => {
     if (initialized) throw new Error(`Cannot provide inputs multiple times to '${componentName}'`);
     initialized = true;
@@ -74,7 +61,29 @@ export const createAnimationEditor = inlineComponent<AnimationEditorInput>(contr
       topLeftContainer.append(inputs.customPanel)
     );
     controls.changed();
+
+    setupShortcuts(playerController);
   };
 
   return () => [topSection, bottomSection];
 });
+
+const setupShortcuts = (playerController: PlayerController) => {
+  document.addEventListener('keydown', e => {
+    if (e.ctrlKey && !e.shiftKey && e.code === 'KeyZ') {
+      Mediator.raiseEvent<EditorUndoEvent>('undoEditorAction');
+    }
+
+    if (e.ctrlKey && e.shiftKey && e.code === 'KeyZ') {
+      Mediator.raiseEvent<EditorRedoEvent>('redoEditorAction');
+    }
+
+    if (e.code === 'Space') {
+      if (playerController.state === PlayerState.Play || playerController.state === PlayerState.End) {
+        playerController.pause();
+      } else {
+        playerController.play();
+      }
+    }
+  });
+};

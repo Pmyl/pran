@@ -1,39 +1,40 @@
 import { Component, EmptyObject, Immutable, RenderResult } from './component';
 import { mandatoryInput } from './mandatory-input';
 
-type InputChangeHooks<T> = {
-  [key in keyof T]: (changed: T[key], inputs: Immutable<T>) => void;
+type InputChangeHooks<TInputs> = {
+  [key in keyof TInputs]: (changed: TInputs[key], inputs: Immutable<TInputs>) => void;
 };
 
-type SideInputChangeHooks<T, TS> = {
-  [key in keyof TS]: (changed: TS[key], sideInputs: Partial<TS>, inputs: Immutable<T>) => void;
+type SideInputChangeHooks<TInputs, TSideInputs> = {
+  [key in keyof TSideInputs]: (changed: TSideInputs[key], sideInputs: Partial<TSideInputs>, inputs: Immutable<TInputs>) => void;
 };
 
-export interface ComponentControls<T extends object, TE extends object = {}> {
+export interface ComponentControls<TInputs extends object, TSideInputs extends object = {}> {
   setup: (selector: string, initialClass?: string) => void;
-  mandatoryInput: (inputName: keyof T) => boolean;
+  mandatoryInput: (inputName: keyof TInputs) => boolean;
   changed(): void;
-  onInputsChange?: (inputs: T) => void;
-  onInputChange?: Partial<InputChangeHooks<T>>;
-  setSideInput: <TK extends keyof TE>(inputName: TK, input: TE[TK]) => void;
-  onSideInputChange?: SideInputChangeHooks<T, TE>;
+  onInputsChange?: (inputs: TInputs) => void;
+  onInputChange?: Partial<InputChangeHooks<TInputs>>;
+  setSideInput: <TInputName extends keyof TSideInputs>(inputName: TInputName, input: TSideInputs[TInputName]) => void;
+  onSideInputChange?: SideInputChangeHooks<TInputs, TSideInputs>;
+  afterFirstRender?: () => void;
   onDestroy?: () => void;
 }
 
-export function inlineComponent<T extends object = EmptyObject, TS extends object = null>(
-  componentFunction: (controls: ComponentControls<T, TS>) => (inputs: T) => RenderResult | [RenderResult, (component: HTMLElement) => void]
-): (inputs?: T) => Component<T> {
-  return (inputs?: T) => {
-    let _selector, _initialClass, component: Component<T>, sideInputs: Partial<TS> = {};
+export function inlineComponent<TInputs extends object = EmptyObject, TSideInputs extends object = null>(
+  componentFunction: (controls: ComponentControls<TInputs, TSideInputs>) => (inputs: TInputs) => RenderResult | [RenderResult, (component: HTMLElement) => void]
+): (inputs?: TInputs) => Component<TInputs> {
+  return (inputs?: TInputs) => {
+    let _selector, _initialClass, component: Component<TInputs>, sideInputs: Partial<TSideInputs> = {};
 
-    const componentControls: ComponentControls<T, TS> = {
+    const componentControls: ComponentControls<TInputs, TSideInputs> = {
       setup(selector: string, initialClass?: string) {
         _selector = selector;
         _initialClass = initialClass
       },
-      mandatoryInput: (inputName: keyof T) => mandatoryInput(component, inputName),
+      mandatoryInput: (inputName: keyof TInputs) => mandatoryInput(component, inputName),
       changed: () => component.render(),
-      setSideInput: <TK extends keyof TS>(inputName: TK, input: TS[TK]) => {
+      setSideInput: <TK extends keyof TSideInputs>(inputName: TK, input: TSideInputs[TK]) => {
         sideInputs[inputName] = input;
         componentControls.onSideInputChange[inputName](input, sideInputs, component.inputs);
       }
@@ -41,7 +42,7 @@ export function inlineComponent<T extends object = EmptyObject, TS extends objec
 
     const renderFn = componentFunction(componentControls)
 
-    component = new (class InlinedComponent extends Component<T> {
+    component = new (class InlinedComponent extends Component<TInputs> {
       private _postRenderFn: null | ((componentToRender: HTMLElement) => void);
 
       constructor() {
@@ -51,13 +52,17 @@ export function inlineComponent<T extends object = EmptyObject, TS extends objec
         super(_selector, _initialClass);
       }
       
-      public setInput<K extends keyof T>(name: K, input: T[K]) {
-        return this.setInputs({ [name]: input } as unknown as Partial<T>);
+      public setInput<K extends keyof TInputs>(name: K, input: TInputs[K]) {
+        return this.setInputs({ [name]: input } as unknown as Partial<TInputs>);
       }
 
-      public setInputs(inputs: Partial<T>): this {
+      public setInputs(inputs: Partial<TInputs>): this {
         super.setInputs(inputs);
         return this;
+      }
+
+      protected _afterFirstRender(): void {
+        componentControls.afterFirstRender?.();
       }
       
       protected _onDestroy(): void {
