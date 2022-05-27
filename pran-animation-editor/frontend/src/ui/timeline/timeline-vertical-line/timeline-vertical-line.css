@@ -1,9 +1,4 @@
-.timeline-vertical-line {
-  --timeline-vertical-line-position: 0px;
-}
-
 .timeline-vertical-line_line {
-  left: var(--timeline-vertical-line-position);
   margin-left: 14px;
   position: absolute;
   border-right: 3px solid var(--timeline-board_vertical-line-color, black);

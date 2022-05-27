@@ -10,4 +10,4 @@ export * from './events/on-double-click';
 export * from './events/on-keydown';
 export * from './events/on-mouseup';
 export * from './events/on-mousedown';
-export * from './modifiers/set-css-custom-property';
+export * from './modifiers/set-property';
