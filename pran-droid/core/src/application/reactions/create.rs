@@ -23,14 +23,13 @@ pub fn create_reaction(request: CreateReactionRequest, repository: &Arc<dyn Reac
     let trigger = ReactionTrigger::new_chat(request.trigger)
         .map_err(|_| CreateReactionError::BadRequest(String::from("Provided `trigger` is invalid")))?;
 
-    match repository.exists_with_trigger(&trigger) {
-        false => {
-            let reaction = Reaction::new_empty(repository.next_id(), trigger);
-            repository.insert(&reaction).map_err(|_| CreateReactionError::Unexpected)?;
+    if !repository.exists_with_trigger(&trigger) {
+        let reaction = Reaction::new_empty(repository.next_id(), trigger);
+        repository.insert(&reaction).map_err(|_| CreateReactionError::Unexpected)?;
 
-            Ok(reaction.into())
-        },
-        true => Err(CreateReactionError::Conflict(trigger))
+        Ok(reaction.into())
+    } else {
+        Err(CreateReactionError::Conflict(trigger))
     }
 }
 

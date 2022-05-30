@@ -24,7 +24,7 @@ pub enum StoreImageError {
 }
 
 pub fn create_image(request: CreateImageRequest, repo: &Arc<dyn ImageRepository>, storage: &Arc<dyn ImageStorage>) -> Result<ImageDto, StoreImageError> {
-    match (ImageId::try_from(request.id.clone()), ImageData::try_from(request.image)) {
+    match (ImageId::try_from(request.id), ImageData::try_from(request.image)) {
         (Ok(id), Ok(image_data)) => {
             let image_url = storage.save(&id, &image_data).map_err(|_| StoreImageError::StorageFail)?;
 
@@ -39,13 +39,12 @@ pub fn create_image(request: CreateImageRequest, repo: &Arc<dyn ImageRepository>
 fn save_in_repo(id: &ImageId, url: &ImageUrl, repository: &Arc<dyn ImageRepository>) -> Result<Image, StoreImageError> {
     let image = Image::new(id, url);
 
-    match repository.insert(&image) {
-        Ok(_) => Ok(image),
-        Err(e) => match e {
-            InsertError::Conflict => Err(StoreImageError::Conflict(format!("Image with id {:?} already exists", id))),
-            InsertError::Unexpected => Err(StoreImageError::Unexpected)
-        }
-    }
+    repository.insert(&image).map_err(|e| match e {
+        InsertError::Conflict => StoreImageError::Conflict(format!("Image with id {:?} already exists", id)),
+        InsertError::Unexpected => StoreImageError::Unexpected
+    })?;
+
+    Ok(image)
 }
 
 #[cfg(test)]
