@@ -6,6 +6,7 @@ use crate::gentle::gentle_api::{GentlePhoneme, GentleResult, GentleWord};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct PhonemisationResult {
+    pub duration: f32,
     pub transcript: String,
     pub words: Vec<ResultWord>
 }
@@ -27,6 +28,7 @@ pub struct ResultPhoneme {
 impl From::<GentleResult> for PhonemisationResult {
     fn from(gentle_result: GentleResult) -> Self {
         PhonemisationResult {
+            duration: gentle_result.duration,
             transcript: gentle_result.transcript,
             words: gentle_result.words.into_iter().map(|word| word.into()).collect()
         }
@@ -59,6 +61,7 @@ impl From::<PhonemiseAudioResult> for PhonemisationResult {
         let phoneme_average_duration = python_audio_result.seconds / all_phonemes.len() as f32;
 
         PhonemisationResult {
+            duration: python_audio_result.seconds,
             transcript: python_audio_result.text.clone(),
             words: vec![ResultWord {
                 word: python_audio_result.text,
@@ -75,15 +78,18 @@ impl From::<PhonemiseAudioResult> for PhonemisationResult {
 
 impl From::<PhonemiseTextResult> for PhonemisationResult {
     fn from(text_result: PhonemiseTextResult) -> Self {
-        let phoneme_average_duration = 0.3;
+        let phoneme_average_duration = 0.1;
+        let end_wait = 0.5;
+        let all_phonemes = flat(text_result.phonemes);
 
         PhonemisationResult {
+            duration: all_phonemes.len() as f32 * phoneme_average_duration + end_wait,
             transcript: text_result.text.clone(),
             words: vec![ResultWord {
                 word: text_result.text,
                 start: 0 as f32,
-                end: text_result.phonemes.len() as f32 * phoneme_average_duration,
-                phones: flat(text_result.phonemes).into_iter().map(|phoneme| ResultPhoneme {
+                end: all_phonemes.len() as f32 * phoneme_average_duration,
+                phones: all_phonemes.into_iter().map(|phoneme| ResultPhoneme {
                     phone: cmu_to_gentle_phoneme(phoneme),
                     duration: phoneme_average_duration
                 }).collect()

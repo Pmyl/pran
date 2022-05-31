@@ -12,6 +12,9 @@ import { createCustomMapping } from '../custom-mapping/custom-mapping';
 import { createEchoRecordingModal } from './echo-recording-modal';
 import { setupInitialAnimation } from './initial-animation';
 
+const TO_FRAMES: number = 60;
+const TO_SECONDS: number = 1 / 60;
+
 interface EchoPanelSideInputs {
   audioFile: File;
   audio: Audio;
@@ -26,6 +29,7 @@ type EchoPanelInputs = PranEditorControls & { mouthMapping: MouthMapping };
 type EchoPanelControls = ComponentControls<EchoPanelInputs, EchoPanelSideInputs>
 
 interface AudioData {
+  duration: number;
   transcript: string;
   words: Array<{
     word: string;
@@ -223,21 +227,21 @@ function updateAnimationAndData(audioData: AudioData, controls: EchoPanelControl
   let lastEnd: number = 0;
 
   const mouthAnimations: Array<ManagerTimelineAction> = audioData.words.flatMap(wordData => {
-    const waitBeforeInFrames: number = Math.floor((leftoverTime + wordData.start - lastEnd) / 0.0167);
-    leftoverTime = leftoverTime + wordData.start - lastEnd - waitBeforeInFrames * 0.0167;
+    const waitBeforeInFrames: number = Math.floor((leftoverTime + wordData.start - lastEnd) * TO_FRAMES);
+    leftoverTime = leftoverTime + wordData.start - lastEnd - waitBeforeInFrames * TO_SECONDS;
     lastEnd = wordData.end;
 
     let waitFrames: Array<ManagerTimelineAction> = [];
 
     if (waitBeforeInFrames > 11) {
       waitFrames = [wait(10), drawId('smile'), wait(waitBeforeInFrames - 10)];
-    } else {
+    } else if (waitBeforeInFrames > 0) {
       waitFrames = [wait(waitBeforeInFrames)];
     }
 
     return [...waitFrames, ...wordData.phones.flatMap(phoneData => {
-      const durationInFrames: number = Math.floor((leftoverTime + phoneData.duration) / 0.0167);
-      leftoverTime = leftoverTime + phoneData.duration - durationInFrames * 0.0167;
+      const durationInFrames: number = Math.floor((leftoverTime + phoneData.duration) * TO_FRAMES);
+      leftoverTime = leftoverTime + phoneData.duration - durationInFrames * TO_SECONDS;
 
       const phoneme = normalisePhoneme(phoneData.phone);
       const mouthPositions = convertToMouthPosition(phoneme);
@@ -252,6 +256,12 @@ function updateAnimationAndData(audioData: AudioData, controls: EchoPanelControl
     })];
   });
 
+  const endWaitInFrames: number = Math.floor((audioData.duration - lastEnd) * TO_FRAMES);
+  if (endWaitInFrames > 1) {
+    mouthAnimations.push(drawId('smile'));
+    mouthAnimations.push(wait(endWaitInFrames - 1));
+  }
+
   if (mouthAnimations[0].type === ActionType.None) {
     if (mouthAnimations[0].amount > 1) {
       mouthAnimations[0].amount--;
@@ -262,8 +272,7 @@ function updateAnimationAndData(audioData: AudioData, controls: EchoPanelControl
     mouthAnimations.unshift(drawId('smile'));
   }
 
-  const totalDurationInSeconds: number = audioData.words[audioData.words.length - 1].end;
-  const totalDurationInFrames: number = totalDurationInSeconds / 0.0167;
+  const totalDurationInFrames: number = audioData.duration * TO_FRAMES;
 
   const eyesAnimations = Array(Math.floor(totalDurationInFrames / 114)).fill(null).flatMap(() => {
     return [
@@ -289,7 +298,7 @@ function updateAnimationAndData(audioData: AudioData, controls: EchoPanelControl
 
   controls.setSideInput('text', audioData.transcript);
   controls.setSideInput('phonemes', audioData.words.map(w => w.phones.map(p => normalisePhoneme(p.phone))));
-  controls.setSideInput('seconds', totalDurationInSeconds);
+  controls.setSideInput('seconds', audioData.duration);
   controls.changed();
 }
 

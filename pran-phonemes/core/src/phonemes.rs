@@ -49,6 +49,14 @@ pub fn phonemise_audio(audio_path: String) -> Result<PhonemiseAudioResult, PyErr
     })
 }
 
+pub fn audio_seconds(audio_path: String) -> Result<f32, PyErr> {
+    Python::with_gil(|py| {
+        let phonemiser: &PyModule = setup_phonemiser_python(py)?;
+        let call_result: f32 = phonemiser.getattr("audio_seconds")?.call1((audio_path, ))?.extract()?;
+        Ok(call_result)
+    })
+}
+
 fn setup_phonemiser_python(py: Python) -> Result<&PyModule, PyErr> {
     let syspath: &PyList = PyModule::import(py, "sys")?
         .getattr("path")?

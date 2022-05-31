@@ -96,5 +96,9 @@ const setupShortcuts = (playerController: PlayerController) => {
         playerController.play();
       }
     }
+
+    if (e.code === 'KeyS') {
+      playerController.stop();
+    }
   });
 };

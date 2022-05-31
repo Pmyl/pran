@@ -1,6 +1,7 @@
 use rocket::serde::{Serialize, Deserialize};
 use futures_util::TryStreamExt;
 use futures_util::TryFutureExt;
+use pran_phonemes_core::phonemes::audio_seconds;
 use rocket_multipart_form_data::multer::bytes::BytesMut;
 use tokio::fs::File;
 use tokio_util::codec::{FramedRead, BytesCodec};
@@ -13,6 +14,7 @@ use crate::core::phoneme::cmu_to_gentle_phoneme;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct GentleResult {
+    pub duration: f32,
     pub transcript: String,
     pub words: Vec<GentleWord>
 }
@@ -124,7 +126,7 @@ pub struct GentlePhoneme {
 }
 
 pub async fn phonemise_gentle(config: &Config, audio_path: String, transcript: String) -> Result<GentleResult, CustomError> {
-    let stream = File::open(audio_path)
+    let stream = File::open(audio_path.clone())
         .map_ok(|file| FramedRead::new(file, BytesCodec::new()).map_ok(BytesMut::freeze))
         .try_flatten_stream();
     let client = reqwest::Client::new();
@@ -141,6 +143,7 @@ pub async fn phonemise_gentle(config: &Config, audio_path: String, transcript: S
         .await.map_err(|error| CustomError(format!("Couldn't parse json from lowerquality gentle.\n\r\n\r{}", error.to_string())))?;
 
     let mut final_result: GentleResult = GentleResult {
+        duration: audio_seconds(audio_path).map_err(|_| CustomError("Couldn't calculate audio length".to_string()))?,
         words: vec![],
         transcript
     };

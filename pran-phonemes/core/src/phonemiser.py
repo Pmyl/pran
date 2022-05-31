@@ -54,3 +54,8 @@ def audio_to_text(audio, samplerate):
         text = r.recognize_google(audio_data)
     os.remove(newfilename)
     return text
+
+
+def audio_seconds(filepath):
+    audio, samplerate = fetch_audio(filepath)
+    return len(audio) / samplerate
