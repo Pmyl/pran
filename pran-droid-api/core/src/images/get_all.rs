@@ -2,10 +2,10 @@ use std::sync::Arc;
 use rocket::serde::Serialize;
 use rocket::State;
 use rocket::serde::json::Json;
-use crate::api::images::responses::image_response::ImageResponse;
-use crate::application::images::dtos::image_dto::ImageDto;
-use crate::application::images::get_all::get_all_images;
-use crate::domain::images::image_repository::ImageRepository;
+use pran_droid_core::application::images::dtos::image_dto::ImageDto;
+use pran_droid_core::application::images::get_all::get_all_images;
+use pran_droid_core::domain::images::image_repository::ImageRepository;
+use crate::images::responses::image_response::ImageResponse;
 
 #[derive(Serialize)]
 pub struct GetAllImagesResponse {

@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 use crate::domain::images::image::ImageId;
 
+// TODO: to remake, emotion should use the Animation entity instead of creating custom animation structures
+// Keeping the layers is not excluded but not necessary at the moment
+
 pub struct Emotion {
     name: EmotionName,
     mouth_mapping: HashMap<MouthPositionName, ImageId>,

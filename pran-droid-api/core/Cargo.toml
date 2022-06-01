@@ -1,0 +1,12 @@
+[package]
+name = "pran-droid-api-core"
+version = "0.1.0"
+authors = ["Pmyl <julo134@gmail.com>"]
+edition = "2021"
+
+[dependencies]
+rocket = { version = "0.5.0-rc.1", features = ["json"] }
+rocket-multipart-form-data = "0.10.0"
+serde = "1.0.128"
+thiserror = "1.0.30"
+pran-droid-core = { path = "../../pran-droid/core" }

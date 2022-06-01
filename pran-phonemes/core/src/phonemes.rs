@@ -1,7 +1,6 @@
 use dotenv::dotenv;
 use std::{env};
 use std::error::Error;
-use std::path::PathBuf;
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 
@@ -18,9 +17,9 @@ pub struct PhonemiseTextResult {
     pub phonemes: Vec<Vec<String>>
 }
 
-pub fn pran_phonemes() -> dotenv::Result<PathBuf> {
+pub fn pran_phonemes() -> Result<(), impl Error> {
     pyo3::prepare_freethreaded_python();
-    dotenv()
+    dotenv().map(|_| {})
 }
 
 pub fn transcribe_audio(audio_path: String) -> Result<String, PyErr> {

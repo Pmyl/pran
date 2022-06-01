@@ -1,4 +1,4 @@
-﻿use crate::application::images::dtos::image_dto::ImageDto;
+﻿use pran_droid_core::application::images::dtos::image_dto::ImageDto;
 use rocket::serde::Serialize;
 
 #[derive(Serialize)]

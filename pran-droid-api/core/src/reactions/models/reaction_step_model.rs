@@ -1,10 +1,11 @@
 ﻿use rocket::serde::{Deserialize, Serialize};
-use crate::application::reactions::dtos::reaction_step_dto::{AnimationFrameDto, ReactionStepDto, ReactionStepSkipDto};
+use serde::Deserializer;
+use pran_droid_core::application::reactions::dtos::reaction_step_dto::{AnimationFrameDto, ReactionStepDto, ReactionStepSkipDto};
 
 #[derive(Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum ReactionStepModel {
-    Movement { animation: Vec<AnimationFrameModel>, skip: Option<ReactionStepSkipModel> }
+    Movement { animation: Vec<AnimationFrameModel>, skip: ReactionStepSkipModel }
 }
 
 impl From<ReactionStepDto> for ReactionStepModel {
@@ -23,26 +24,25 @@ impl From<ReactionStepDto> for ReactionStepModel {
 #[derive(Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum ReactionStepSkipModel {
+    None,
     #[serde(rename_all = "camelCase")]
     AfterMilliseconds { after_ms: u16 }
 }
 
-impl From<ReactionStepSkipDto> for Option<ReactionStepSkipModel> {
-    fn from(dto: ReactionStepSkipDto) -> Option<ReactionStepSkipModel> {
+impl From<ReactionStepSkipDto> for ReactionStepSkipModel {
+    fn from(dto: ReactionStepSkipDto) -> ReactionStepSkipModel {
         match dto {
-            ReactionStepSkipDto::ImmediatelyAfter => None,
-            ReactionStepSkipDto::AfterMilliseconds(ms) => Some(ReactionStepSkipModel::AfterMilliseconds { after_ms: ms })
+            ReactionStepSkipDto::ImmediatelyAfter => ReactionStepSkipModel::None,
+            ReactionStepSkipDto::AfterMilliseconds(ms) => ReactionStepSkipModel::AfterMilliseconds { after_ms: ms }
         }
     }
 }
 
-impl Into<ReactionStepSkipDto> for Option<ReactionStepSkipModel> {
-    fn into(self: Option<ReactionStepSkipModel>) -> ReactionStepSkipDto {
+impl Into<ReactionStepSkipDto> for ReactionStepSkipModel {
+    fn into(self: ReactionStepSkipModel) -> ReactionStepSkipDto {
         match self {
-            None => ReactionStepSkipDto::ImmediatelyAfter,
-            Some(skip) => match skip {
-                ReactionStepSkipModel::AfterMilliseconds { after_ms } => ReactionStepSkipDto::AfterMilliseconds(after_ms)
-            }
+            ReactionStepSkipModel::None => ReactionStepSkipDto::ImmediatelyAfter,
+            ReactionStepSkipModel::AfterMilliseconds { after_ms } => ReactionStepSkipDto::AfterMilliseconds(after_ms)
         }
     }
 }

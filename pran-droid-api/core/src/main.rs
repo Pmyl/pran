@@ -1,27 +1,25 @@
 #[macro_use] extern crate rocket;
 
-use pran_phonemes_core::phonemes::pran_phonemes;
 use std::fmt::{Debug};
 use std::sync::Arc;
 use rocket::{figment::{Figment, providers::Env}, Config as RocketConfig };
 use rocket::data::{Limits, ToByteUnit};
-use api::emotions::create::api_create_emotion;
-use api::images::get_all::api_get_all_images;
-use api::images::create::api_create_image;
-use api::reactions::create::api_create_reaction;
-use api::reactions::get::api_get_reaction;
-use api::reactions::insert_step::api_insert_reaction_step;
-use crate::domain::images::image_repository::ImageRepository;
-use crate::domain::images::image_storage::ImageStorage;
-use crate::domain::reactions::reaction_repository::ReactionRepository;
-use crate::persistence::images::in_memory_image_repository::InMemoryImageRepository;
-use crate::persistence::images::in_memory_image_storage::InMemoryImageStorage;
-use crate::persistence::reactions::in_memory_reaction_repository::InMemoryReactionRepository;
+use pran_droid_core::domain::images::image_repository::ImageRepository;
+use pran_droid_core::domain::images::image_storage::ImageStorage;
+use pran_droid_core::domain::reactions::reaction_repository::ReactionRepository;
+use pran_droid_core::persistence::images::in_memory_image_repository::InMemoryImageRepository;
+use pran_droid_core::persistence::images::in_memory_image_storage::InMemoryImageStorage;
+use pran_droid_core::persistence::reactions::in_memory_reaction_repository::InMemoryReactionRepository;
+use crate::emotions::create::api_create_emotion;
+use crate::images::get_all::api_get_all_images;
+use crate::images::create::api_create_image;
+use crate::reactions::create::api_create_reaction;
+use crate::reactions::get::api_get_reaction;
+use crate::reactions::insert_step::api_insert_reaction_step;
 
-mod api;
-mod application;
-mod domain;
-mod persistence;
+mod emotions;
+mod images;
+mod reactions;
 
 #[derive(Debug)]
 struct Config {
@@ -40,7 +38,7 @@ impl Config {
 
 #[launch]
 fn rocket() -> _ {
-    pran_phonemes().ok();
+    pran_droid_core::init().ok();
     let config = Config::new();
     let reaction_repo = Arc::new(InMemoryReactionRepository::new());
     let images_repo = Arc::new(InMemoryImageRepository::new());

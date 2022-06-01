@@ -8,6 +8,16 @@ pub struct Animation {
     pub frames: AnimationFrames
 }
 
+#[derive(Clone)]
+pub struct AnimationFrames(pub Vec<AnimationFrame>);
+
+#[derive(Clone)]
+pub struct AnimationFrame {
+    pub frame_start: u16,
+    pub frame_end: u16,
+    pub image_id: ImageId
+}
+
 #[derive(Debug, Error)]
 pub enum CreateAnimationError {
     #[error("Frames not ordered or overlapping")]
@@ -17,9 +27,6 @@ pub enum CreateAnimationError {
     #[error("Frame does not have any duration")]
     EmptyFrame
 }
-
-#[derive(Clone)]
-pub struct AnimationFrames(pub Vec<AnimationFrame>);
 
 impl AnimationFrames {
     pub(crate) fn all_image_ids(&self) -> Vec<ImageId> {
@@ -40,13 +47,6 @@ impl AnimationFrames {
         }
         Ok(AnimationFrames(frames))
     }
-}
-
-#[derive(Clone)]
-pub struct AnimationFrame {
-    pub frame_start: u16,
-    pub frame_end: u16,
-    pub image_id: ImageId
 }
 
 impl AnimationFrame {

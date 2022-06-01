@@ -4,10 +4,10 @@ use rocket::{Request, response, State};
 use rocket::http::Status;
 use rocket::response::{Responder, status};
 use rocket::serde::json::Json;
-use crate::api::images::responses::image_response::ImageResponse;
-use crate::application::images::create::{create_image, CreateImageRequest, StoreImageError};
-use crate::domain::images::image_repository::ImageRepository;
-use crate::domain::images::image_storage::ImageStorage;
+use pran_droid_core::application::images::create::{create_image, CreateImageRequest, StoreImageError};
+use pran_droid_core::domain::images::image_repository::ImageRepository;
+use pran_droid_core::domain::images::image_storage::ImageStorage;
+use crate::images::responses::image_response::ImageResponse;
 
 #[post("/images", format = "json", data = "<payload>")]
 pub fn api_create_image(payload: Json<CreateImageApiRequest>, repo: &State<Arc<dyn ImageRepository>>, storage: &State<Arc<dyn ImageStorage>>) -> Result<Json<ImageResponse>, Error> {

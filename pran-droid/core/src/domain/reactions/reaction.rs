@@ -10,6 +10,19 @@ pub struct Reaction {
     pub steps: Vec<ReactionStep>
 }
 
+#[derive(Clone, PartialEq)]
+pub struct ReactionId(pub String);
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum ReactionTrigger {
+    Chat(ChatTrigger)
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ChatTrigger {
+    pub text: String
+}
+
 impl Reaction {
     pub(crate) fn new_empty(id: ReactionId, trigger: ReactionTrigger) -> Self {
         Self {
@@ -27,19 +40,6 @@ impl Reaction {
         self.steps.remove(index);
         self.steps.insert(index, step);
     }
-}
-
-#[derive(Clone, PartialEq)]
-pub struct ReactionId(pub String);
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum ReactionTrigger {
-    Chat(ChatTrigger)
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct ChatTrigger {
-    pub text: String
 }
 
 impl ReactionTrigger {

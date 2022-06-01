@@ -7,7 +7,7 @@ use crate::domain::images::image::ImageId;
 use crate::domain::reactions::reaction::{Milliseconds, MovingReactionStep, Reaction, ReactionId, ReactionStep, ReactionStepSkip};
 use crate::domain::reactions::reaction_domain_service::{add_step_to_reaction, AddStepToReactionError, replace_step_in_reaction};
 use crate::domain::reactions::reaction_repository::ReactionRepository;
-use crate::ImageRepository;
+use crate::domain::images::image_repository::ImageRepository;
 
 #[derive(Debug, Error)]
 pub enum AddMovementStepToReactionError {
@@ -65,13 +65,13 @@ fn map_frames(frames: Vec<AnimationFrameDto>) -> Result<Vec<AnimationFrame>, Cre
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::application::reactions::create::{create_reaction, CreateReactionRequest};
     use crate::application::reactions::get::{get_reaction, GetReactionRequest};
     use crate::persistence::reactions::in_memory_reaction_repository::InMemoryReactionRepository;
-    use super::*;
     use crate::application::reactions::dtos::reaction_dto::ReactionDto;
     use crate::application::reactions::dtos::reaction_step_dto::{MovingReactionStepDto, ReactionStepSkipDto};
-    use crate::{ImageRepository, InMemoryImageRepository};
+    use crate::persistence::images::in_memory_image_repository::InMemoryImageRepository;
 
     #[test]
     fn insert_movement_step_to_reaction_wrong_id_return_error() {

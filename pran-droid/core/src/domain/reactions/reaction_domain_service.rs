@@ -2,7 +2,7 @@ use std::sync::Arc;
 use std::fmt::Debug;
 use thiserror::Error;
 use crate::domain::reactions::reaction::{MovingReactionStep, Reaction, ReactionStep};
-use crate::ImageRepository;
+use crate::domain::images::image_repository::ImageRepository;
 
 pub fn add_step_to_reaction(reaction: &mut Reaction, reaction_step: &ReactionStep, image_repository: &Arc<dyn ImageRepository>) -> Result<(), AddStepToReactionError> {
     validate_step(reaction_step, image_repository)?;

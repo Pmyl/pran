@@ -1,6 +1,6 @@
 ﻿use rocket::serde::Serialize;
-use crate::api::reactions::models::reaction_step_model::ReactionStepModel;
-use crate::application::reactions::dtos::reaction_dto::{ReactionDto, ReactionTriggerDto};
+use pran_droid_core::application::reactions::dtos::reaction_dto::{ReactionDto, ReactionTriggerDto};
+use crate::reactions::models::reaction_step_model::ReactionStepModel;
 
 #[derive(Serialize)]
 pub struct ReactionResponse {
