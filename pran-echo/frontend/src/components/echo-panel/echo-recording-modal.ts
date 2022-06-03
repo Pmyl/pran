@@ -6,6 +6,7 @@ import {
 } from 'pran-animation-editor-frontend';
 import { Animator, AnimatorManager, CanvasControllerFactory } from 'pran-animation-frontend';
 import { Container, inlineComponent, onClick } from 'pran-gular-frontend';
+import { webmToMp4 } from './webm-to-mp4';
 
 type EchoRecordingModalInputs = { animatorManager: AnimatorManager, animator: Animator } & ModalContentInputs<void>;
 
@@ -38,11 +39,11 @@ export const createEchoRecordingModal = inlineComponent<EchoRecordingModalInputs
     playerContainer,
     `<button type="button" class="echo-recording-modal_record-button g-button">Record</button>`
   ], e => (
-    onClick(e, '.echo-recording-modal_record-button', () => startRecording(canvas, playerController, 60))
+    onClick(e, '.echo-recording-modal_record-button', () => startRecording(canvas, playerController, animator, 60))
   )];
 });
 
-async function startRecording(canvas: HTMLCanvasElement, playerController: PlayerController, fps: number) {
+async function startRecording(canvas: HTMLCanvasElement, playerController: PlayerController, animator: Animator, fps: number) {
   const stream = canvas.captureStream(fps);
   const recordedChunks = [];
   const options: MediaRecorderOptions = {
@@ -60,22 +61,23 @@ async function startRecording(canvas: HTMLCanvasElement, playerController: Playe
     }
   });
   mediaRecorder.start();
-  playAnimationWithGoodQuality(canvas, playerController);
+  playAnimationWithGoodQuality(canvas, playerController, animator);
 
   function handleDataAvailable(event) {
     recordedChunks.push(event.data);
   }
 
-  function download() {
-    const blob = new Blob(recordedChunks, {
-      type: "video/webm"
+  async function download() {
+    const mp4Buffer = await webmToMp4(new Blob(recordedChunks, { type: "video/wemb" }));
+    const blob = new Blob([mp4Buffer], {
+      type: "video/mp4"
     });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     document.body.appendChild(a);
     (a as any).style = "display: none";
     a.href = url;
-    a.download = "output.webm";
+    a.download = "output.mp4";
     a.click();
     window.URL.revokeObjectURL(url);
   }
@@ -88,7 +90,7 @@ function stopMediaRecorder(mediaRecorder: MediaRecorder) {
   }, 1000);
 }
 
-function playAnimationWithGoodQuality(canvas: HTMLCanvasElement, playerController: PlayerController) {
+function playAnimationWithGoodQuality(canvas: HTMLCanvasElement, playerController: PlayerController, animator: Animator) {
   // Draw various colours to force media recorder to get their shit together and record with optimal quality
   const context = canvas.getContext('2d');
   setTimeout(() => {
@@ -128,6 +130,11 @@ function playAnimationWithGoodQuality(canvas: HTMLCanvasElement, playerControlle
     context.fillRect(0, 0, 500, 500);
   }, 900);
   setTimeout(() => {
-    playerController.play();
+    playerController.pickFrame(0);
+    animator.tick();
   }, 1000)
+  setTimeout(() => {
+    playerController.pickFrame(0);
+    playerController.play();
+  }, 2000)
 }
