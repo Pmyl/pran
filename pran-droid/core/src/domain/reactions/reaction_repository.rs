@@ -6,7 +6,7 @@ use crate::domain::reactions::reaction::{Reaction, ReactionId, ReactionTrigger};
 pub enum ReactionInsertError {
     #[error("Unexpected error while inserting the reaction")]
     Unexpected,
-    #[error("Trying to insert an reaction with existing trigger")]
+    #[error("Trying to insert an reaction with existing id")]
     Conflict
 }
 
@@ -21,5 +21,6 @@ pub trait ReactionRepository: Send + Sync {
     fn insert(&self, reaction: &Reaction) -> Result<(), ReactionInsertError>;
     fn exists_with_trigger(&self, trigger: &ReactionTrigger) -> bool;
     fn get(&self, id: &ReactionId) -> Option<Reaction>;
+    fn get_all(&self) -> Vec<Reaction>;
     fn update(&self, reaction: &Reaction) -> Result<(), ReactionUpdateError>;
 }

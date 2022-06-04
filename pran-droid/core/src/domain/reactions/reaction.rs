@@ -23,6 +23,12 @@ pub struct ChatTrigger {
     pub text: String
 }
 
+impl ChatTrigger {
+    pub fn matches(&self, message_text: &str) -> bool {
+        message_text.contains(&self.text)
+    }
+}
+
 impl Reaction {
     pub(crate) fn new_empty(id: ReactionId, trigger: ReactionTrigger) -> Self {
         Self {
@@ -32,18 +38,18 @@ impl Reaction {
         }
     }
 
-    pub(crate) fn add_step(&mut self, step: ReactionStep) {
+    pub(super) fn add_step(&mut self, step: ReactionStep) {
         self.steps.push(step);
     }
 
-    pub(crate) fn replace_step_at(&mut self, step: ReactionStep, index: usize) {
+    pub(super) fn replace_step_at(&mut self, step: ReactionStep, index: usize) {
         self.steps.remove(index);
         self.steps.insert(index, step);
     }
 }
 
 impl ReactionTrigger {
-    pub fn new_chat(trigger: String) -> Result<Self, ()> {
+    pub(crate) fn new_chat(trigger: String) -> Result<Self, ()> {
         if trigger.is_empty() {
             return Err(());
         }

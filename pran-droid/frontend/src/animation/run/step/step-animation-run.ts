@@ -18,6 +18,7 @@ export class StepAnimationRun implements AnimationRun {
 
   public async animateWith(animator: Animator, animatorManager: AnimatorManager, playerController: PlayerController): Promise<void> {
     playerController.setLoop(false);
+    this._stopped = false;
 
     for (let animation: PranDroidAnimation; !!(animation = this._animationStepper.nextStep()) && !this._stopped;) {
       await this._step(animation, animator, animatorManager, playerController);

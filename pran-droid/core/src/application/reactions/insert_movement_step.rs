@@ -1,8 +1,8 @@
 use std::sync::Arc;
 use std::fmt::Debug;
 use thiserror::Error;
-use crate::application::reactions::dtos::reaction_step_dto::{AnimationFrameDto, ReactionStepDto, ReactionStepSkipDto};
-use crate::domain::animations::animation::{Animation, AnimationFrame, AnimationFrames, CreateAnimationError};
+use crate::application::reactions::dtos::reaction_step_dto::{AnimationFrameDto, frames_dtos_to_animation, ReactionStepDto, ReactionStepSkipDto};
+use crate::domain::animations::animation::{CreateAnimationError};
 use crate::domain::images::image::ImageId;
 use crate::domain::reactions::reaction::{Milliseconds, MovingReactionStep, Reaction, ReactionId, ReactionStep, ReactionStepSkip};
 use crate::domain::reactions::reaction_domain_service::{add_step_to_reaction, AddStepToReactionError, replace_step_in_reaction};
@@ -35,9 +35,7 @@ pub fn insert_movement_step_to_reaction(request: InsertMovementStepToReactionReq
             ReactionStepSkipDto::ImmediatelyAfter => ReactionStepSkip::ImmediatelyAfter,
             ReactionStepSkipDto::AfterMilliseconds(ms) => ReactionStepSkip::AfterMilliseconds(Milliseconds(ms))
         },
-        animation: Animation {
-            frames: AnimationFrames::new(map_frames(request.animation)?)?
-        }
+        animation: frames_dtos_to_animation(request.animation)?
     });
     insert_step_in_correct_index(&mut reaction, &reaction_step, request.step_index, image_repository)?;
     repository.update(&reaction).unwrap();
@@ -53,14 +51,8 @@ fn insert_step_in_correct_index(reaction: &mut Reaction, reaction_step: &Reactio
     } else {
         replace_step_in_reaction(reaction, reaction_step, step_index, image_repository)?;
     }
-    
-    Ok(())
-}
 
-fn map_frames(frames: Vec<AnimationFrameDto>) -> Result<Vec<AnimationFrame>, CreateAnimationError> {
-    frames.into_iter()
-        .map(|frame_dto| AnimationFrame::new(frame_dto.frame_start, frame_dto.frame_end, ImageId(frame_dto.image_id)))
-        .collect()
+    Ok(())
 }
 
 #[cfg(test)]
@@ -109,7 +101,7 @@ mod tests {
         }, &repository, &image_repo);
 
         match result {
-            Ok(step) => match get_reaction(GetReactionRequest { id: reaction.id }, &repository) {
+            Ok(_) => match get_reaction(GetReactionRequest { id: reaction.id }, &repository) {
                 Some(reaction) => assert_eq!(reaction.steps.len(), 1),
                 None => unreachable!("should have saved reaction")
             },

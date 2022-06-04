@@ -1,7 +1,8 @@
-use crate::domain::reactions::reaction::{ReactionStep, ReactionStepSkip};
 use std::fmt::Debug;
 use std::clone::Clone;
-use crate::domain::animations::animation::{AnimationFrame, AnimationFrames};
+use crate::domain::reactions::reaction::{ReactionStep, ReactionStepSkip};
+use crate::domain::animations::animation::{Animation, AnimationFrame, AnimationFrames, CreateAnimationError};
+use crate::domain::images::image::ImageId;
 
 #[derive(Clone, Debug)]
 pub enum ReactionStepDto {
@@ -61,4 +62,16 @@ impl From<AnimationFrame> for AnimationFrameDto {
             image_id: frame.image_id.0
         }
     }
+}
+
+pub(crate) fn frames_dtos_to_animation(frames: Vec<AnimationFrameDto>) -> Result<Animation, CreateAnimationError> {
+    Ok(Animation {
+        frames: AnimationFrames::new(frames_dtos_to_frames(frames)?)?
+    })
+}
+
+fn frames_dtos_to_frames(frames: Vec<AnimationFrameDto>) -> Result<Vec<AnimationFrame>, CreateAnimationError> {
+    frames.into_iter()
+        .map(|frame_dto| AnimationFrame::new(frame_dto.frame_start, frame_dto.frame_end, ImageId(frame_dto.image_id)))
+        .collect()
 }

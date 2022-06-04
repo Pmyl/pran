@@ -15,7 +15,7 @@ pub struct Image {
 }
 
 impl Image {
-    pub fn new(id: &ImageId, url: &ImageUrl) -> Image {
+    pub(crate) fn new(id: &ImageId, url: &ImageUrl) -> Image {
         Image { id: id.clone(), url: url.clone() }
     }
 }

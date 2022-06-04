@@ -1,5 +1,4 @@
 ﻿use rocket::serde::{Deserialize, Serialize};
-use serde::Deserializer;
 use pran_droid_core::application::reactions::dtos::reaction_step_dto::{AnimationFrameDto, ReactionStepDto, ReactionStepSkipDto};
 
 #[derive(Deserialize, Serialize)]

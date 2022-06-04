@@ -1,16 +1,17 @@
 use std::sync::Arc;
 use std::fmt::Debug;
 use thiserror::Error;
+use crate::domain::animations::animation_domain_service::validate_images;
 use crate::domain::reactions::reaction::{MovingReactionStep, Reaction, ReactionStep};
 use crate::domain::images::image_repository::ImageRepository;
 
-pub fn add_step_to_reaction(reaction: &mut Reaction, reaction_step: &ReactionStep, image_repository: &Arc<dyn ImageRepository>) -> Result<(), AddStepToReactionError> {
+pub(crate) fn add_step_to_reaction(reaction: &mut Reaction, reaction_step: &ReactionStep, image_repository: &Arc<dyn ImageRepository>) -> Result<(), AddStepToReactionError> {
     validate_step(reaction_step, image_repository)?;
     reaction.add_step(reaction_step.clone());
     Ok(())
 }
 
-pub fn replace_step_in_reaction(reaction: &mut Reaction, reaction_step: &ReactionStep, step_index: usize, image_repository: &Arc<dyn ImageRepository>) -> Result<(), AddStepToReactionError> {
+pub(crate) fn replace_step_in_reaction(reaction: &mut Reaction, reaction_step: &ReactionStep, step_index: usize, image_repository: &Arc<dyn ImageRepository>) -> Result<(), AddStepToReactionError> {
     validate_step(reaction_step, image_repository)?;
     reaction.replace_step_at(reaction_step.clone(), step_index);
     Ok(())
@@ -30,12 +31,5 @@ fn validate_step(reaction_step: &ReactionStep, image_repository: &Arc<dyn ImageR
 }
 
 fn ensure_all_images_exist(step: &MovingReactionStep, image_repository: &Arc<dyn ImageRepository>) -> Result<(), AddStepToReactionError> {
-    let image_ids = step.animation.frames.all_image_ids();
-    for image_id in image_ids {
-        if !image_repository.has(&image_id) {
-            return Err(AddStepToReactionError::ImageNotFound(image_id.0))
-        }
-    }
-    
-    Ok(())
+    validate_images(&step.animation, image_repository).map_err(|error| AddStepToReactionError::ImageNotFound(error.0))
 }

@@ -3,15 +3,15 @@ use std::fmt::Debug;
 use thiserror::Error;
 use crate::domain::images::image::{ImageId};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Animation {
     pub frames: AnimationFrames
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct AnimationFrames(pub Vec<AnimationFrame>);
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct AnimationFrame {
     pub frame_start: u16,
     pub frame_end: u16,
@@ -29,13 +29,13 @@ pub enum CreateAnimationError {
 }
 
 impl AnimationFrames {
-    pub(crate) fn all_image_ids(&self) -> Vec<ImageId> {
-        self.0.iter().map(|frame| frame.image_id.clone()).collect()
+    pub(super) fn all_image_ids(&self) -> Vec<&ImageId> {
+        self.0.iter().map(|frame| &frame.image_id).collect()
     }
 }
 
 impl AnimationFrames {
-    pub fn new(frames: Vec<AnimationFrame>) -> Result<AnimationFrames, CreateAnimationError> {
+    pub(crate) fn new(frames: Vec<AnimationFrame>) -> Result<AnimationFrames, CreateAnimationError> {
         let mut maybe_current_frame: Option<u16> = None;
         for frame in &frames {
             if let Some(current_frame) = maybe_current_frame {
@@ -50,7 +50,7 @@ impl AnimationFrames {
 }
 
 impl AnimationFrame {
-    pub fn new(frame_start: u16, frame_end: u16, image_id: ImageId) -> Result<AnimationFrame, CreateAnimationError> {
+    pub(crate) fn new(frame_start: u16, frame_end: u16, image_id: ImageId) -> Result<AnimationFrame, CreateAnimationError> {
         if frame_start == frame_end {
             return Err(CreateAnimationError::EmptyFrame)
         }

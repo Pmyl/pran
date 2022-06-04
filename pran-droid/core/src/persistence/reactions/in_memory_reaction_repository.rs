@@ -42,6 +42,10 @@ impl ReactionRepository for InMemoryReactionRepository {
         self.reactions.lock().unwrap().iter().find(|stored_reaction| &stored_reaction.id == id).cloned()
     }
 
+    fn get_all(&self) -> Vec<Reaction> {
+        self.reactions.lock().unwrap().to_vec()
+    }
+
     fn update(&self, reaction: &Reaction) -> Result<(), ReactionUpdateError> {
         let mut lock = self.reactions.lock().unwrap();
         if let Some(index) = lock.iter().position(|stored_reaction| stored_reaction.id == reaction.id) {

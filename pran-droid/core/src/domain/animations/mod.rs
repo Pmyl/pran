@@ -1,2 +1,2 @@
 pub mod animation;
-pub mod animation_repository;
+pub mod animation_domain_service;

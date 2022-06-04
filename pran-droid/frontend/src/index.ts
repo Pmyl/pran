@@ -1,12 +1,4 @@
-import {
-  ActionType,
-  Animator,
-  AnimatorManager,
-  CanvasControllerFactory,
-  drawId,
-  ManagerTimelineAction,
-  wait
-} from 'pran-animation-frontend';
+import { ActionType, Animator, AnimatorManager, CanvasControllerFactory, drawId, ManagerTimelineAction, wait } from 'pran-animation-frontend';
 import { Container, inlineComponent } from 'pran-gular-frontend';
 import { cmuPhonemesMap, phonemesMapper } from 'pran-phonemes-frontend';
 import { randomFramesBetweenInMs } from './animation/helpers/random';
@@ -16,8 +8,8 @@ import { AnimationRun } from './animation/run/animation-run';
 import { StepAnimationRun } from './animation/run/step/step-animation-run';
 import { LoopAnimationStepper } from './animation/run/step/stepper/loop-animation-stepper';
 import { SingleAnimationStepper } from './animation/run/step/stepper/single-animation-stepper';
-import './index.css';
 import { waitFor } from './helpers/async';
+import './index.css';
 import { SpeechBubble } from './speech-bubble/speech-bubble';
 
 const header = inlineComponent((controls) => {
@@ -27,6 +19,74 @@ const header = inlineComponent((controls) => {
     <span>Pran Droid</span>
   `;
 });
+
+interface BrainMovingReaction {
+  type: ReactionType.Moving;
+  animation: { frameStart: number, frameEnd: number, imageId: string }[];
+  bubble?: string | { text: string; letterByLetter: boolean; };
+  skip?: PranDroidSkipAfterMs | { after: PranDroidReactionSkipAfter, waitExtraMs?: number };
+}
+
+type DroidBrainReaction = { steps: (BrainMovingReaction | TalkingReaction | CompositeTalkingReaction)[] };
+
+function connectToBrain(pranDroid: PranDroid) {
+  const socket = new WebSocket('ws://localhost:8080');
+
+  socket.addEventListener('open', function (event) {
+    socket.send('Hello Server!');
+  });
+
+  function getAnimation(step: BrainMovingReaction): AnimationRun {
+    return StepAnimationRun.animating(SingleAnimationStepper.create({
+      fps: 60,
+      layers: [
+        {
+          loop: false,
+          actions: step.animation.flatMap(frame => {
+            const actions: ManagerTimelineAction[] = [{
+              type: ActionType.Draw,
+              imageId: frame.imageId
+            }];
+
+            if (frame.frameEnd - frame.frameStart > 1) {
+              actions.push({
+                type: ActionType.None,
+                amount: frame.frameEnd - frame.frameStart - 1
+              });
+            }
+
+            return actions;
+          })
+        }
+      ]
+    }));
+  }
+
+  socket.addEventListener('message', function (event) {
+    try {
+      const message: DroidBrainReaction = JSON.parse(event.data);
+      console.log('Input received from websocket', message);
+
+      const reactions: PranDroidReaction[] = message.steps.map(step => {
+        switch (step.type) {
+          case ReactionType.Moving:
+            return {
+              type: ReactionType.Moving,
+              movements: getAnimation(step),
+              bubble: step.bubble,
+              skip: step.skip
+            };
+          default:
+            throw new Error("unhandled step type " + step.type);
+        }
+      });
+
+      pranDroid.react(reactions);
+    } catch(e) {
+      console.error("Message received from websocket, error occurred", e);
+    }
+  });
+}
 
 document.addEventListener('DOMContentLoaded', async() => {
   const body: Container = Container.CreateBody();
@@ -163,6 +223,7 @@ document.addEventListener('DOMContentLoaded', async() => {
   })
 
   pranDroid.react(reactions);
+  connectToBrain(pranDroid);
 });
 
 class PranDroid {
@@ -253,17 +314,19 @@ class PranDroid {
     this._speechBubble.closeBubble();
   }
 
-  private _waitReactionTime(reaction: MovingReaction | TalkingReaction, speechResult: { durationMs: number }, animationExecution: Promise<unknown>) {
+  private _waitReactionTime(reaction: MovingReaction | TalkingReaction, speechResult: { durationMs: number }, animationExecution: Promise<unknown>): Promise<unknown> {
     if (isSkipAfterMs(reaction.skip)) {
       return waitFor(reaction.skip.afterMs);
     } else {
-      switch (reaction.skip.after) {
+      const skip = reaction.skip ?? { after: PranDroidReactionSkipAfter.LatestBubbleMovements };
+
+      switch (skip.after) {
         case PranDroidReactionSkipAfter.Movements:
           return animationExecution;
         case PranDroidReactionSkipAfter.Bubble:
-          return waitFor((reaction.skip.waitExtraMs || 0) + speechResult.durationMs);
+          return waitFor((skip.waitExtraMs || 0) + speechResult.durationMs);
         case PranDroidReactionSkipAfter.LatestBubbleMovements:
-          return Promise.all([animationExecution, waitFor((reaction.skip.waitExtraMs || 0) + speechResult.durationMs)]);
+          return Promise.all([animationExecution, waitFor((skip.waitExtraMs || 0) + speechResult.durationMs)]);
       }
     }
   }
@@ -320,14 +383,14 @@ class ConfigurableEmotion implements Emotion {
   }
 }
 
-function isSkipAfterMs(skip: (MovingReaction | TalkingReaction)['skip']): skip is PranDroidSkipAfterMs {
-  return (skip as PranDroidSkipAfterMs).afterMs !== undefined;
+function isSkipAfterMs(skip: (MovingReaction | TalkingReaction)['skip'] | undefined): skip is PranDroidSkipAfterMs {
+  return (skip as PranDroidSkipAfterMs)?.afterMs !== undefined;
 }
 
 enum ReactionType {
-  Moving,
-  Talking,
-  CompositeTalking
+  Moving = "Moving",
+  Talking = "Talking",
+  CompositeTalking = "CompositeTalking"
 }
 
 interface MovingReaction {

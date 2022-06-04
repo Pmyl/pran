@@ -4,6 +4,7 @@ use std::fmt::{Debug};
 use std::sync::Arc;
 use rocket::{figment::{Figment, providers::Env}, Config as RocketConfig };
 use rocket::data::{Limits, ToByteUnit};
+use rocket::fs::FileServer;
 use pran_droid_core::domain::images::image_repository::ImageRepository;
 use pran_droid_core::domain::images::image_storage::ImageStorage;
 use pran_droid_core::domain::reactions::reaction_repository::ReactionRepository;
@@ -58,7 +59,7 @@ fn rocket() -> _ {
         .manage::<Arc<dyn ImageRepository>>(images_repo)
         .manage::<Arc<dyn ImageStorage>>(images_storage)
         .manage::<Arc<dyn ReactionRepository>>(reaction_repo)
-        // .mount("/", FileServer::from(static_path))
+        .mount("/", FileServer::from(static_path))
         .mount("/api", routes![
             api_create_emotion,
             api_get_all_images,
