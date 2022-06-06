@@ -1,18 +1,33 @@
 use std::fmt::Debug;
 use std::clone::Clone;
-use crate::domain::reactions::reaction::{ReactionStep, ReactionStepSkip};
+use crate::domain::reactions::reaction::{Milliseconds};
+use crate::domain::reactions::reaction_definition::{MovingReactionStepDefinition, ReactionStepDefinition, ReactionStepSkipDefinition, ReactionStepTextDefinition, TalkingReactionStepDefinition};
 use crate::domain::animations::animation::{Animation, AnimationFrame, AnimationFrames, CreateAnimationError};
 use crate::domain::images::image::ImageId;
 
 #[derive(Clone, Debug)]
 pub enum ReactionStepDto {
     Moving(MovingReactionStepDto),
+    Talking(TalkingReactionStepDto)
 }
 
 #[derive(Clone, Debug)]
 pub struct MovingReactionStepDto {
     pub animation: Vec<AnimationFrameDto>,
     pub skip: ReactionStepSkipDto
+}
+
+#[derive(Clone, Debug)]
+pub struct TalkingReactionStepDto {
+    pub text: ReactionStepTextDto,
+    pub emotion_id: String,
+    pub skip: ReactionStepSkipDto
+}
+
+#[derive(Clone, Debug)]
+pub enum ReactionStepTextDto {
+    Instant(String),
+    LetterByLetter(String)
 }
 
 #[derive(Clone, Debug)]
@@ -28,22 +43,58 @@ pub enum ReactionStepSkipDto {
     AfterMilliseconds(u16),
 }
 
-impl From<ReactionStep> for ReactionStepDto {
-    fn from(step: ReactionStep) -> Self {
+impl From<ReactionStepDefinition> for ReactionStepDto {
+    fn from(step: ReactionStepDefinition) -> Self {
         match step {
-            ReactionStep::Moving(moving_step) => ReactionStepDto::Moving(MovingReactionStepDto {
-                skip: moving_step.skip.into(),
-                animation: moving_step.animation.frames.into()
-            })
+            ReactionStepDefinition::Moving(step) => step.into(),
+            ReactionStepDefinition::Talking(step) => step.into(),
+            ReactionStepDefinition::CompositeTalking(_) => todo!("This should never happen, reaction step composite is not implemented")
         }
     }
 }
 
-impl From<ReactionStepSkip> for ReactionStepSkipDto {
-    fn from(skip: ReactionStepSkip) -> Self {
+impl From<MovingReactionStepDefinition> for ReactionStepDto {
+    fn from(moving_step: MovingReactionStepDefinition) -> Self {
+        ReactionStepDto::Moving(MovingReactionStepDto {
+            skip: moving_step.skip.into(),
+            animation: moving_step.animation.frames.into()
+        })
+    }
+}
+
+impl From<ReactionStepSkipDefinition> for ReactionStepSkipDto {
+    fn from(skip: ReactionStepSkipDefinition) -> Self {
         match skip {
-            ReactionStepSkip::AfterMilliseconds(ms) => ReactionStepSkipDto::AfterMilliseconds(ms.0),
-            ReactionStepSkip::ImmediatelyAfter => ReactionStepSkipDto::ImmediatelyAfter
+            ReactionStepSkipDefinition::AfterMilliseconds(ms) => ReactionStepSkipDto::AfterMilliseconds(ms.0),
+            ReactionStepSkipDefinition::ImmediatelyAfter => ReactionStepSkipDto::ImmediatelyAfter
+        }
+    }
+}
+
+impl Into<ReactionStepSkipDefinition> for ReactionStepSkipDto {
+    fn into(self) -> ReactionStepSkipDefinition {
+        match self {
+            ReactionStepSkipDto::AfterMilliseconds(ms) => ReactionStepSkipDefinition::AfterMilliseconds(Milliseconds(ms)),
+            ReactionStepSkipDto::ImmediatelyAfter => ReactionStepSkipDefinition::ImmediatelyAfter
+        }
+    }
+}
+
+impl From<TalkingReactionStepDefinition> for ReactionStepDto {
+    fn from(talking_step: TalkingReactionStepDefinition) -> Self {
+        ReactionStepDto::Talking(TalkingReactionStepDto {
+            skip: talking_step.skip.into(),
+            emotion_id: talking_step.emotion_id.0,
+            text: talking_step.text.into()
+        })
+    }
+}
+
+impl From<ReactionStepTextDefinition> for ReactionStepTextDto {
+    fn from(text: ReactionStepTextDefinition) -> Self {
+        match text {
+            ReactionStepTextDefinition::Instant(text) => ReactionStepTextDto::Instant(text),
+            ReactionStepTextDefinition::LetterByLetter(text) => ReactionStepTextDto::LetterByLetter(text),
         }
     }
 }

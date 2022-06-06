@@ -48,6 +48,10 @@ impl EmotionRepository for InMemoryEmotionRepository {
         self.emotions.lock().unwrap().iter().find(|stored_emotion| &stored_emotion.id == id).cloned()
     }
 
+    fn exists(&self, id: &EmotionId) -> bool {
+        self.emotions.lock().unwrap().iter().any(|stored_emotion| &stored_emotion.id == id)
+    }
+
     fn get_by_name(&self, name: &EmotionName) -> Option<Emotion> {
         self.emotions.lock().unwrap().iter().find(|stored_emotion| &stored_emotion.name == name).cloned()
     }
@@ -59,12 +63,17 @@ impl EmotionRepository for InMemoryEmotionRepository {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
     use super::*;
 
     impl InMemoryEmotionRepository {
-        pub fn has(&self, id: &EmotionId) -> bool {
-            let lock = self.emotions.lock().unwrap();
-            lock.iter().any(|image| image.id == *id)
+        pub fn create_dummy_emotion(id: String) -> Emotion {
+            Emotion {
+                id: EmotionId(id),
+                name: EmotionName(String::from("a name")),
+                animation: vec![],
+                mouth_mapping: HashMap::new()
+            }
         }
     }
 }

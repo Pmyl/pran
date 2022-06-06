@@ -1,4 +1,4 @@
-use crate::domain::reactions::reaction::{Reaction, ReactionTrigger};
+use crate::domain::reactions::reaction_definition::{ReactionDefinition, ReactionTrigger};
 use std::fmt::Debug;
 use crate::application::reactions::dtos::reaction_step_dto::{ReactionStepDto};
 
@@ -9,8 +9,8 @@ pub struct ReactionDto {
     pub steps: Vec<ReactionStepDto>
 }
 
-impl From<Reaction> for ReactionDto {
-    fn from(value: Reaction) -> Self {
+impl From<ReactionDefinition> for ReactionDto {
+    fn from(value: ReactionDefinition) -> Self {
         Self { id: value.id.0, trigger: value.trigger.into(), steps: value.steps.into_iter().map(From::from).collect() }
     }
 }

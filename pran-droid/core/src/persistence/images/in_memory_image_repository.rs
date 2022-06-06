@@ -37,18 +37,3 @@ impl ImageRepository for InMemoryImageRepository {
         Ok(())
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::domain::images::image::{ImageId, ImageUrl};
-
-    impl InMemoryImageRepository {
-        pub fn create_dummy_image(id: String) -> Image {
-            Image {
-                id: ImageId(id),
-                url: ImageUrl(String::from("a url"))
-            }
-        }
-    }
-}

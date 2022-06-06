@@ -76,6 +76,14 @@ function connectToBrain(pranDroid: PranDroid) {
               bubble: step.bubble,
               skip: step.skip
             };
+          case ReactionType.Talking:
+            return {
+              type: ReactionType.Talking,
+              emotion: step.emotion,
+              phonemes: [],
+              bubble: step.bubble,
+              skip: step.skip
+            } as TalkingReaction;
           default:
             throw new Error("unhandled step type " + step.type);
         }
@@ -192,6 +200,18 @@ document.addEventListener('DOMContentLoaded', async() => {
       getEyesLayer(): ManagerTimelineAction[] {
         return [
           drawId('eyes_closed')
+        ];
+      },
+    }),
+    'sad': new ConfigurableEmotion({
+      getHeadLayer(): ManagerTimelineAction[] {
+        return [
+          drawId('head_idle')
+        ];
+      },
+      getEyesLayer(): ManagerTimelineAction[] {
+        return [
+          drawId('eyes_open')
         ];
       },
     }),

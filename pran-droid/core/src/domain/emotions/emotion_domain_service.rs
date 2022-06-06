@@ -12,6 +12,10 @@ pub enum SetMouthPositionToEmotionError {
     ImageNotFound(String)
 }
 
+#[derive(Debug, Error)]
+#[error("{0}")]
+pub struct UpdateLayerInEmotionError(pub String);
+
 pub(crate) fn set_mouth_position(emotion: &mut Emotion, position_name: MouthPositionName, image_id: ImageId, image_repository: &Arc<dyn ImageRepository>) -> Result<(), SetMouthPositionToEmotionError> {
     if image_repository.has(&image_id) {
         emotion.set_mouth_position(position_name, image_id);
@@ -21,9 +25,9 @@ pub(crate) fn set_mouth_position(emotion: &mut Emotion, position_name: MouthPosi
     }
 }
 
-pub(crate) fn update_layer_in_emotion(index: usize, emotion: &mut Emotion, animation: Animation, image_repository: &Arc<dyn ImageRepository>) -> Result<(), ()> {
-    validate_images(&animation, image_repository).map_err(|_| ())?;
-    emotion.update_layer(index, animation)?;
+pub(crate) fn update_layer_in_emotion(index: usize, emotion: &mut Emotion, animation: Animation, image_repository: &Arc<dyn ImageRepository>) -> Result<(), UpdateLayerInEmotionError> {
+    validate_images(&animation, image_repository).map_err(|error| UpdateLayerInEmotionError(error.0.clone()))?;
+    emotion.update_layer(index, animation).map_err(|_| UpdateLayerInEmotionError(String::from("Updating layer at wrong index")))?;
 
     Ok(())
 }

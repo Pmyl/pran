@@ -85,7 +85,7 @@ mod tests {
         let repository = Arc::new(InMemoryEmotionRepository::new());
 
         match create_emotion(request, &(repository.clone() as Arc<dyn EmotionRepository>)) {
-            Ok(emotion) => assert!(repository.has(&EmotionId(emotion.id))),
+            Ok(emotion) => assert!(repository.exists(&EmotionId(emotion.id))),
             _ => unreachable!("expected create emotion to not fail")
         }
     }

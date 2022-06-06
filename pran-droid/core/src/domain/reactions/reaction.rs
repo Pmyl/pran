@@ -1,67 +1,17 @@
-use std::fmt::Debug;
-use std::clone::Clone;
-use std::cmp::PartialEq;
-use crate::domain::animations::animation::{Animation};
+use crate::domain::animations::animation::Animation;
+use crate::domain::emotions::emotion::EmotionId;
+use crate::domain::reactions::reaction_definition::{ReactionDefinition, ReactionStepDefinition, TalkingReactionStepDefinition};
 
 #[derive(Clone)]
 pub struct Reaction {
-    pub id: ReactionId,
-    pub trigger: ReactionTrigger,
     pub steps: Vec<ReactionStep>
-}
-
-#[derive(Clone, PartialEq)]
-pub struct ReactionId(pub String);
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum ReactionTrigger {
-    Chat(ChatTrigger)
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct ChatTrigger {
-    pub text: String
-}
-
-impl ChatTrigger {
-    pub fn matches(&self, message_text: &str) -> bool {
-        message_text.contains(&self.text)
-    }
-}
-
-impl Reaction {
-    pub(crate) fn new_empty(id: ReactionId, trigger: ReactionTrigger) -> Self {
-        Self {
-            id,
-            trigger,
-            steps: vec![]
-        }
-    }
-
-    pub(super) fn add_step(&mut self, step: ReactionStep) {
-        self.steps.push(step);
-    }
-
-    pub(super) fn replace_step_at(&mut self, step: ReactionStep, index: usize) {
-        self.steps.remove(index);
-        self.steps.insert(index, step);
-    }
-}
-
-impl ReactionTrigger {
-    pub(crate) fn new_chat(trigger: String) -> Result<Self, ()> {
-        if trigger.is_empty() {
-            return Err(());
-        }
-
-        Ok(ReactionTrigger::Chat(ChatTrigger { text: trigger }))
-    }
 }
 
 #[derive(Clone)]
 pub enum ReactionStep {
     Moving(MovingReactionStep),
-    //Talking(TalkingReactionStep)
+    Talking(TalkingReactionStep),
+    CompositeTalking(Vec<TalkingReactionStep>)
 }
 
 #[derive(Clone)]
@@ -70,18 +20,13 @@ pub struct MovingReactionStep {
     pub skip: ReactionStepSkip
 }
 
-// #[derive(Clone)]
-// pub enum TalkingReactionStep {
-//     Single(TalkingStep),
-//     Composite(Vec<TalkingStep>)
-// }
-
-// #[derive(Clone)]
-// pub struct TalkingStep {
-//     pub animation: Animation,
-//     pub skip: ReactionStepSkip,
-//     pub text: ReactionStepText
-// }
+#[derive(Clone)]
+pub struct TalkingReactionStep {
+    pub emotion_id: EmotionId,
+    pub skip: ReactionStepSkip,
+    pub phonemes: Vec<String>,
+    pub text: ReactionStepText
+}
 
 #[derive(Clone)]
 pub enum ReactionStepSkip {
@@ -90,11 +35,11 @@ pub enum ReactionStepSkip {
     //AfterStep(AfterStep, Milliseconds)
 }
 
-// #[derive(Clone)]
-// pub enum ReactionStepText {
-//     Instant(String),
-//     LetterByLetter(String)
-// }
+#[derive(Clone)]
+pub enum ReactionStepText {
+    Instant(String),
+    LetterByLetter(String)
+}
 
 // #[derive(Clone)]
 // pub enum AfterStep {
@@ -105,3 +50,32 @@ pub enum ReactionStepSkip {
 
 #[derive(Clone)]
 pub struct Milliseconds(pub u16);
+
+impl Reaction {
+    pub(crate) fn create(definition: &ReactionDefinition) -> Self {
+        Reaction {
+            steps: definition.steps.iter().map(|step| ReactionStep::create(step)).collect()
+        }
+    }
+}
+
+impl ReactionStep {
+    pub(crate) fn create(definition: &ReactionStepDefinition) -> Self {
+        match definition {
+            ReactionStepDefinition::Moving(moving_step_definition) => ReactionStep::Moving(moving_step_definition.clone()),
+            ReactionStepDefinition::Talking(talking_step_definition) => ReactionStep::Talking(TalkingReactionStep::create(talking_step_definition)),
+            ReactionStepDefinition::CompositeTalking(_) => todo!("should never get here")
+        }
+    }
+}
+
+impl TalkingReactionStep {
+    fn create(definition: &TalkingReactionStepDefinition) -> Self {
+        TalkingReactionStep {
+            skip: definition.skip.clone(),
+            text: definition.text.clone(),
+            emotion_id: definition.emotion_id.clone(),
+            phonemes: vec![]
+        }
+    }
+}

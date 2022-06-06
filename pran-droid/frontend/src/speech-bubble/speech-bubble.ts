@@ -19,6 +19,7 @@ export class SpeechBubble {
   private _canvas: HTMLCanvasElement;
   private _context: CanvasRenderingContext2D;
   private _lastText: string = '';
+  private _lastDrawCancellation: () => void;
   private _bubbleOpen: boolean;
 
   constructor(canvas: HTMLCanvasElement) {
@@ -46,6 +47,7 @@ export class SpeechBubble {
     const fullOptions: Required<typeof options> = Object.assign({ center: true, letterByLetter: true, append: false }, options);
 
     const context = this._canvas.getContext('2d');
+    this._lastDrawCancellation?.();
     this._clearBubble();
     context.font = `${SPEECH_BUBBLE_FONT_SIZE}px Arial`;
     context.textAlign = fullOptions.center ? 'center' : 'left';
@@ -187,8 +189,11 @@ export class SpeechBubble {
 
   private _drawSpeechLetterByLetter(context: CanvasRenderingContext2D, initialText: string, text: string, options: { center: boolean }) {
     (async () => {
+      let cancelled: boolean = false;
+      this._lastDrawCancellation = () => cancelled = true;
       let textToWrite = initialText;
-      for (const char of text) {
+      for (let index = 0; index < text.length && !cancelled; index++) {
+        const char = text[index];
         this._clearBubble();
         textToWrite += char;
         this._drawSpeechInstant(context, textToWrite, options);

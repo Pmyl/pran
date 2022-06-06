@@ -2,7 +2,7 @@ use std::sync::Arc;
 use std::fmt::Debug;
 use thiserror::Error;
 use crate::application::reactions::dtos::reaction_dto::ReactionDto;
-use crate::domain::reactions::reaction::{Reaction, ReactionTrigger};
+use crate::domain::reactions::reaction_definition::{ReactionDefinition, ReactionTrigger};
 use crate::domain::reactions::reaction_repository::{ReactionRepository};
 
 #[derive(Debug, Error)]
@@ -24,7 +24,7 @@ pub fn create_reaction(request: CreateReactionRequest, repository: &Arc<dyn Reac
         .map_err(|_| CreateReactionError::BadRequest(String::from("Provided `trigger` is invalid")))?;
 
     if !repository.exists_with_trigger(&trigger) {
-        let reaction = Reaction::new_empty(repository.next_id(), trigger);
+        let reaction = ReactionDefinition::new_empty(repository.next_id(), trigger);
         repository.insert(&reaction).map_err(|_| CreateReactionError::Unexpected)?;
 
         Ok(reaction.into())
@@ -37,7 +37,7 @@ pub fn create_reaction(request: CreateReactionRequest, repository: &Arc<dyn Reac
 mod tests {
     use crate::application::reactions::dtos::reaction_dto::ReactionTriggerDto;
     use crate::domain::reactions::reaction_repository::ReactionRepository;
-    use crate::domain::reactions::reaction::{ReactionId};
+    use crate::domain::reactions::reaction_definition::{ReactionDefinitionId};
     use crate::persistence::reactions::in_memory_reaction_repository::InMemoryReactionRepository;
     use super::*;
 
@@ -73,7 +73,7 @@ mod tests {
         let repository = Arc::new(InMemoryReactionRepository::new());
 
         match create_reaction(request, &(repository.clone() as Arc<dyn ReactionRepository>)) {
-            Ok(reaction) => assert!(repository.has(&ReactionId(reaction.id))),
+            Ok(reaction) => assert!(repository.has(&ReactionDefinitionId(reaction.id))),
             _ => unreachable!("expected create reaction to not fail")
         }
     }

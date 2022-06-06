@@ -1,5 +1,5 @@
 use serde::Serialize;
-use pran_droid_core::domain::reactions::reaction::{Reaction, ReactionStep, ReactionStepSkip};
+use pran_droid_core::domain::reactions::reaction::{Reaction, ReactionStep, ReactionStepSkip, ReactionStepText};
 
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct ReactionOutput {
@@ -9,12 +9,22 @@ pub(crate) struct ReactionOutput {
 #[derive(Clone, Debug, Serialize)]
 #[serde(tag = "type")]
 pub(crate) enum ReactionStepOutput {
-    Moving(MovingReactionStepOutput)
+    Moving(MovingReactionStepOutput),
+    Talking(TalkingReactionStepOutput),
 }
 
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct MovingReactionStepOutput {
     pub animation: Vec<AnimationFrameOutput>,
+    pub skip: Option<ReactionStepSkipOutput>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct TalkingReactionStepOutput {
+    pub bubble: String,
+    pub phonemes: Vec<String>,
+    pub emotion: String,
     pub skip: Option<ReactionStepSkipOutput>,
 }
 
@@ -27,12 +37,14 @@ pub(crate) struct AnimationFrameOutput {
 }
 
 #[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub(crate) enum ReactionStepSkipOutput {
+    #[serde(rename = "afterMs")]
     AfterMilliseconds(u16)
 }
 
-impl From<&Reaction> for ReactionOutput {
-    fn from(reaction: &Reaction) -> Self {
+impl From<Reaction> for ReactionOutput {
+    fn from(reaction: Reaction) -> Self {
         ReactionOutput {
             steps: reaction.steps.iter()
                 .map(|step| match step {
@@ -46,7 +58,20 @@ impl From<&Reaction> for ReactionOutput {
                             ReactionStepSkip::ImmediatelyAfter => None,
                             ReactionStepSkip::AfterMilliseconds(ms) => Some(ReactionStepSkipOutput::AfterMilliseconds(ms.0))
                         }
-                    })
+                    }),
+                    ReactionStep::Talking(ref talking_step) => ReactionStepOutput::Talking(TalkingReactionStepOutput {
+                        bubble: match &talking_step.text {
+                            ReactionStepText::Instant(text) => text.clone(),
+                            ReactionStepText::LetterByLetter(text) => text.clone(),
+                        },
+                        phonemes: talking_step.phonemes.clone(),
+                        emotion: talking_step.emotion_id.0.clone(),
+                        skip: match &talking_step.skip {
+                            ReactionStepSkip::ImmediatelyAfter => None,
+                            ReactionStepSkip::AfterMilliseconds(ms) => Some(ReactionStepSkipOutput::AfterMilliseconds(ms.0))
+                        }
+                    }),
+                    ReactionStep::CompositeTalking(_) => todo!("Handle composite talking")
                 })
                 .collect()
         }
