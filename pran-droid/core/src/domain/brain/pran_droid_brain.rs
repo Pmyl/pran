@@ -1,19 +1,25 @@
-use crate::domain::brain::stimuli::Stimulus;
+use std::sync::Arc;
+use crate::application::brain::pran_droid_brain::TextPhonemiser;
+use crate::domain::brain::stimuli::{ChatMessageStimulus, Stimulus};
 use crate::domain::reactions::reaction::Reaction;
 use crate::domain::reactions::reaction_definition::{ReactionDefinition, ReactionTrigger};
 
 pub struct PranDroidBrain {
-    chat_reactions: Vec<ReactionDefinition>
+    chat_reactions: Vec<ReactionDefinition>,
+    text_phonemiser: Arc<dyn TextPhonemiser>,
 }
 
 impl PranDroidBrain {
-    pub fn new(chat_reactions: Vec<ReactionDefinition>) -> Self { PranDroidBrain {
-        chat_reactions
-    } }
+    pub fn new(text_phonemiser: Arc<dyn TextPhonemiser>, chat_reactions: Vec<ReactionDefinition>) -> Self {
+        PranDroidBrain {
+            text_phonemiser,
+            chat_reactions
+        }
+    }
 
     pub fn stimulate(&self, stimulus: Stimulus) -> Option<Reaction> {
         match stimulus {
-            Stimulus::ChatMessage { text: chat_message, .. } => self.handle_chat_message(chat_message),
+            Stimulus::ChatMessage(ChatMessageStimulus { text: chat_message, .. }) => self.handle_chat_message(chat_message),
         }
     }
 
@@ -26,7 +32,7 @@ impl PranDroidBrain {
                     false
                 }
             })
-            .map(|definition| Reaction::create(definition))
+            .map(|definition| Reaction::create(&self.text_phonemiser, definition))
             .map(From::from)
     }
 }

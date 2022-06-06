@@ -1,3 +1,5 @@
+use std::sync::Arc;
+use crate::application::brain::pran_droid_brain::TextPhonemiser;
 use crate::domain::animations::animation::Animation;
 use crate::domain::emotions::emotion::EmotionId;
 use crate::domain::reactions::reaction_definition::{ReactionDefinition, ReactionStepDefinition, TalkingReactionStepDefinition};
@@ -52,30 +54,30 @@ pub enum ReactionStepText {
 pub struct Milliseconds(pub u16);
 
 impl Reaction {
-    pub(crate) fn create(definition: &ReactionDefinition) -> Self {
+    pub(crate) fn create(text_phonemiser: &Arc<dyn TextPhonemiser>, definition: &ReactionDefinition) -> Self {
         Reaction {
-            steps: definition.steps.iter().map(|step| ReactionStep::create(step)).collect()
+            steps: definition.steps.iter().map(|step| ReactionStep::create(text_phonemiser, step)).collect()
         }
     }
 }
 
 impl ReactionStep {
-    pub(crate) fn create(definition: &ReactionStepDefinition) -> Self {
+    pub(crate) fn create(text_phonemiser: &Arc<dyn TextPhonemiser>, definition: &ReactionStepDefinition) -> Self {
         match definition {
             ReactionStepDefinition::Moving(moving_step_definition) => ReactionStep::Moving(moving_step_definition.clone()),
-            ReactionStepDefinition::Talking(talking_step_definition) => ReactionStep::Talking(TalkingReactionStep::create(talking_step_definition)),
+            ReactionStepDefinition::Talking(talking_step_definition) => ReactionStep::Talking(TalkingReactionStep::create(text_phonemiser, talking_step_definition)),
             ReactionStepDefinition::CompositeTalking(_) => todo!("should never get here")
         }
     }
 }
 
 impl TalkingReactionStep {
-    fn create(definition: &TalkingReactionStepDefinition) -> Self {
+    fn create(text_phonemiser: &Arc<dyn TextPhonemiser>, definition: &TalkingReactionStepDefinition) -> Self {
         TalkingReactionStep {
             skip: definition.skip.clone(),
             text: definition.text.clone(),
             emotion_id: definition.emotion_id.clone(),
-            phonemes: vec![]
+            phonemes: text_phonemiser.phonemise_text(definition.text.get_text())
         }
     }
 }

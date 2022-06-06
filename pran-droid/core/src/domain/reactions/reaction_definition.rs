@@ -77,3 +77,12 @@ pub struct TalkingReactionStepDefinition {
 
 pub type ReactionStepSkipDefinition = ReactionStepSkip;
 pub type ReactionStepTextDefinition = ReactionStepText;
+
+impl ReactionStepTextDefinition {
+    pub fn get_text(&self) -> String {
+        match self {
+            ReactionStepTextDefinition::Instant(text) => text.clone(),
+            ReactionStepTextDefinition::LetterByLetter(text) => text.clone()
+        }
+    }
+}

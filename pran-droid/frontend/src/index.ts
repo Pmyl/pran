@@ -80,7 +80,7 @@ function connectToBrain(pranDroid: PranDroid) {
             return {
               type: ReactionType.Talking,
               emotion: step.emotion,
-              phonemes: [],
+              phonemes: step.phonemes,
               bubble: step.bubble,
               skip: step.skip
             } as TalkingReaction;

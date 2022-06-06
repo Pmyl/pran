@@ -4,12 +4,12 @@ use rocket::serde::json::Json;
 use rocket::serde::Deserialize;
 use rocket::{Request, response, State};
 use pran_droid_core::application::reactions::insert_movement_step::{AddMovementStepToReactionError, insert_movement_step_to_reaction, InsertMovementStepToReactionRequest};
-use pran_droid_core::domain::reactions::reaction_repository::{ReactionRepository};
+use pran_droid_core::domain::reactions::reaction_definition_repository::{ReactionDefinitionRepository};
 use pran_droid_core::domain::images::image_repository::ImageRepository;
 use crate::reactions::models::reaction_step_model::{AnimationFrameModel, ReactionStepModel, ReactionStepSkipModel};
 
 #[put("/reactions/<reaction_id>/steps", format = "json", data = "<payload>")]
-pub fn api_insert_reaction_step(reaction_id: String, payload: Json<InsertReactionStepApiRequest>, repo: &State<Arc<dyn ReactionRepository>>, image_repo: &State<Arc<dyn ImageRepository>>) -> Result<Json<ReactionStepModel>, Error> {
+pub fn api_insert_reaction_step(reaction_id: String, payload: Json<InsertReactionStepApiRequest>, repo: &State<Arc<dyn ReactionDefinitionRepository>>, image_repo: &State<Arc<dyn ImageRepository>>) -> Result<Json<ReactionStepModel>, Error> {
     Ok(Json(insert_movement_step_to_reaction(payload.0.into_request(reaction_id), repo, image_repo)?.into()))
 }
 

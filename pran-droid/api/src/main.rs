@@ -7,7 +7,7 @@ use rocket::data::{Limits, ToByteUnit};
 use rocket::fs::FileServer;
 use pran_droid_core::domain::images::image_repository::ImageRepository;
 use pran_droid_core::domain::images::image_storage::ImageStorage;
-use pran_droid_core::domain::reactions::reaction_repository::ReactionRepository;
+use pran_droid_core::domain::reactions::reaction_definition_repository::ReactionDefinitionRepository;
 use pran_droid_core::persistence::images::in_memory_image_repository::InMemoryImageRepository;
 use pran_droid_core::persistence::images::in_memory_image_storage::InMemoryImageStorage;
 use pran_droid_core::persistence::reactions::in_memory_reaction_repository::InMemoryReactionRepository;
@@ -39,7 +39,6 @@ impl Config {
 
 #[launch]
 fn rocket() -> _ {
-    pran_droid_core::init().ok();
     let config = Config::new();
     let reaction_repo = Arc::new(InMemoryReactionRepository::new());
     let images_repo = Arc::new(InMemoryImageRepository::new());
@@ -58,7 +57,7 @@ fn rocket() -> _ {
         .manage(config)
         .manage::<Arc<dyn ImageRepository>>(images_repo)
         .manage::<Arc<dyn ImageStorage>>(images_storage)
-        .manage::<Arc<dyn ReactionRepository>>(reaction_repo)
+        .manage::<Arc<dyn ReactionDefinitionRepository>>(reaction_repo)
         .mount("/", FileServer::from(static_path))
         .mount("/api", routes![
             api_create_emotion,

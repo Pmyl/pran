@@ -790,6 +790,7 @@ dependencies = [
  "futures",
  "log",
  "pran-droid-core",
+ "pran-phonemes-core",
  "rand",
  "reqwest",
  "serde",
@@ -808,7 +809,6 @@ dependencies = [
 name = "pran-droid-core"
 version = "0.1.0"
 dependencies = [
- "pran-phonemes-core",
  "rand",
  "thiserror",
  "uuid",

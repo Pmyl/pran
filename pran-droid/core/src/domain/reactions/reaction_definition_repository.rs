@@ -16,7 +16,7 @@ pub enum ReactionUpdateError {
     Missing
 }
 
-pub trait ReactionRepository: Send + Sync {
+pub trait ReactionDefinitionRepository: Send + Sync {
     fn next_id(&self) -> ReactionDefinitionId;
     fn insert(&self, reaction: &ReactionDefinition) -> Result<(), ReactionInsertError>;
     fn exists_with_trigger(&self, trigger: &ReactionTrigger) -> bool;
@@ -30,7 +30,7 @@ pub mod tests {
     use std::sync::Arc;
     use super::*;
 
-    pub fn setup_dummy_reaction_definition(repository: &Arc<dyn ReactionRepository>) -> ReactionDefinition {
+    pub fn setup_dummy_chat_reaction_definition(repository: &Arc<dyn ReactionDefinitionRepository>) -> ReactionDefinition {
         let definition = ReactionDefinition::new_empty(
             ReactionDefinitionId(String::from("an id")),
             ReactionTrigger::new_chat(String::from("a trigger")).unwrap()
@@ -38,5 +38,17 @@ pub mod tests {
         repository.insert(&definition).unwrap();
 
         definition
+    }
+
+    pub fn setup_dummy_chat_reaction_definitions(chat_triggers: Vec<&str>, repository: &Arc<dyn ReactionDefinitionRepository>) -> Vec<ReactionDefinition> {
+        chat_triggers.iter().map(|trigger| {
+            let definition = ReactionDefinition::new_empty(
+                ReactionDefinitionId(format!("{}_id", trigger)),
+                ReactionTrigger::new_chat(trigger.to_string()).unwrap()
+            );
+            repository.insert(&definition).unwrap();
+
+            definition
+        }).collect()
     }
 }

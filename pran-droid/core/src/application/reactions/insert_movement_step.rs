@@ -5,7 +5,7 @@ use crate::application::reactions::dtos::reaction_step_dto::{AnimationFrameDto, 
 use crate::domain::animations::animation::{CreateAnimationError};
 use crate::domain::reactions::reaction_definition::{MovingReactionStepDefinition, ReactionDefinition, ReactionDefinitionId};
 use crate::domain::reactions::reaction_domain_service::{add_moving_step_to_reaction, AddStepToReactionError, replace_moving_step_in_reaction};
-use crate::domain::reactions::reaction_repository::ReactionRepository;
+use crate::domain::reactions::reaction_definition_repository::ReactionDefinitionRepository;
 use crate::domain::images::image_repository::ImageRepository;
 
 #[derive(Debug, Error)]
@@ -25,7 +25,7 @@ pub struct InsertMovementStepToReactionRequest {
     pub skip: ReactionStepSkipDto
 }
 
-pub fn insert_movement_step_to_reaction(request: InsertMovementStepToReactionRequest, repository: &Arc<dyn ReactionRepository>, image_repository: &Arc<dyn ImageRepository>) -> Result<ReactionStepDto, AddMovementStepToReactionError> {
+pub fn insert_movement_step_to_reaction(request: InsertMovementStepToReactionRequest, repository: &Arc<dyn ReactionDefinitionRepository>, image_repository: &Arc<dyn ImageRepository>) -> Result<ReactionStepDto, AddMovementStepToReactionError> {
     let mut reaction = repository.get(&ReactionDefinitionId(request.reaction_id.clone()))
         .ok_or_else(|| AddMovementStepToReactionError::BadRequest(String::from("The requested reaction id does not exist")))?;
 
@@ -58,14 +58,14 @@ mod tests {
     use crate::persistence::reactions::in_memory_reaction_repository::InMemoryReactionRepository;
     use crate::application::reactions::dtos::reaction_step_dto::{MovingReactionStepDto, ReactionStepSkipDto};
     use crate::domain::images::image_repository::tests::setup_dummy_images;
-    use crate::domain::reactions::reaction_repository::tests::setup_dummy_reaction_definition;
+    use crate::domain::reactions::reaction_definition_repository::tests::setup_dummy_chat_reaction_definition;
     use crate::persistence::images::in_memory_image_repository::InMemoryImageRepository;
 
     #[test]
     fn insert_movement_step_to_reaction_wrong_id_return_error() {
-        let repository: Arc<dyn ReactionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        setup_dummy_reaction_definition(&repository);
+        setup_dummy_chat_reaction_definition(&repository);
 
         let result = insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
             reaction_id: String::from("new id"),
@@ -79,9 +79,9 @@ mod tests {
 
     #[test]
     fn insert_movement_step_to_reaction_empty_animation_store_in_repository() {
-        let repository: Arc<dyn ReactionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let reaction = setup_dummy_reaction_definition(&repository);
+        let reaction = setup_dummy_chat_reaction_definition(&repository);
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
             reaction_id: reaction.id.0.clone(),
@@ -96,9 +96,9 @@ mod tests {
 
     #[test]
     fn insert_movement_step_to_reaction_correctly_map_the_animation_of_movement_step() {
-        let repository: Arc<dyn ReactionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let reaction = setup_dummy_reaction_definition(&repository);
+        let reaction = setup_dummy_chat_reaction_definition(&repository);
         setup_dummy_images(vec!["id1", "id2"], &image_repo);
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
@@ -132,9 +132,9 @@ mod tests {
 
     #[test]
     fn insert_movement_step_to_reaction_with_non_existing_image_id_errors() {
-        let repository: Arc<dyn ReactionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let reaction = setup_dummy_reaction_definition(&repository);
+        let reaction = setup_dummy_chat_reaction_definition(&repository);
 
         let result = insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
             reaction_id: reaction.id.0.clone(),
@@ -152,9 +152,9 @@ mod tests {
 
     #[test]
     fn insert_movement_step_to_existing_index_with_non_existing_image_id_errors() {
-        let repository: Arc<dyn ReactionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let reaction = setup_dummy_reaction_definition(&repository);
+        let reaction = setup_dummy_chat_reaction_definition(&repository);
         setup_dummy_images(vec!["id1"], &image_repo);
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
@@ -183,9 +183,9 @@ mod tests {
 
     #[test]
     fn insert_multiple_movement_steps_to_reaction_save_all_of_them_at_provided_index() {
-        let repository: Arc<dyn ReactionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let reaction = setup_dummy_reaction_definition(&repository);
+        let reaction = setup_dummy_chat_reaction_definition(&repository);
         setup_dummy_images(vec!["id1", "id2"], &image_repo);
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
@@ -228,9 +228,9 @@ mod tests {
 
     #[test]
     fn insert_movement_step_to_reaction_save_skip_configuration() {
-        let repository: Arc<dyn ReactionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let reaction = setup_dummy_reaction_definition(&repository);
+        let reaction = setup_dummy_chat_reaction_definition(&repository);
         setup_dummy_images(vec!["id1", "id2"], &image_repo);
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
@@ -264,9 +264,9 @@ mod tests {
 
     #[test]
     fn insert_movement_step_to_an_index_detached_from_existing_steps_errors() {
-        let repository: Arc<dyn ReactionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let reaction = setup_dummy_reaction_definition(&repository);
+        let reaction = setup_dummy_chat_reaction_definition(&repository);
         setup_dummy_images(vec!["id1", "id2", "id3"], &image_repo);
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
@@ -297,9 +297,9 @@ mod tests {
 
     #[test]
     fn insert_movement_step_to_an_index_right_after_existing_steps_at_index() {
-        let repository: Arc<dyn ReactionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let reaction = setup_dummy_reaction_definition(&repository);
+        let reaction = setup_dummy_chat_reaction_definition(&repository);
         setup_dummy_images(vec!["id1", "id2"], &image_repo);
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
@@ -334,9 +334,9 @@ mod tests {
 
     #[test]
     fn insert_movement_step_to_an_index_with_existing_step_replace_existing_step() {
-        let repository: Arc<dyn ReactionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let reaction = setup_dummy_reaction_definition(&repository);
+        let reaction = setup_dummy_chat_reaction_definition(&repository);
         setup_dummy_images(vec!["id1", "id2"], &image_repo);
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
@@ -370,7 +370,7 @@ mod tests {
         assert_eq!(second_step_frame.image_id, String::from("id1"));
     }
 
-    fn get_moving_animation_step_at(repository: &Arc<dyn ReactionRepository>, reaction_id: String, index: usize) -> MovingReactionStepDto {
+    fn get_moving_animation_step_at(repository: &Arc<dyn ReactionDefinitionRepository>, reaction_id: String, index: usize) -> MovingReactionStepDto {
         let first_step = try_get_animation_step_at(repository, reaction_id.clone(), index)
             .expect(format!("should have saved a step at index {}", index).as_str());
         if let ReactionStepDto::Moving(moving_step) = first_step {
@@ -380,7 +380,7 @@ mod tests {
         }
     }
 
-    fn try_get_animation_step_at(repository: &Arc<dyn ReactionRepository>, reaction_id: String, index: usize) -> Result<ReactionStepDto, String> {
+    fn try_get_animation_step_at(repository: &Arc<dyn ReactionDefinitionRepository>, reaction_id: String, index: usize) -> Result<ReactionStepDto, String> {
         let updated_reaction = get_reaction(GetReactionRequest { id: reaction_id.clone() }, &repository)
             .expect(format!("should have a reaction with id {}", reaction_id).as_str());
         let maybe_step: Option<&ReactionStepDto> = updated_reaction.steps.get(index);

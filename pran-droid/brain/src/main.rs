@@ -12,13 +12,13 @@ use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::tungstenite::Message;
-use pran_droid_core::application::brain::pran_droid_brain::create_droid_brain;
-use pran_droid_core::domain::brain::stimuli::{Source, Stimulus};
-use pran_droid_core::domain::reactions::reaction_definition::{ReactionDefinition, ReactionTrigger};
-use pran_droid_core::domain::reactions::reaction_repository::ReactionRepository;
+use pran_droid_core::application::brain::pran_droid_brain::{create_droid_brain, TextPhonemiser};
+use pran_droid_core::domain::brain::stimuli::{ChatMessageStimulus, Source, Stimulus};
+use pran_droid_core::domain::reactions::reaction_definition_repository::ReactionDefinitionRepository;
 use pran_droid_core::persistence::reactions::in_memory_reaction_repository::InMemoryReactionRepository;
+use pran_phonemes_core::phonemes::{phonemise_text};
 use crate::future::join;
-use crate::stream_interface::events::{ChatEvent, ChatMessage};
+use crate::stream_interface::events::{ChatEvent};
 use crate::stream_interface::twitch::twitch_interface::{connect_to_twitch, TwitchConnectOptions};
 use crate::websocket_output::outputs::ReactionOutput;
 
@@ -26,15 +26,25 @@ mod stream_interface;
 mod websocket_output;
 mod test_database;
 
+struct PranTextPhonemiser {}
+
+impl TextPhonemiser for PranTextPhonemiser {
+    fn phonemise_text(&self, text: String) -> Vec<String> {
+        phonemise_text(text).unwrap().phonemes.into_iter().flat_map(|s| s).collect()
+    }
+}
+
 #[tokio::main]
 async fn main() {
     dotenv().ok();
+    pran_phonemes_core::phonemes::pran_phonemes().expect("PranPhonemes failed to initialise");
     init_logger();
 
-    let reaction_repository: Arc<dyn ReactionRepository> = Arc::new(InMemoryReactionRepository::new());
+    let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+    let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(PranTextPhonemiser{});
     test_database::build_test_database::build_test_database(reaction_repository.clone());
 
-    let brain = create_droid_brain(&reaction_repository).await;
+    let brain = create_droid_brain(&reaction_repository, &text_phonemiser);
 
     let token = authenticate(
         env::var("CLIENT_SECRET").unwrap(),
@@ -124,12 +134,12 @@ async fn authenticate(client_secret: String, old_token: String) -> String {
 impl Into<Stimulus> for ChatEvent {
     fn into(self) -> Stimulus {
         match self {
-            ChatEvent::Message(chat_message) => Stimulus::ChatMessage {
+            ChatEvent::Message(chat_message) => Stimulus::ChatMessage(ChatMessageStimulus {
                 text: chat_message.content,
                 source: Source {
                     is_mod: chat_message.is_mod, user_name: chat_message.name
                 }
-            },
+            }),
             ChatEvent::Action(_) => todo!("unhandled action type")
         }
     }

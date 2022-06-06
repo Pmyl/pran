@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::sync::Arc;
-use pran_droid_core::application::emotions::create::{create_emotion, CreateEmotionRequest};
 use pran_droid_core::application::emotions::get::{get_emotion, GetEmotionRequest};
 use pran_droid_core::application::emotions::get_by_name::{get_emotion_by_name, GetEmotionByNameRequest};
 use pran_droid_core::application::emotions::update_layer::{AddEmotionAnimationLayerRequest, update_emotion_animation_layer};
@@ -14,12 +13,12 @@ use pran_droid_core::domain::emotions::emotion::{Emotion, EmotionId, EmotionLaye
 use pran_droid_core::domain::emotions::emotion_repository::EmotionRepository;
 use pran_droid_core::domain::images::image_repository::ImageRepository;
 use pran_droid_core::domain::images::image_storage::ImageStorage;
-use pran_droid_core::domain::reactions::reaction_repository::ReactionRepository;
+use pran_droid_core::domain::reactions::reaction_definition_repository::ReactionDefinitionRepository;
 use pran_droid_core::persistence::emotions::in_memory_emotion_repository::InMemoryEmotionRepository;
 use pran_droid_core::persistence::images::in_memory_image_repository::InMemoryImageRepository;
 use pran_droid_core::persistence::images::in_memory_image_storage::InMemoryImageStorage;
 
-pub fn build_test_database(reaction_repository: Arc<dyn ReactionRepository>) {
+pub fn build_test_database(reaction_repository: Arc<dyn ReactionDefinitionRepository>) {
     let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
     let emotion_repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
     build_images_database(&image_repository);
@@ -113,7 +112,7 @@ fn build_images_database(image_repository: &Arc<dyn ImageRepository>) {
     create_image(CreateImageRequest { image: vec![1], id: String::from("eyesFire6") }, &image_repository, &image_storage).expect("error creating image");
 }
 
-fn build_reactions_database(reaction_repository: &Arc<dyn ReactionRepository>, image_repository: &Arc<dyn ImageRepository>, emotion_repository: &Arc<dyn EmotionRepository>) {
+fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefinitionRepository>, image_repository: &Arc<dyn ImageRepository>, emotion_repository: &Arc<dyn EmotionRepository>) {
     let reaction1 = create_reaction(CreateReactionRequest { trigger: String::from("!hello") }, &reaction_repository).expect("error creating reaction");
     let reaction2 = create_reaction(CreateReactionRequest { trigger: String::from("!move") }, &reaction_repository).expect("error creating reaction");
     let sad_emotion = get_emotion_by_name(GetEmotionByNameRequest { name: String::from("sad") }, &emotion_repository).expect("error getting sad emotion");
@@ -152,7 +151,7 @@ fn build_reactions_database(reaction_repository: &Arc<dyn ReactionRepository>, i
     insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
         emotion_id: sad_emotion.id.clone(),
         text: String::from("Hey everyone, a bit sad..."),
-        skip: ReactionStepSkipDto::AfterMilliseconds(500),
+        skip: ReactionStepSkipDto::ImmediatelyAfter,
         step_index: 2,
         reaction_id: reaction1.id.clone(),
     }, &reaction_repository, &emotion_repository).expect("error inserting step");
@@ -160,7 +159,7 @@ fn build_reactions_database(reaction_repository: &Arc<dyn ReactionRepository>, i
     insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
         emotion_id: sad_emotion.id.clone(),
         text: String::from("...but prandroid here!"),
-        skip: ReactionStepSkipDto::AfterMilliseconds(500),
+        skip: ReactionStepSkipDto::AfterMilliseconds(2500),
         step_index: 3,
         reaction_id: reaction1.id.clone(),
     }, &reaction_repository, &emotion_repository).expect("error inserting step");

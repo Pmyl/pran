@@ -17,9 +17,12 @@ pub struct PhonemiseTextResult {
     pub phonemes: Vec<Vec<String>>
 }
 
-pub fn pran_phonemes() -> Result<(), impl Error> {
+pub fn pran_phonemes() -> Result<(), ()> {
     pyo3::prepare_freethreaded_python();
-    dotenv().map(|_| {})
+    dotenv().ok();
+    env::var("PRAN_PHONEMES_PYTHON_PATH").expect("PRAN_PHONEMES_PYTHON_PATH missing in env variables.");
+
+    Ok(())
 }
 
 pub fn transcribe_audio(audio_path: String) -> Result<String, PyErr> {

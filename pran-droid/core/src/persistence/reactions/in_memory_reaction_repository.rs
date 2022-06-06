@@ -1,6 +1,6 @@
 use std::sync::Mutex;
 use crate::domain::reactions::reaction_definition::{ReactionDefinition, ReactionDefinitionId, ReactionTrigger};
-use crate::domain::reactions::reaction_repository::{ReactionRepository, ReactionInsertError, ReactionUpdateError};
+use crate::domain::reactions::reaction_definition_repository::{ReactionDefinitionRepository, ReactionInsertError, ReactionUpdateError};
 
 pub struct InMemoryReactionRepository {
     reactions: Mutex<Vec<ReactionDefinition>>,
@@ -12,7 +12,7 @@ impl InMemoryReactionRepository {
     }
 }
 
-impl ReactionRepository for InMemoryReactionRepository {
+impl ReactionDefinitionRepository for InMemoryReactionRepository {
     fn next_id(&self) -> ReactionDefinitionId {
         ReactionDefinitionId(uuid::Uuid::new_v4().to_string())
     }

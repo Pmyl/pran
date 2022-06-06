@@ -5,11 +5,11 @@ use rocket::serde::Deserialize;
 use rocket::{Request, response, State};
 use rocket::http::Status;
 use pran_droid_core::application::reactions::create::{create_reaction, CreateReactionError, CreateReactionRequest};
-use pran_droid_core::domain::reactions::reaction_repository::{ReactionRepository};
+use pran_droid_core::domain::reactions::reaction_definition_repository::{ReactionDefinitionRepository};
 use crate::reactions::models::reaction_model::ReactionResponse;
 
 #[post("/reactions", format = "json", data = "<payload>")]
-pub fn api_create_reaction(payload: Json<CreateReactionApiRequest>, repo: &State<Arc<dyn ReactionRepository>>) -> Result<Json<ReactionResponse>, Error> {
+pub fn api_create_reaction(payload: Json<CreateReactionApiRequest>, repo: &State<Arc<dyn ReactionDefinitionRepository>>) -> Result<Json<ReactionResponse>, Error> {
     Ok(Json(create_reaction(payload.0.into(), repo)?.into()))
 }
 

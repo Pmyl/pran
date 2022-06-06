@@ -71,6 +71,7 @@ export class SpeechBubble {
 
   public clearBubble(): void {
     if (!this._bubbleOpen) {
+      this._lastDrawCancellation?.();
       this._clearBubble();
     }
   }
