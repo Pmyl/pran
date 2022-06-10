@@ -67,15 +67,17 @@ pub async fn start_droid_brain(config: PranDroidBrainConfig, reaction_repository
 
     let brain_execution = tokio::spawn(async move {
         while let Some(event) = event_stream.next().await {
-            if let Some(reaction) = brain.stimulate(event.into()) {
-                debug!("Sending message with reaction {:?}", reaction);
-                let message = serde_json::to_string(&Into::<ReactionOutput>::into(reaction)).unwrap();
+            Into::<Option<Stimulus>>::into(event)
+                .and_then(|stimulus| brain.stimulate(stimulus))
+                .map(|reaction| {
+                    debug!("Sending message with reaction {:?}", reaction);
+                    let message = serde_json::to_string(&Into::<ReactionOutput>::into(reaction)).unwrap();
 
-                for ws_listener in ws_listeners.lock().unwrap().iter().map(|(_, ws_listener)| ws_listener) {
-                    ws_listener.unbounded_send(Message::Text(message.clone())).unwrap();
-                }
-                debug!("Message sent {:?}", message);
-            }
+                    for ws_listener in ws_listeners.lock().unwrap().iter().map(|(_, ws_listener)| ws_listener) {
+                        ws_listener.unbounded_send(Message::Text(message.clone())).unwrap();
+                    }
+                    debug!("Message sent {:?}", message);
+                });
         }
     });
 
@@ -131,16 +133,16 @@ async fn authenticate(client_secret: String, old_token: String) -> String {
     token.access_token.secret().to_string()
 }
 
-impl Into<Stimulus> for ChatEvent {
-    fn into(self) -> Stimulus {
+impl Into<Option<Stimulus>> for ChatEvent {
+    fn into(self) -> Option<Stimulus> {
         match self {
-            ChatEvent::Message(chat_message) => Stimulus::ChatMessage(ChatMessageStimulus {
+            ChatEvent::Message(chat_message) => Some(Stimulus::ChatMessage(ChatMessageStimulus {
                 text: chat_message.content,
                 source: Source {
                     is_mod: chat_message.is_mod, user_name: chat_message.name
                 }
-            }),
-            ChatEvent::Action(_) => todo!("unhandled action type")
+            })),
+            ChatEvent::Action(_) => None
         }
     }
 }
