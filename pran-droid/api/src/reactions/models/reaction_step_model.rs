@@ -1,19 +1,30 @@
 ﻿use rocket::serde::{Deserialize, Serialize};
-use pran_droid_core::application::reactions::dtos::reaction_step_dto::{AnimationFrameDto, ReactionStepDto, ReactionStepSkipDto};
+use pran_droid_core::application::reactions::dtos::reaction_step_dto::{AnimationFrameDto, ReactionStepDto, ReactionStepSkipDto, ReactionStepTextDto};
 
-#[derive(Deserialize, Serialize)]
-#[serde(untagged)]
+#[derive(Serialize)]
+#[serde(tag = "type")]
 pub enum ReactionStepModel {
-    Movement { animation: Vec<AnimationFrameModel>, skip: ReactionStepSkipModel }
+    Moving { animation: Vec<AnimationFrameModel>, skip: ReactionStepSkipModel },
+    Talking { text: String, emotion_id: String, skip: ReactionStepSkipModel },
 }
 
 impl From<ReactionStepDto> for ReactionStepModel {
     fn from(dto: ReactionStepDto) -> ReactionStepModel {
         match dto {
             ReactionStepDto::Moving(movement_step) => {
-                ReactionStepModel::Movement {
+                ReactionStepModel::Moving {
                     animation: movement_step.animation.into_iter().map(From::from).collect(),
                     skip: movement_step.skip.into()
+                }
+            }
+            ReactionStepDto::Talking(talking_step) => {
+                ReactionStepModel::Talking {
+                    text: match talking_step.text {
+                        ReactionStepTextDto::Instant(text) => text,
+                        ReactionStepTextDto::LetterByLetter(text) => text,
+                    },
+                    emotion_id: talking_step.emotion_id,
+                    skip: talking_step.skip.into()
                 }
             }
         }

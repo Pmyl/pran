@@ -5,6 +5,7 @@ authors = ["Pmyl <julo134@gmail.com>"]
 edition = "2021"
 
 [dependencies]
+log = "0.4.17"
 rand = "0.8.5"
 thiserror = "1.0.30"
 uuid = { version = "0.8.2", features = ["v4"] }

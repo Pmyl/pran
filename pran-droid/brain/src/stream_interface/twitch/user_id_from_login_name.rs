@@ -24,17 +24,17 @@ pub async fn user_id_from_login_name(options: TwitchConnectOptions) -> u32 {
         .await.unwrap()
         .json::<TwitchUsersResponse>()
         .await.unwrap();
-    
+
     match response {
         TwitchUsersResponse::Success { data: users } => {
             let TwitchUsersResponseData { id } = users.first().unwrap();
             let id = id.parse::<u32>().unwrap();
-            
+
             info!("Channel id fetched {}", id);
             id
         },
-        response => {
-            panic!("{:?}", response);
+        TwitchUsersResponse::Error { error, status, message} => {
+            panic!("Error: {}\nStatus: {}\nMessage: {}", error, status, message);
         }
     }
 }

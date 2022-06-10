@@ -1,13 +1,9 @@
 #[macro_use] extern crate log;
 
-use dotenv::dotenv;
 use futures::channel::mpsc::{unbounded, UnboundedSender};
 use futures::{future, pin_mut, TryStreamExt};
 use futures::stream::{StreamExt};
-use log::LevelFilter;
-use simplelog::{Config, SimpleLogger};
 use std::collections::HashMap;
-use std::env;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 use tokio::net::{TcpListener, TcpStream};
@@ -15,7 +11,6 @@ use tokio_tungstenite::tungstenite::Message;
 use pran_droid_core::application::brain::pran_droid_brain::{create_droid_brain, TextPhonemiser};
 use pran_droid_core::domain::brain::stimuli::{ChatMessageStimulus, Source, Stimulus};
 use pran_droid_core::domain::reactions::reaction_definition_repository::ReactionDefinitionRepository;
-use pran_droid_core::persistence::reactions::in_memory_reaction_repository::InMemoryReactionRepository;
 use pran_phonemes_core::phonemes::{phonemise_text};
 use crate::future::join;
 use crate::stream_interface::events::{ChatEvent};
@@ -30,56 +25,67 @@ struct PranTextPhonemiser {}
 
 impl TextPhonemiser for PranTextPhonemiser {
     fn phonemise_text(&self, text: String) -> Vec<String> {
-        phonemise_text(text).unwrap().phonemes.into_iter().flat_map(|s| s).collect()
+        debug!("Start phonemise {}", text.clone());
+        let result = phonemise_text(text).unwrap().phonemes.into_iter().flat_map(|s| s).collect();
+        debug!("End phonemise {:?}", &result);
+
+        result
     }
 }
 
-#[tokio::main]
-async fn main() {
-    dotenv().ok();
-    pran_phonemes_core::phonemes::pran_phonemes().expect("PranPhonemes failed to initialise");
-    init_logger();
+pub struct PranDroidBrainConfig {
+    pub twitch_client_secret: String,
+    pub twitch_client_id: String,
+    pub twitch_token: String,
+    pub twitch_channel: String,
+    pub twitch_user: String,
+    pub websocket_port: u16
+}
 
-    let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
-    let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(PranTextPhonemiser{});
+pub async fn start_droid_brain(config: PranDroidBrainConfig, reaction_repository: Arc<dyn ReactionDefinitionRepository>) {
+    pran_phonemes_core::phonemes::pran_phonemes().expect("PranPhonemes failed to initialise");
+
+    let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(PranTextPhonemiser {});
     test_database::build_test_database::build_test_database(reaction_repository.clone());
 
     let brain = create_droid_brain(&reaction_repository, &text_phonemiser);
 
     let token = authenticate(
-        env::var("CLIENT_SECRET").unwrap(),
-        env::var("OLD_TOKEN").unwrap()
+        config.twitch_client_secret,
+        config.twitch_token
     ).await;
 
     let mut event_stream = connect_to_twitch(TwitchConnectOptions {
         token,
-        channel: env::var("CHANNEL").unwrap(),
-        client_id: env::var("CLIENT_ID").unwrap(),
-        user: env::var("USER").unwrap()
+        channel: config.twitch_channel,
+        client_id: config.twitch_client_id,
+        user: config.twitch_user
     }).await;
 
     let ws_listeners: Arc<Mutex<HashMap<SocketAddr, UnboundedSender<Message>>>> = Arc::new(Mutex::new(HashMap::new()));
-    let websocket = init_websocket(ws_listeners.clone());
+    let websocket = init_websocket(config.websocket_port, ws_listeners.clone());
 
     let brain_execution = tokio::spawn(async move {
         while let Some(event) = event_stream.next().await {
             if let Some(reaction) = brain.stimulate(event.into()) {
+                debug!("Sending message with reaction {:?}", reaction);
                 let message = serde_json::to_string(&Into::<ReactionOutput>::into(reaction)).unwrap();
 
                 for ws_listener in ws_listeners.lock().unwrap().iter().map(|(_, ws_listener)| ws_listener) {
                     ws_listener.unbounded_send(Message::Text(message.clone())).unwrap();
                 }
+                debug!("Message sent {:?}", message);
             }
         }
     });
 
-    join(websocket, brain_execution).await;
+    let _ = join(websocket, brain_execution).await;
 
     info!("End process");
 }
 
-async fn init_websocket(ws_listeners: Arc<Mutex<HashMap<SocketAddr, UnboundedSender<Message>>>>) {
-    let addr = format!("127.0.0.1:{}", env::var("WEBSOCKET_PORT").unwrap());
+async fn init_websocket(port: u16, ws_listeners: Arc<Mutex<HashMap<SocketAddr, UnboundedSender<Message>>>>) {
+    let addr = format!("127.0.0.1:{}", port);
 
     let try_socket = TcpListener::bind(&addr).await;
     let listener = try_socket.expect("Failed to bind");
@@ -108,12 +114,6 @@ async fn handle_connection(ws_listeners: Arc<Mutex<HashMap<SocketAddr, Unbounded
     info!("WebSocket connection closed: {}", addr);
 
     ws_listeners.lock().unwrap().remove(&addr);
-}
-
-fn init_logger() {
-    if let Err(_) = SimpleLogger::init(LevelFilter::Info, Config::default()) {
-        eprintln!("Failed initializing logger for the application, nothing will be logged.");
-    }
 }
 
 async fn authenticate(client_secret: String, old_token: String) -> String {

@@ -4,25 +4,25 @@ use crate::domain::animations::animation::Animation;
 use crate::domain::emotions::emotion::EmotionId;
 use crate::domain::reactions::reaction_definition::{ReactionDefinition, ReactionStepDefinition, TalkingReactionStepDefinition};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Reaction {
     pub steps: Vec<ReactionStep>
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum ReactionStep {
     Moving(MovingReactionStep),
     Talking(TalkingReactionStep),
     CompositeTalking(Vec<TalkingReactionStep>)
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct MovingReactionStep {
     pub animation: Animation,
     pub skip: ReactionStepSkip
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct TalkingReactionStep {
     pub emotion_id: EmotionId,
     pub skip: ReactionStepSkip,
@@ -30,27 +30,27 @@ pub struct TalkingReactionStep {
     pub text: ReactionStepText
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum ReactionStepSkip {
     ImmediatelyAfter,
     AfterMilliseconds(Milliseconds),
     //AfterStep(AfterStep, Milliseconds)
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum ReactionStepText {
     Instant(String),
     LetterByLetter(String)
 }
 
-// #[derive(Clone)]
+// #[derive(Clone, Debug)]
 // pub enum AfterStep {
 //     Animation,
 //     Text,
 //     All
 // }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Milliseconds(pub u16);
 
 impl Reaction {

@@ -4,7 +4,6 @@ use std::fmt::Debug;
 
 #[derive(Debug, Deserialize)]
 pub struct CreateEmotionRequest {
-    lol: String
 }
 
 #[post("/emotion", format = "json", data = "<data>")]

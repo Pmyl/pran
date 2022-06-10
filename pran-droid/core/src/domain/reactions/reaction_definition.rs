@@ -4,14 +4,14 @@ use std::cmp::PartialEq;
 use crate::domain::emotions::emotion::EmotionId;
 use crate::domain::reactions::reaction::{MovingReactionStep, ReactionStepSkip, ReactionStepText};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ReactionDefinition {
     pub id: ReactionDefinitionId,
     pub trigger: ReactionTrigger,
     pub steps: Vec<ReactionStepDefinition>
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ReactionDefinitionId(pub String);
 
 #[derive(Debug, Clone, PartialEq)]
@@ -59,7 +59,7 @@ impl ReactionTrigger {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum ReactionStepDefinition {
     Moving(MovingReactionStep),
     Talking(TalkingReactionStepDefinition),
@@ -68,7 +68,7 @@ pub enum ReactionStepDefinition {
 
 pub type MovingReactionStepDefinition = MovingReactionStep;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct TalkingReactionStepDefinition {
     pub emotion_id: EmotionId,
     pub skip: ReactionStepSkipDefinition,
