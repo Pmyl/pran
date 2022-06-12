@@ -13,6 +13,11 @@ impl InMemoryImageRepository {
 }
 
 impl ImageRepository for InMemoryImageRepository {
+    fn get(&self, id: &ImageId) -> Option<Image> {
+        let lock = self.images.lock().unwrap();
+        lock.iter().find(|image| image.id == *id).cloned()
+    }
+
     fn get_all(&self) -> Vec<Image> {
         self.images.lock().unwrap().to_vec()
     }

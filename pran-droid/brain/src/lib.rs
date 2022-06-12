@@ -12,6 +12,9 @@ use pran_droid_core::application::brain::pran_droid_brain::{create_droid_brain, 
 use pran_droid_core::domain::brain::stimuli::{ChatMessageStimulus, Source, Stimulus};
 use pran_droid_core::domain::reactions::reaction_definition_repository::ReactionDefinitionRepository;
 use pran_phonemes_core::phonemes::{phonemise_text};
+use pran_droid_core::domain::emotions::emotion_repository::EmotionRepository;
+use pran_droid_core::domain::images::image_repository::ImageRepository;
+use pran_droid_core::domain::images::image_storage::ImageStorage;
 use crate::future::join;
 use crate::stream_interface::events::{ChatEvent};
 use crate::stream_interface::twitch::twitch_interface::{connect_to_twitch, TwitchConnectOptions};
@@ -42,11 +45,17 @@ pub struct PranDroidBrainConfig {
     pub websocket_port: u16
 }
 
-pub async fn start_droid_brain(config: PranDroidBrainConfig, reaction_repository: Arc<dyn ReactionDefinitionRepository>) {
+pub async fn start_droid_brain(
+    config: PranDroidBrainConfig,
+    reaction_repository: Arc<dyn ReactionDefinitionRepository>,
+    emotion_repository: Arc<dyn EmotionRepository>,
+    image_repository: Arc<dyn ImageRepository>,
+    image_storage: Arc<dyn ImageStorage>,
+) {
     pran_phonemes_core::phonemes::pran_phonemes().expect("PranPhonemes failed to initialise");
 
     let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(PranTextPhonemiser {});
-    test_database::build_test_database::build_test_database(reaction_repository.clone());
+    test_database::build_test_database::build_test_database(reaction_repository.clone(), emotion_repository, image_repository, image_storage);
 
     let brain = create_droid_brain(&reaction_repository, &text_phonemiser);
 

@@ -11,15 +11,18 @@ use std::sync::Arc;
 use std::{env};
 use futures::future::join;
 use pran_droid_brain::PranDroidBrainConfig;
+use pran_droid_core::domain::emotions::emotion_repository::EmotionRepository;
 use pran_droid_core::domain::images::image_repository::ImageRepository;
 use pran_droid_core::domain::images::image_storage::ImageStorage;
 use pran_droid_core::domain::reactions::reaction_definition_repository::ReactionDefinitionRepository;
+use pran_droid_core::persistence::emotions::in_memory_emotion_repository::InMemoryEmotionRepository;
 use pran_droid_core::persistence::images::in_memory_image_repository::InMemoryImageRepository;
 use pran_droid_core::persistence::images::in_memory_image_storage::InMemoryImageStorage;
 use pran_droid_core::persistence::reactions::in_memory_reaction_repository::InMemoryReactionRepository;
-use crate::emotions::create::api_create_emotion;
+use crate::emotions::get_all::api_get_all_emotions;
 use crate::images::get_all::api_get_all_images;
 use crate::images::create::api_create_image;
+use crate::images::get_from_storage::api_get_image_from_storage;
 use crate::reactions::create::api_create_reaction;
 use crate::reactions::get::api_get_reaction;
 use crate::reactions::insert_step::api_insert_reaction_step;
@@ -63,11 +66,15 @@ async fn main() {
     debug!("{:?}", config);
 
     let reaction_repo = Arc::new(InMemoryReactionRepository::new());
+    let emotion_repo = Arc::new(InMemoryEmotionRepository::new());
     let images_repo = Arc::new(InMemoryImageRepository::new());
     let images_storage = Arc::new(InMemoryImageStorage::new());
 
     let brain = tokio::spawn({
         let reaction_repo = reaction_repo.clone();
+        let emotion_repo = emotion_repo.clone();
+        let images_repo = images_repo.clone();
+        let images_storage = images_storage.clone();
         let twitch_client_secret = config.twitch_client_secret.clone();
         let twitch_client_id = config.twitch_client_id.clone();
         let twitch_token = config.twitch_token.clone();
@@ -82,7 +89,7 @@ async fn main() {
                 twitch_channel,
                 twitch_user,
                 websocket_port,
-            }, reaction_repo).await
+            }, reaction_repo, emotion_repo, images_repo, images_storage).await
         }
     });
     let static_path = config.static_path.clone();
@@ -96,13 +103,15 @@ async fn main() {
 
     let api = rocket::custom(figment)
         .manage(config)
+        .manage::<Arc<dyn EmotionRepository>>(emotion_repo)
         .manage::<Arc<dyn ImageRepository>>(images_repo)
         .manage::<Arc<dyn ImageStorage>>(images_storage)
         .manage::<Arc<dyn ReactionDefinitionRepository>>(reaction_repo)
         .mount("/", FileServer::from(static_path))
         .mount("/api", routes![
-            api_create_emotion,
+            api_get_all_emotions,
             api_get_all_images,
+            api_get_image_from_storage,
             api_create_image,
             api_create_reaction,
             api_get_reaction,

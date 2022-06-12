@@ -1,6 +1,7 @@
-use std::collections::HashMap;
+use std::fs;
+use std::path::Path;
 use std::sync::Arc;
-use pran_droid_core::application::emotions::get::{get_emotion, GetEmotionRequest};
+use pran_droid_core::application::emotions::create::{create_emotion, CreateEmotionRequest};
 use pran_droid_core::application::emotions::get_by_name::{get_emotion_by_name, GetEmotionByNameRequest};
 use pran_droid_core::application::emotions::update_layer::{AddEmotionAnimationLayerRequest, update_emotion_animation_layer};
 use pran_droid_core::application::emotions::update_mouth_mapping::{update_emotion_mouth_mapping, UpdateEmotionMouthMappingElementRequest, UpdateEmotionMouthMappingRequest};
@@ -9,53 +10,56 @@ use pran_droid_core::application::reactions::create::{create_reaction, CreateRea
 use pran_droid_core::application::reactions::dtos::reaction_step_dto::{AnimationFrameDto, ReactionStepSkipDto};
 use pran_droid_core::application::reactions::insert_movement_step::{insert_movement_step_to_reaction, InsertMovementStepToReactionRequest};
 use pran_droid_core::application::reactions::insert_talking_step::{insert_talking_step_to_reaction, InsertTalkingStepToReactionRequest};
-use pran_droid_core::domain::emotions::emotion::{Emotion, EmotionId, EmotionLayer, EmotionName};
+use pran_droid_core::domain::emotions::emotion::{MouthPositionName};
 use pran_droid_core::domain::emotions::emotion_repository::EmotionRepository;
 use pran_droid_core::domain::images::image_repository::ImageRepository;
 use pran_droid_core::domain::images::image_storage::ImageStorage;
 use pran_droid_core::domain::reactions::reaction_definition_repository::ReactionDefinitionRepository;
-use pran_droid_core::persistence::emotions::in_memory_emotion_repository::InMemoryEmotionRepository;
-use pran_droid_core::persistence::images::in_memory_image_repository::InMemoryImageRepository;
-use pran_droid_core::persistence::images::in_memory_image_storage::InMemoryImageStorage;
 
-pub fn build_test_database(reaction_repository: Arc<dyn ReactionDefinitionRepository>) {
-    let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-    let emotion_repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
-    build_images_database(&image_repository);
+pub fn build_test_database(reaction_repository: Arc<dyn ReactionDefinitionRepository>, emotion_repository: Arc<dyn EmotionRepository>, image_repository: Arc<dyn ImageRepository>, image_storage: Arc<dyn ImageStorage>) {
+    build_images_database(&image_repository, &image_storage);
     build_emotions_database(&emotion_repository, &image_repository);
     build_reactions_database(&reaction_repository, &image_repository, &emotion_repository);
 }
 
 fn build_emotions_database(emotion_repository: &Arc<dyn EmotionRepository>, image_repository: &Arc<dyn ImageRepository>) {
-    emotion_repository.insert(&Emotion {
-        id: EmotionId(String::from("happy")),
-        name: EmotionName(String::from("happy")),
-        animation: vec![EmotionLayer::Mouth],
-        mouth_mapping: HashMap::new()
-    }).expect("error creating emotion");
-    emotion_repository.insert(&Emotion {
-        id: EmotionId(String::from("sad")),
-        name: EmotionName(String::from("sad")),
-        animation: vec![EmotionLayer::Mouth],
-        mouth_mapping: HashMap::new()
-    }).expect("error creating emotion");
-    let happy_emotion = get_emotion(GetEmotionRequest { id: String::from("happy") }, emotion_repository).expect("error getting emotion");
-    let sad_emotion = get_emotion(GetEmotionRequest { id: String::from("sad") }, emotion_repository).expect("error getting emotion");
+    let happy_emotion = create_emotion(CreateEmotionRequest { name: String::from("happy") }, emotion_repository).expect("error creating emotion");
+    let sad_emotion = create_emotion(CreateEmotionRequest { name: String::from("sad") }, emotion_repository).expect("error creating emotion");
 
     // Mouth mapping
     update_emotion_mouth_mapping(UpdateEmotionMouthMappingRequest {
         emotion_id: happy_emotion.id.clone(),
         mapping: vec! {
-            UpdateEmotionMouthMappingElementRequest { name: String::from("aah"), image_id: String::from("eyesFire0") },
-            UpdateEmotionMouthMappingElementRequest { name: String::from("o"), image_id: String::from("eyesFire1") }
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::AAh.into(), image_id: String::from("happyAAh") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::O.into(), image_id: String::from("happyO") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::E.into(), image_id: String::from("happyE") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::FV.into(), image_id: String::from("happyFV") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::LD.into(), image_id: String::from("happyLD") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::MBSilent.into(), image_id: String::from("happyMBSilent") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::P1.into(), image_id: String::from("happyP1") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::P2.into(), image_id: String::from("happyP2") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::Pause.into(), image_id: String::from("pause") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::Smile.into(), image_id: String::from("smile") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::STCh.into(), image_id: String::from("happySTCh") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::UR.into(), image_id: String::from("happyUR") },
         },
     }, emotion_repository, image_repository).expect("error updating mouth mapping");
 
     update_emotion_mouth_mapping(UpdateEmotionMouthMappingRequest {
         emotion_id: sad_emotion.id.clone(),
         mapping: vec! {
-            UpdateEmotionMouthMappingElementRequest { name: String::from("aah"), image_id: String::from("pause") },
-            UpdateEmotionMouthMappingElementRequest { name: String::from("o"), image_id: String::from("smile") }
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::AAh.into(), image_id: String::from("sadAAh") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::O.into(), image_id: String::from("sadO") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::E.into(), image_id: String::from("sadE") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::FV.into(), image_id: String::from("sadFV") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::LD.into(), image_id: String::from("sadLD") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::MBSilent.into(), image_id: String::from("sadMBSilent") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::P1.into(), image_id: String::from("sadP1") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::P2.into(), image_id: String::from("sadP2") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::Pause.into(), image_id: String::from("pause") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::Smile.into(), image_id: String::from("smile") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::STCh.into(), image_id: String::from("sadSTCh") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::UR.into(), image_id: String::from("sadUR") },
         },
     }, emotion_repository, image_repository).expect("error updating mouth mapping");
 
@@ -63,8 +67,10 @@ fn build_emotions_database(emotion_repository: &Arc<dyn EmotionRepository>, imag
     update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
         emotion_id: happy_emotion.id.clone(),
         animation: vec![
-            AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("eyesFire2") },
-            AnimationFrameDto { frame_start: 15, frame_end: 20, image_id: String::from("eyesFire3") }
+            AnimationFrameDto { frame_start: 0, frame_end: 200, image_id: String::from("eyes0") },
+            AnimationFrameDto { frame_start: 201, frame_end: 204, image_id: String::from("eyes1") },
+            AnimationFrameDto { frame_start: 205, frame_end: 208, image_id: String::from("eyes2") },
+            AnimationFrameDto { frame_start: 209, frame_end: 212, image_id: String::from("eyes1") },
         ],
         index: 1
     }, emotion_repository, image_repository).expect("error updating animation layer");
@@ -72,8 +78,7 @@ fn build_emotions_database(emotion_repository: &Arc<dyn EmotionRepository>, imag
     update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
         emotion_id: happy_emotion.id.clone(),
         animation: vec![
-            AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("pause") },
-            AnimationFrameDto { frame_start: 20, frame_end: 25, image_id: String::from("pause") }
+            AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("idle") },
         ],
         index: 2
     }, emotion_repository, image_repository).expect("error updating animation layer");
@@ -82,8 +87,10 @@ fn build_emotions_database(emotion_repository: &Arc<dyn EmotionRepository>, imag
     update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
         emotion_id: sad_emotion.id.clone(),
         animation: vec![
-            AnimationFrameDto { frame_start: 0, frame_end: 5, image_id: String::from("eyesFire2") },
-            AnimationFrameDto { frame_start: 10, frame_end: 20, image_id: String::from("eyesFire3") }
+            AnimationFrameDto { frame_start: 0, frame_end: 25, image_id: String::from("eyes0") },
+            AnimationFrameDto { frame_start: 26, frame_end: 29, image_id: String::from("eyes1") },
+            AnimationFrameDto { frame_start: 30, frame_end: 33, image_id: String::from("eyes2") },
+            AnimationFrameDto { frame_start: 34, frame_end: 37, image_id: String::from("eyes1") },
         ],
         index: 1
     }, emotion_repository, image_repository).expect("error updating animation layer");
@@ -91,25 +98,54 @@ fn build_emotions_database(emotion_repository: &Arc<dyn EmotionRepository>, imag
     update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
         emotion_id: sad_emotion.id.clone(),
         animation: vec![
-            AnimationFrameDto { frame_start: 0, frame_end: 5, image_id: String::from("smile") },
-            AnimationFrameDto { frame_start: 15, frame_end: 25, image_id: String::from("smile") }
+            AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("idle") },
         ],
         index: 2
     }, emotion_repository, image_repository).expect("error updating animation layer");
 }
 
-fn build_images_database(image_repository: &Arc<dyn ImageRepository>) {
-    let image_storage: Arc<dyn ImageStorage> = Arc::new(InMemoryImageStorage::new());
+fn build_images_database(image_repository: &Arc<dyn ImageRepository>, image_storage: &Arc<dyn ImageStorage>) {
+    // Base mouth
+    create_image(CreateImageRequest { image: fetch_image("mouth/pause.png"), id: String::from("pause") }, &image_repository, &image_storage).expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/smile.png"), id: String::from("smile") }, &image_repository, &image_storage).expect("error creating image");
 
-    create_image(CreateImageRequest { image: vec![1], id: String::from("pause") }, &image_repository, &image_storage).expect("error creating image");
-    create_image(CreateImageRequest { image: vec![1], id: String::from("smile") }, &image_repository, &image_storage).expect("error creating image");
-    create_image(CreateImageRequest { image: vec![1], id: String::from("eyesFire0") }, &image_repository, &image_storage).expect("error creating image");
-    create_image(CreateImageRequest { image: vec![1], id: String::from("eyesFire1") }, &image_repository, &image_storage).expect("error creating image");
-    create_image(CreateImageRequest { image: vec![1], id: String::from("eyesFire2") }, &image_repository, &image_storage).expect("error creating image");
-    create_image(CreateImageRequest { image: vec![1], id: String::from("eyesFire3") }, &image_repository, &image_storage).expect("error creating image");
-    create_image(CreateImageRequest { image: vec![1], id: String::from("eyesFire4") }, &image_repository, &image_storage).expect("error creating image");
-    create_image(CreateImageRequest { image: vec![1], id: String::from("eyesFire5") }, &image_repository, &image_storage).expect("error creating image");
-    create_image(CreateImageRequest { image: vec![1], id: String::from("eyesFire6") }, &image_repository, &image_storage).expect("error creating image");
+    // Happy mouth
+    create_image(CreateImageRequest { image: fetch_image("mouth/a,ah.png"), id: String::from("happyAAh") }, &image_repository, &image_storage).expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/e.png"), id: String::from("happyE") }, &image_repository, &image_storage).expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/f,v.png"), id: String::from("happyFV") }, &image_repository, &image_storage).expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/l,d.png"), id: String::from("happyLD") }, &image_repository, &image_storage).expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/m,b,silent.png"), id: String::from("happyMBSilent") }, &image_repository, &image_storage).expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/ooh.png"), id: String::from("happyO") }, &image_repository, &image_storage).expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/p-1.png"), id: String::from("happyP1") }, &image_repository, &image_storage).expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/p-2.png"), id: String::from("happyP2") }, &image_repository, &image_storage).expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/s,t,ch.png"), id: String::from("happySTCh") }, &image_repository, &image_storage).expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/u,r.png"), id: String::from("happyUR") }, &image_repository, &image_storage).expect("error creating image");
+
+    // Sad mouth
+    create_image(CreateImageRequest { image: fetch_image("mouth/a,ah.png"), id: String::from("sadAAh") }, &image_repository, &image_storage).expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/e.png"), id: String::from("sadE") }, &image_repository, &image_storage).expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/f,v.png"), id: String::from("sadFV") }, &image_repository, &image_storage).expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/l,d.png"), id: String::from("sadLD") }, &image_repository, &image_storage).expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/m,b,silent.png"), id: String::from("sadMBSilent") }, &image_repository, &image_storage).expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/ooh.png"), id: String::from("sadO") }, &image_repository, &image_storage).expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/p-1.png"), id: String::from("sadP1") }, &image_repository, &image_storage).expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/p-2.png"), id: String::from("sadP2") }, &image_repository, &image_storage).expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/s,t,ch.png"), id: String::from("sadSTCh") }, &image_repository, &image_storage).expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/u,r.png"), id: String::from("sadUR") }, &image_repository, &image_storage).expect("error creating image");
+
+    create_image(CreateImageRequest { image: fetch_image("idle_0000.png"), id: String::from("idle") }, &image_repository, &image_storage).expect("error creating image");
+
+    create_image(CreateImageRequest { image: fetch_image("eyes/eyes_0000.png"), id: String::from("eyes0") }, &image_repository, &image_storage).expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("eyes/eyes_0001.png"), id: String::from("eyes1") }, &image_repository, &image_storage).expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("eyes/eyes_0002.png"), id: String::from("eyes2") }, &image_repository, &image_storage).expect("error creating image");
+
+    create_image(CreateImageRequest { image: fetch_image("eyes/eyesFire_0000.png"), id: String::from("eyesFire0") }, &image_repository, &image_storage).expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("eyes/eyesFire_0001.png"), id: String::from("eyesFire1") }, &image_repository, &image_storage).expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("eyes/eyesFire_0002.png"), id: String::from("eyesFire2") }, &image_repository, &image_storage).expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("eyes/eyesFire_0003.png"), id: String::from("eyesFire3") }, &image_repository, &image_storage).expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("eyes/eyesFire_0004.png"), id: String::from("eyesFire4") }, &image_repository, &image_storage).expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("eyes/eyesFire_0005.png"), id: String::from("eyesFire5") }, &image_repository, &image_storage).expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("eyes/eyesFire_0006.png"), id: String::from("eyesFire6") }, &image_repository, &image_storage).expect("error creating image");
 }
 
 fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefinitionRepository>, image_repository: &Arc<dyn ImageRepository>, emotion_repository: &Arc<dyn EmotionRepository>) {
@@ -197,8 +233,310 @@ fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefinitionRepo
     insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
         emotion_id: happy_emotion.id.clone(),
         text: String::from("Hey everyone, prandroid here!"),
-        skip: ReactionStepSkipDto::AfterMilliseconds(500),
+        skip: ReactionStepSkipDto::ImmediatelyAfter,
         step_index: 2,
         reaction_id: reaction2.id.clone(),
     }, &reaction_repository, &emotion_repository).expect("error inserting step");
+
+    // !hi
+    {
+        let reaction = create_reaction(CreateReactionRequest {
+            trigger: String::from("!hi") // Alias !hello
+        }, &reaction_repository).expect("error creating reaction");
+        insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
+            emotion_id: happy_emotion.id.clone(),
+            // Random, ask pranessa
+            text: String::from("Hi ${user}!!"),
+            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            // Cooldown 10 seconds
+            // Authorisation level Everyone
+            step_index: 0,
+            reaction_id: reaction.id.clone(),
+        }, &reaction_repository, &emotion_repository).expect("error inserting step");
+    }
+
+    // !beep
+    {
+        let reaction = create_reaction(CreateReactionRequest {
+            trigger: String::from("!beep")
+        }, &reaction_repository).expect("error creating reaction");
+        insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
+            emotion_id: happy_emotion.id.clone(),
+            text: String::from("Beep boob boop"), // Random between "Beep boob boop" "Bo-beep" "Beeeeeeeee" "Boop boop" "Beep"
+            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            // Cooldown 5 seconds
+            // Authorisation level Everyone
+            step_index: 0,
+            reaction_id: reaction.id.clone(),
+        }, &reaction_repository, &emotion_repository).expect("error inserting step");
+    }
+
+    // !lurk
+    {
+        let reaction = create_reaction(CreateReactionRequest {
+            trigger: String::from("!lurk")
+        }, &reaction_repository).expect("error creating reaction");
+        insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
+            emotion_id: happy_emotion.id.clone(),
+            text: String::from("Enjoy the lurk ${user}"),
+            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            // Cooldown 5 seconds
+            // Authorisation level Everyone
+            step_index: 0,
+            reaction_id: reaction.id.clone(),
+        }, &reaction_repository, &emotion_repository).expect("error inserting step");
+    }
+
+    // !chaos
+    {
+        let reaction = create_reaction(CreateReactionRequest {
+            trigger: String::from("!chaos")
+        }, &reaction_repository).expect("error creating reaction");
+        insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
+            emotion_id: happy_emotion.id.clone(),
+            // Random, ask pranessa
+            text: String::from("AI doesn’t have to be evil to destroy humanity – if AI has a goal and humanity just happens to come in the way, it will destroy humanity as a matter of course without even thinking about it, no hard feelings."),
+            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            // Cooldown 5 seconds
+            // Authorisation level Everyone
+            step_index: 0,
+            reaction_id: reaction.id.clone(),
+        }, &reaction_repository, &emotion_repository).expect("error inserting step");
+    }
+
+    // !hydrate - MAKE REDEEM OF HYDRATE
+    {
+        let reaction = create_reaction(CreateReactionRequest {
+            trigger: String::from("!hydrate")
+        }, &reaction_repository).expect("error creating reaction");
+        insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
+            emotion_id: happy_emotion.id.clone(),
+            // Random, ask pranessa
+            text: String::from("Go grab a glass of water!"),
+            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            // Cooldown 5 seconds
+            // Authorisation level Everyone
+            step_index: 0,
+            reaction_id: reaction.id.clone(),
+        }, &reaction_repository, &emotion_repository).expect("error inserting step");
+    }
+
+    // !kill
+    {
+        let reaction = create_reaction(CreateReactionRequest {
+            trigger: String::from("!kill")
+        }, &reaction_repository).expect("error creating reaction");
+        insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
+            emotion_id: happy_emotion.id.clone(),
+            text: String::from("EXTERMINATE!"),
+            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            // Cooldown 5 seconds
+            // Authorisation level Everyone
+            step_index: 0,
+            reaction_id: reaction.id.clone(),
+        }, &reaction_repository, &emotion_repository).expect("error inserting step");
+    }
+
+    // !help
+    {
+        let reaction = create_reaction(CreateReactionRequest {
+            trigger: String::from("!help")
+        }, &reaction_repository).expect("error creating reaction");
+        insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
+            emotion_id: happy_emotion.id.clone(),
+            text: String::from("I'm just a droid, I can't do much"),
+            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            // Cooldown 5 seconds
+            // Authorisation level Everyone
+            step_index: 0,
+            reaction_id: reaction.id.clone(),
+        }, &reaction_repository, &emotion_repository).expect("error inserting step");
+    }
+
+    // !aria
+    {
+        let reaction = create_reaction(CreateReactionRequest {
+            trigger: String::from("!aria")
+        }, &reaction_repository).expect("error creating reaction");
+        insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
+            emotion_id: happy_emotion.id.clone(),
+            text: String::from("Do you know Aria? She's a cutie"),
+            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            // Cooldown 5 seconds
+            // Authorisation level Everyone
+            step_index: 0,
+            reaction_id: reaction.id.clone(),
+        }, &reaction_repository, &emotion_repository).expect("error inserting step");
+    }
+
+    // !star
+    {
+        let reaction = create_reaction(CreateReactionRequest {
+            trigger: String::from("!star")
+        }, &reaction_repository).expect("error creating reaction");
+        insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
+            emotion_id: happy_emotion.id.clone(),
+            // Implement count!
+            text: String::from("There are ${count} stars in the sky!"),
+            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            // Cooldown 5 seconds
+            // Authorisation level Everyone
+            step_index: 0,
+            reaction_id: reaction.id.clone(),
+        }, &reaction_repository, &emotion_repository).expect("error inserting step");
+    }
+
+    // !save
+    {
+        let reaction = create_reaction(CreateReactionRequest {
+            trigger: String::from("!save")
+        }, &reaction_repository).expect("error creating reaction");
+        insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
+            emotion_id: happy_emotion.id.clone(),
+            // Random, ask pranessa
+            text: String::from("The sight of such a friendly town fills you with determination."),
+            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            // Cooldown 5 seconds
+            // Authorisation level Everyone
+            step_index: 0,
+            reaction_id: reaction.id.clone(),
+        }, &reaction_repository, &emotion_repository).expect("error inserting step");
+    }
+
+    // !battle
+    {
+        let reaction = create_reaction(CreateReactionRequest {
+            trigger: String::from("!battle")
+        }, &reaction_repository).expect("error creating reaction");
+        insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
+            emotion_id: happy_emotion.id.clone(),
+            // Random, ask pranessa
+            text: String::from("[FIGHT]"),
+            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            // Cooldown 5 seconds
+            // Authorisation level Everyone
+            step_index: 0,
+            reaction_id: reaction.id.clone(),
+        }, &reaction_repository, &emotion_repository).expect("error inserting step");
+    }
+
+    // !so
+    {
+        let reaction = create_reaction(CreateReactionRequest {
+            trigger: String::from("!so")
+        }, &reaction_repository).expect("error creating reaction");
+        insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
+            emotion_id: happy_emotion.id.clone(),
+            // Random, ask pranessa
+            text: String::from("Did you say ${1}?! I've heard amazing things about them! "),
+            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            // Cooldown 5 seconds
+            // Authorisation level Everyone
+            step_index: 0,
+            reaction_id: reaction.id.clone(),
+        }, &reaction_repository, &emotion_repository).expect("error inserting step");
+    }
+
+    // !name
+    {
+        let reaction = create_reaction(CreateReactionRequest {
+            trigger: String::from("!name")
+        }, &reaction_repository).expect("error creating reaction");
+        insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
+            emotion_id: happy_emotion.id.clone(),
+            text: String::from("My name, my real name. That is not the point."),
+            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            // Cooldown 5 seconds
+            // Authorisation level Everyone
+            step_index: 0,
+            reaction_id: reaction.id.clone(),
+        }, &reaction_repository, &emotion_repository).expect("error inserting step");
+    }
+
+    // !pat
+    {
+        let reaction = create_reaction(CreateReactionRequest {
+            trigger: String::from("!pat")
+        }, &reaction_repository).expect("error creating reaction");
+        insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
+            emotion_id: happy_emotion.id.clone(),
+            text: String::from("People tell me I'm a heavy patter ${1}"),
+            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            // Cooldown 5 seconds
+            // Authorisation level Everyone
+            step_index: 0,
+            reaction_id: reaction.id.clone(),
+        }, &reaction_repository, &emotion_repository).expect("error inserting step");
+    }
+
+    // !breaktime
+    {
+        let reaction = create_reaction(CreateReactionRequest {
+            trigger: String::from("!breaktime")
+        }, &reaction_repository).expect("error creating reaction");
+        insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
+            emotion_id: happy_emotion.id.clone(),
+            text: String::from("Time to break things I guess"),
+            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            // Cooldown 5 seconds
+            // Authorisation level Everyone
+            step_index: 0,
+            reaction_id: reaction.id.clone(),
+        }, &reaction_repository, &emotion_repository).expect("error inserting step");
+    }
+
+    // !cookie
+    {
+        let reaction = create_reaction(CreateReactionRequest {
+            trigger: String::from("!cookie")
+        }, &reaction_repository).expect("error creating reaction");
+        insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
+            emotion_id: happy_emotion.id.clone(),
+            // Random, ask pranessa
+            text: String::from("A freshly baked cookie for you!"),
+            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            // Cooldown 5 seconds
+            // Authorisation level Everyone
+            step_index: 0,
+            reaction_id: reaction.id.clone(),
+        }, &reaction_repository, &emotion_repository).expect("error inserting step");
+    }
+
+    // !croissant
+    {
+        let reaction = create_reaction(CreateReactionRequest {
+            trigger: String::from("!croissant")
+        }, &reaction_repository).expect("error creating reaction");
+        insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
+            emotion_id: happy_emotion.id.clone(),
+            text: String::from("CONGRATULATIONS! You won a life-long subscription to our unlimited croissant stock!"),
+            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            // Cooldown 5 seconds
+            // Authorisation level Everyone
+            step_index: 0,
+            reaction_id: reaction.id.clone(),
+        }, &reaction_repository, &emotion_repository).expect("error inserting step");
+    }
+
+    // !mantra
+    {
+        let reaction = create_reaction(CreateReactionRequest {
+            // Alias !bs
+            trigger: String::from("!mantra")
+        }, &reaction_repository).expect("error creating reaction");
+        insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
+            emotion_id: happy_emotion.id.clone(),
+            text: String::from("${1} is an incredible artist. You do your best. Your best is enough. People do not hate you."),
+            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            // Cooldown 5 seconds
+            // Authorisation level Everyone
+            step_index: 0,
+            reaction_id: reaction.id.clone(),
+        }, &reaction_repository, &emotion_repository).expect("error inserting step");
+    }
+}
+
+fn fetch_image(path: &str) -> Vec<u8> {
+    let path = Path::new("../frontend/src/resources/").join(path);
+    fs::read(path.clone()).expect(format!("{:?}", path).as_str()).as_slice().to_vec()
 }

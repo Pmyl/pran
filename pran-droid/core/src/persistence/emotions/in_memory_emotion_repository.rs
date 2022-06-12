@@ -48,6 +48,10 @@ impl EmotionRepository for InMemoryEmotionRepository {
         self.emotions.lock().unwrap().iter().find(|stored_emotion| &stored_emotion.id == id).cloned()
     }
 
+    fn get_all(&self) -> Vec<Emotion> {
+        self.emotions.lock().unwrap().to_vec()
+    }
+
     fn exists(&self, id: &EmotionId) -> bool {
         self.emotions.lock().unwrap().iter().any(|stored_emotion| &stored_emotion.id == id)
     }

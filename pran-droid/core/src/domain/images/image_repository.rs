@@ -11,6 +11,7 @@ pub enum InsertError {
 }
 
 pub trait ImageRepository: Send + Sync {
+    fn get(&self, id: &ImageId) -> Option<Image>;
     fn get_all(&self) -> Vec<Image>;
     fn has(&self, id: &ImageId) -> bool;
     fn insert(&self, image: &Image) -> Result<(), InsertError>;

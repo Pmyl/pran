@@ -15,19 +15,30 @@ impl InMemoryImageStorage {
 }
 
 impl ImageStorage for InMemoryImageStorage {
+    fn get(&self, url: &ImageUrl) -> Option<ImageData> {
+        let lock = match self.file_system.lock() {
+            Ok(lock) => lock,
+            _ => return None,
+        };
+        lock.get(&url.0.clone()).cloned()
+    }
+
     fn save(&self, id: &ImageId, data: &ImageData) -> Result<ImageUrl, StorageSaveError> {
         if self.error_on_save {
             return Err(StorageSaveError::Unexpected);
         }
-        let url = ImageUrl(id.0.clone());
+        let mut url = format!("api/images/{}", id.0.clone());
 
         let mut lock = match self.file_system.lock() {
             Ok(lock) => lock,
             _ => return Err(StorageSaveError::Unexpected),
         };
-        lock.insert(url.0.clone(), data.clone());
+        while lock.contains_key(&url) {
+            url = format!("{}0", url);
+        }
+        lock.insert(url.clone(), data.clone());
 
-        Ok(url)
+        Ok(ImageUrl(url))
     }
 
     fn delete(&self, url: &ImageUrl) -> Result<(), StorageDeleteError> {
@@ -53,8 +64,8 @@ impl InMemoryImageStorage {
         self.error_on_save = true;
     }
 
-    pub fn has_images_stored(&self) -> bool {
-        !self.file_system.lock().unwrap().is_empty()
+    pub fn files_count(&self) -> usize {
+        self.file_system.lock().unwrap().len()
     }
 
     pub fn has(&self, url: &ImageUrl) -> bool {

@@ -106,21 +106,22 @@ mod tests {
     }
 
     #[test]
-    fn store_image_conflict_return_unexpected_and_image_not_on_fs() {
+    fn store_image_conflict_return_conflict_and_image_not_on_fs() {
         let repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
         let storage = Arc::new(InMemoryImageStorage::new());
         let image = fake_image();
+        let mut image_conflict = fake_image();
+        image_conflict.push(1);
         let id = create_id();
 
-        create_image(CreateImageRequest { image: image.clone(), id: id.clone() }, &repository, &(storage.clone() as Arc<dyn ImageStorage>)).unwrap();
+        let first_image = create_image(CreateImageRequest { image: image.clone(), id: id.clone() }, &repository, &(storage.clone() as Arc<dyn ImageStorage>)).unwrap();
 
-        match create_image(CreateImageRequest { image, id: id.clone() }, &repository, &(storage.clone() as Arc<dyn ImageStorage>)) {
-            Err(e) => match e {
-                StoreImageError::Conflict(_) => assert!(!storage.has_images_stored()),
-                _ => unreachable!()
-            },
-            _ => unreachable!()
-        }
+        let error = create_image(CreateImageRequest { image: image_conflict, id: id.clone() }, &repository, &(storage.clone() as Arc<dyn ImageStorage>))
+            .expect_err("Creation of image with existing id should have errored");
+
+        assert!(matches!(error, StoreImageError::Conflict(_)));
+        assert!(matches!(storage.get(&ImageUrl(first_image.url)), Some(ImageData(i)) if i == image));
+        assert_eq!(storage.files_count(), 1);
     }
 
     #[test]

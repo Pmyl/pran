@@ -4,8 +4,8 @@ use std::marker::{Send, Sync};
 use thiserror::Error;
 use crate::domain::images::image::{ImageId, ImageUrl};
 
-#[derive(Clone)]
-pub struct ImageData(Vec<u8>);
+#[derive(Debug, Clone)]
+pub struct ImageData(pub Vec<u8>);
 
 impl TryFrom<Vec<u8>> for ImageData {
     type Error = ();
@@ -33,6 +33,7 @@ pub enum StorageDeleteError {
 }
 
 pub trait ImageStorage: Send + Sync {
+    fn get(&self, url: &ImageUrl) -> Option<ImageData>;
     fn save(&self, id: &ImageId, data: &ImageData) -> Result<ImageUrl, StorageSaveError>;
     fn delete(&self, url: &ImageUrl) -> Result<(), StorageDeleteError>;
 }

@@ -19,7 +19,7 @@ pub struct EmotionName(pub String);
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum MouthPositionName {
     FV,
-    Ur,
+    UR,
     STCh,
     MBSilent,
     P1,
@@ -84,7 +84,7 @@ impl Into<String> for MouthPositionName {
     fn into(self) -> String {
         match self {
             MouthPositionName::FV => String::from("fv"),
-            MouthPositionName::Ur => String::from("ur"),
+            MouthPositionName::UR => String::from("ur"),
             MouthPositionName::STCh => String::from("stch"),
             MouthPositionName::MBSilent => String::from("mbsilent"),
             MouthPositionName::P1 => String::from("p1"),
@@ -105,7 +105,7 @@ impl TryFrom<String> for MouthPositionName {
     fn try_from(position_name: String) -> Result<Self, Self::Error> {
         match position_name.as_ref() {
             "fv" => Ok(MouthPositionName::FV),
-            "ur" => Ok(MouthPositionName::Ur),
+            "ur" => Ok(MouthPositionName::UR),
             "stch" => Ok(MouthPositionName::STCh),
             "mbsilent" => Ok(MouthPositionName::MBSilent),
             "p1" => Ok(MouthPositionName::P1),

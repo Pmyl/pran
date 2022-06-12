@@ -1,4 +1,4 @@
-import { ActionType, Animator, AnimatorManager, CanvasControllerFactory, drawId, ManagerTimelineAction, wait } from 'pran-animation-frontend';
+import { ActionType, Animator, AnimatorManager, CanvasControllerFactory, clear, drawId, ManagerTimelineAction, wait } from 'pran-animation-frontend';
 import { Container, inlineComponent } from 'pran-gular-frontend';
 import { cmuPhonemesMap, phonemesMapper } from 'pran-phonemes-frontend';
 import { randomFramesBetweenInMs } from './animation/helpers/random';
@@ -42,21 +42,7 @@ function connectToBrain(pranDroid: PranDroid) {
       layers: [
         {
           loop: false,
-          actions: step.animation.flatMap(frame => {
-            const actions: ManagerTimelineAction[] = [{
-              type: ActionType.Draw,
-              imageId: frame.imageId
-            }];
-
-            if (frame.frameEnd - frame.frameStart > 1) {
-              actions.push({
-                type: ActionType.None,
-                amount: frame.frameEnd - frame.frameStart - 1
-              });
-            }
-
-            return actions;
-          })
+          actions: animationToTimelineActions(step.animation)
         }
       ]
     }));
@@ -113,6 +99,68 @@ document.addEventListener('DOMContentLoaded', async() => {
   body.append(pranCanvas);
   body.render();
 
+  const pranDroid = new PranDroid(animationPlayer, speechBubble);
+  pranDroid.setIdle(getIdleAnimation());
+  await setupEmotions(pranDroid);
+  //setupDemoData(pranDroid);
+
+  pranDroid.start();
+  connectToBrain(pranDroid);
+});
+
+function setupDemoData(pranDroid: PranDroid) {
+  pranDroid.setEmotionRange({
+    'happy': new ConfigurableEmotion([
+      'Mouth',
+      () => [drawId('head_idle')],
+      () => [
+        drawId('eyes_open'),
+        wait(200),
+        drawId('eyes_semi_open'),
+        wait(3),
+        drawId('eyes_closed'),
+        wait(3),
+        drawId('eyes_semi_open'),
+        wait(3),
+        drawId('eyes_open')
+      ]
+    ]),
+    'drugged': new ConfigurableEmotion([
+      'Mouth',
+      () => [drawId('head_idle')],
+      () => [drawId('eyes_semi_open')]
+    ]),
+    'glad': new ConfigurableEmotion([
+      'Mouth',
+      () => [drawId('head_idle')],
+      () => [drawId('eyes_closed')]
+    ]),
+    'sad': new ConfigurableEmotion([
+      'Mouth',
+      () => [drawId('head_idle')],
+      () => [drawId('eyes_open')]
+    ]),
+    'crazy': new ConfigurableEmotion([
+      'Mouth',
+      () => [drawId('head_idle')],
+      () => [
+        drawId('eyesFire0'),
+        wait(3),
+        drawId('eyesFire1'),
+        wait(3),
+        drawId('eyesFire2'),
+        wait(3),
+        drawId('eyesFire3'),
+        wait(3),
+        drawId('eyesFire4'),
+        wait(3),
+        drawId('eyesFire5'),
+        wait(3),
+        drawId('eyesFire6'),
+        wait(3)
+      ]
+    ])
+  });
   const reactions: PranDroidReaction[] = [
     {
       type: ReactionType.Talking,
@@ -155,96 +203,8 @@ document.addEventListener('DOMContentLoaded', async() => {
       skip: { after: PranDroidReactionSkipAfter.Bubble, waitExtraMs: 2000 }
     }
   ];
-
-  const pranDroid = new PranDroid(animationPlayer, speechBubble);
-  pranDroid.setIdle(getIdleAnimation());
-  pranDroid.setEmotionRange({
-    'happy': new ConfigurableEmotion({
-      getHeadLayer(): ManagerTimelineAction[] {
-        return [
-          drawId('head_idle')
-        ];
-      },
-      getEyesLayer(): ManagerTimelineAction[] {
-        return [
-          drawId('eyes_open'),
-          wait(200),
-          drawId('eyes_semi_open'),
-          wait(3),
-          drawId('eyes_closed'),
-          wait(3),
-          drawId('eyes_semi_open'),
-          wait(3),
-          drawId('eyes_open')
-        ];
-      },
-    }),
-    'drugged': new ConfigurableEmotion({
-      getHeadLayer(): ManagerTimelineAction[] {
-        return [
-          drawId('head_idle')
-        ];
-      },
-      getEyesLayer(): ManagerTimelineAction[] {
-        return [
-          drawId('eyes_semi_open'),
-        ];
-      },
-    }),
-    'glad': new ConfigurableEmotion({
-      getHeadLayer(): ManagerTimelineAction[] {
-        return [
-          drawId('head_idle')
-        ];
-      },
-      getEyesLayer(): ManagerTimelineAction[] {
-        return [
-          drawId('eyes_closed')
-        ];
-      },
-    }),
-    'sad': new ConfigurableEmotion({
-      getHeadLayer(): ManagerTimelineAction[] {
-        return [
-          drawId('head_idle')
-        ];
-      },
-      getEyesLayer(): ManagerTimelineAction[] {
-        return [
-          drawId('eyes_open')
-        ];
-      },
-    }),
-    'crazy': new ConfigurableEmotion({
-      getHeadLayer(): ManagerTimelineAction[] {
-        return [
-          drawId('head_idle')
-        ];
-      },
-      getEyesLayer(): ManagerTimelineAction[] {
-        return [
-          drawId('eyesFire0'),
-          wait(3),
-          drawId('eyesFire1'),
-          wait(3),
-          drawId('eyesFire2'),
-          wait(3),
-          drawId('eyesFire3'),
-          wait(3),
-          drawId('eyesFire4'),
-          wait(3),
-          drawId('eyesFire5'),
-          wait(3),
-          drawId('eyesFire6'),
-          wait(3),
-        ];
-      },
-    })
-  })
-
   pranDroid.react(reactions);
-  connectToBrain(pranDroid);
-});
+}
 
 class PranDroid {
   private _animationPlayer: PranDroidAnimationPlayer;
@@ -321,8 +281,8 @@ class PranDroid {
 
   private async _executeTalkReaction(reaction: TalkingReaction) {
     const emotion = this._getEmotion(reaction.emotion);
-    const animationExecution = this._animationPlayer.play(emotion.speak(reaction.phonemes));
     const speechResult = this._showBubble(reaction);
+    const animationExecution = this._animationPlayer.play(emotion.speak(reaction.phonemes));
     await this._waitReactionTime(reaction, speechResult, animationExecution);
   }
 
@@ -375,16 +335,15 @@ interface Emotion {
   speak(phonemes: string[]): AnimationRun;
 }
 
-interface EmotionConfig {
-  getEyesLayer(): ManagerTimelineAction[];
-  getHeadLayer(): ManagerTimelineAction[];
-}
+type EmotionConfig = ((() => ManagerTimelineAction[]) | 'Mouth')[];
 
 class ConfigurableEmotion implements Emotion {
   private _emotionConfig: EmotionConfig;
+  private _mouthMapping: { [key: string]: string } | undefined;
 
-  constructor(emotionConfig: EmotionConfig) {
+  constructor(emotionConfig: EmotionConfig, mouthMapping?: { [key: string]: string }) {
     this._emotionConfig = emotionConfig;
+    this._mouthMapping = mouthMapping;
   }
 
   public speak(phonemes: string[]): AnimationRun {
@@ -392,13 +351,12 @@ class ConfigurableEmotion implements Emotion {
 
     return StepAnimationRun.animating(SingleAnimationStepper.create({
       fps: 60,
-      layers: [
-        mouthMovementsMapping.flatMap(mapping => (
-          [drawId(mapping.output), wait(5)]
-        )),
-        { actions: this._emotionConfig.getEyesLayer(), loop: true },
-        { actions: this._emotionConfig.getHeadLayer(), loop: true }
-      ]
+      layers: this._emotionConfig.map(config => config === 'Mouth'
+      ? mouthMovementsMapping.flatMap(mapping => {
+        let imageId = this._mouthMapping ? this._mouthMapping[mapping.output] : mapping.output;
+        return [imageId ? drawId(imageId) : clear(), wait(5)];
+      })
+      : { actions: config(), loop: true })
     }));
   }
 }
@@ -446,33 +404,17 @@ enum PranDroidReactionSkipAfter {
 }
 
 async function setupPranDroidAnimation(pranCanvas: Container): Promise<PranDroidAnimationPlayer> {
+  const images = (await fetch("/api/images").then(r => r.json())).data;
+
   const animatorManager: AnimatorManager = await AnimatorManager.create(
     CanvasControllerFactory.createFrom((pranCanvas.componentElement as HTMLCanvasElement).getContext('2d')),
-    [
-      ['fv', './resources/mouth/f,v.png'],
-      ['ur', './resources/mouth/u,r.png'],
-      ['stch', './resources/mouth/s,t,ch.png'],
-      ['mbsilent', './resources/mouth/m,b,silent.png'],
-      ['p1', './resources/mouth/p-1.png'],
-      ['p2', './resources/mouth/p-2.png'],
-      ['e', './resources/mouth/e.png'],
-      ['aah', './resources/mouth/a,ah.png'],
-      ['o', './resources/mouth/ooh.png'],
-      ['ld', './resources/mouth/l,d.png'],
-      ['pause', './resources/mouth/pause.png'],
+    images.map(data => [data.id, data.url]).concat([
       ['smile', './resources/mouth/smile.png'],
       ['head_idle', './resources/idle_0000.png'],
       ['eyes_open', './resources/eyes/eyes_0000.png'],
       ['eyes_semi_open', './resources/eyes/eyes_0001.png'],
       ['eyes_closed', './resources/eyes/eyes_0002.png'],
-      ['eyesFire0', './resources/eyes/eyesFire_0000.png'],
-      ['eyesFire1', './resources/eyes/eyesFire_0001.png'],
-      ['eyesFire2', './resources/eyes/eyesFire_0002.png'],
-      ['eyesFire3', './resources/eyes/eyesFire_0003.png'],
-      ['eyesFire4', './resources/eyes/eyesFire_0004.png'],
-      ['eyesFire5', './resources/eyes/eyesFire_0005.png'],
-      ['eyesFire6', './resources/eyes/eyesFire_0006.png'],
-    ]
+    ])
   );
 
   const animator: Animator = animatorManager.animate();
@@ -480,6 +422,47 @@ async function setupPranDroidAnimation(pranCanvas: Container): Promise<PranDroid
   const playerController: PlayerController = new PlayerController(animator);
 
   return new PranDroidAnimationPlayer(animator, animatorManager, playerController);
+}
+
+async function setupEmotions(pranDroid: PranDroid): Promise<void> {
+  const emotions: {
+    id: string,
+    name: string,
+    layers: ({ type: 'Mouth' } | { type: 'Animation', frames: { frameStart: number, frameEnd: number, imageId: string }[]})[],
+    mouth_mapping: { [key: string]: string }
+  }[] = (await fetch("/api/emotions").then(r => r.json())).data;
+  console.log("Emotions", emotions);
+
+  pranDroid.setEmotionRange(emotions.reduce((acc, emotion) => {
+    acc[emotion.name] = new ConfigurableEmotion(emotion.layers.map(layer => layer.type === 'Mouth'
+    ? 'Mouth'
+    : () => animationToTimelineActions(layer.frames)), emotion.mouth_mapping);
+
+    return acc;
+  }, {}));
+}
+
+function animationToTimelineActions(frames: { frameStart: number, frameEnd: number, imageId: string }[]): ManagerTimelineAction[] {
+  let currentFrame: number = 0;
+
+  return frames.flatMap(frame => {
+    const actions: ManagerTimelineAction[] = [];
+
+    if (frame.frameStart === currentFrame + 1) {
+      actions.push(clear());
+    } else if (frame.frameStart > currentFrame) {
+      actions.push(clear());
+      actions.push(wait(frame.frameEnd - currentFrame - 1));
+    }
+
+    actions.push(drawId(frame.imageId));
+    if (frame.frameEnd - frame.frameStart > 1) {
+      actions.push(wait(frame.frameEnd - frame.frameStart - 1));
+    }
+    currentFrame = frame.frameEnd + 1;
+
+    return actions;
+  });
 }
 
 function getMouthLoopingAnimation(): AnimationRun {

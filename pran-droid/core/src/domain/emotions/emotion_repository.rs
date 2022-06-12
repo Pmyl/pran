@@ -20,6 +20,7 @@ pub trait EmotionRepository: Send + Sync {
     fn insert(&self, emotion: &Emotion) -> Result<(), EmotionInsertError>;
     fn update(&self, emotion: &Emotion) -> Result<(), EmotionUpdateError>;
     fn get(&self, id: &EmotionId) -> Option<Emotion>;
+    fn get_all(&self) -> Vec<Emotion>;
     fn exists(&self, id: &EmotionId) -> bool;
     fn get_by_name(&self, name: &EmotionName) -> Option<Emotion>;
     fn exists_with_name(&self, name: &EmotionName) -> bool;

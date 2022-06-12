@@ -5,10 +5,10 @@ use std::cmp::PartialEq;
 #[derive(Debug, Clone, PartialEq)]
 pub struct ImageId(pub String);
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct ImageUrl(pub String);
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Image {
     pub id: ImageId,
     pub url: ImageUrl

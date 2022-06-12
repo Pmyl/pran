@@ -1,5 +1,6 @@
 use crate::domain::images::image::Image;
 
+#[derive(Debug)]
 pub struct ImageDto {
     pub id: String,
     pub url: String

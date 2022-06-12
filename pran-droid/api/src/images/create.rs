@@ -1,6 +1,7 @@
 use std::sync::Arc;
-use rocket::serde::{Deserialize};
 use rocket::{Request, response, State};
+use rocket::form::Form;
+use rocket::fs::TempFile;
 use rocket::http::Status;
 use rocket::response::{Responder, status};
 use rocket::serde::json::Json;
@@ -9,30 +10,35 @@ use pran_droid_core::domain::images::image_repository::ImageRepository;
 use pran_droid_core::domain::images::image_storage::ImageStorage;
 use crate::images::responses::image_response::ImageResponse;
 
-#[post("/images", format = "json", data = "<payload>")]
-pub fn api_create_image(payload: Json<CreateImageApiRequest>, repo: &State<Arc<dyn ImageRepository>>, storage: &State<Arc<dyn ImageStorage>>) -> Result<Json<ImageResponse>, Error> {
-    Ok(Json(create_image(payload.0.into(), repo, storage)?.into()))
+#[post("/images", data = "<payload>")]
+pub fn api_create_image(payload: Form<CreateImageApiRequest<'_>>, repo: &State<Arc<dyn ImageRepository>>, storage: &State<Arc<dyn ImageStorage>>) -> Result<Json<ImageResponse>, Error> {
+    let request = into_request(payload)?;
+    Ok(Json(create_image(request, repo, storage)?.into()))
 }
 
-#[derive(Deserialize)]
-pub struct CreateImageApiRequest {
+#[derive(FromForm)]
+pub struct CreateImageApiRequest<'f> {
     id: String,
-    data: Vec<u8>
+    data: TempFile<'f>
 }
 
-impl Into<CreateImageRequest> for CreateImageApiRequest {
-    fn into(self) -> CreateImageRequest {
-        CreateImageRequest {
-            id: self.id,
-            image: self.data
-        }
+fn into_request(api_request: Form<CreateImageApiRequest>) -> Result<CreateImageRequest, Error> {
+    if let Some(path) = api_request.data.path() {
+        Ok(CreateImageRequest {
+            id: api_request.id.clone(),
+            image: std::fs::read(path).unwrap().as_slice().to_vec()
+        })
+    } else {
+        Err(Error::CorruptedFile)
     }
 }
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("{0:?}")]
-    StoreImageError(#[from] StoreImageError)
+    StoreImageError(#[from] StoreImageError),
+    #[error("Corrupted file")]
+    CorruptedFile
 }
 
 impl<'r, 'o: 'r> Responder<'r, 'o> for Error {
@@ -46,6 +52,7 @@ impl<'r, 'o: 'r> Responder<'r, 'o> for Error {
                     StoreImageError::BadRequest => Status::BadRequest.respond_to(req)
                 }
             }
+            Error::CorruptedFile => Status::BadRequest.respond_to(req)
         }
     }
 }
