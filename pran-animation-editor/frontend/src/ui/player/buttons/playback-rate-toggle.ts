@@ -2,7 +2,7 @@ import { inlineComponent, onClick } from 'pran-gular-frontend';
 import { PlayerController } from '../../../core/player/player-controller';
 
 export const createPlaybackRateToggle = inlineComponent<{ playerController: PlayerController }>(controls => {
-  let playbackRates: number[] = [1, 0.5, 0.25, 0.1],
+  let playbackRates: number[] = [1, 0.5, 0.25],
     currentRate: number = 0;
 
   controls.setup('half-playback-rate-toggle', 'half-playback-rate-toggle');

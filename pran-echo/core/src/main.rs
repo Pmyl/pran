@@ -6,7 +6,6 @@ mod errors;
 mod core;
 mod api_structures;
 
-use std::path::PathBuf;
 use pran_phonemes_core::phonemes::{phonemise_audio, phonemise_text, pran_phonemes, transcribe_audio};
 use rocket::fs::{FileServer, NamedFile};
 use rocket::form::Form;
