@@ -4,8 +4,8 @@ use pran_droid_core::application::reactions::dtos::reaction_step_dto::{Animation
 #[derive(Serialize)]
 #[serde(tag = "type")]
 pub enum ReactionStepModel {
-    Moving { animation: Vec<AnimationFrameModel>, skip: ReactionStepSkipModel },
-    Talking { text: String, emotion_id: String, skip: ReactionStepSkipModel },
+    Moving { animation: Vec<AnimationFrameModel>, skip: Option<ReactionStepSkipModel> },
+    Talking { text: String, emotion_id: String, skip: Option<ReactionStepSkipModel> },
 }
 
 impl From<ReactionStepDto> for ReactionStepModel {
@@ -14,7 +14,7 @@ impl From<ReactionStepDto> for ReactionStepModel {
             ReactionStepDto::Moving(movement_step) => {
                 ReactionStepModel::Moving {
                     animation: movement_step.animation.into_iter().map(From::from).collect(),
-                    skip: movement_step.skip.into()
+                    skip: from_dto_to_model(movement_step.skip)
                 }
             }
             ReactionStepDto::Talking(talking_step) => {
@@ -24,7 +24,7 @@ impl From<ReactionStepDto> for ReactionStepModel {
                         ReactionStepTextDto::LetterByLetter(text) => text,
                     },
                     emotion_id: talking_step.emotion_id,
-                    skip: talking_step.skip.into()
+                    skip: from_dto_to_model(talking_step.skip)
                 }
             }
         }
@@ -32,28 +32,27 @@ impl From<ReactionStepDto> for ReactionStepModel {
 }
 
 #[derive(Deserialize, Serialize)]
-#[serde(untagged)]
+#[serde(tag = "type")]
 pub enum ReactionStepSkipModel {
-    None,
-    #[serde(rename_all = "camelCase")]
-    AfterMilliseconds { after_ms: u16 }
+    #[serde(rename = "AfterTime", rename_all = "camelCase")]
+    AfterMilliseconds { ms: u16 },
+    #[serde(rename = "AfterStep", rename_all = "camelCase")]
+    AfterStep { extra_ms: u16 }
 }
 
-impl From<ReactionStepSkipDto> for ReactionStepSkipModel {
-    fn from(dto: ReactionStepSkipDto) -> ReactionStepSkipModel {
-        match dto {
-            ReactionStepSkipDto::ImmediatelyAfter => ReactionStepSkipModel::None,
-            ReactionStepSkipDto::AfterMilliseconds(ms) => ReactionStepSkipModel::AfterMilliseconds { after_ms: ms }
-        }
+pub(crate) fn from_dto_to_model(dto: ReactionStepSkipDto) -> Option<ReactionStepSkipModel> {
+    match dto {
+        ReactionStepSkipDto::ImmediatelyAfter => None,
+        ReactionStepSkipDto::AfterMilliseconds(ms) => Some(ReactionStepSkipModel::AfterMilliseconds { ms }),
+        ReactionStepSkipDto::AfterStepWithExtraMilliseconds(ms) => Some(ReactionStepSkipModel::AfterStep { extra_ms: ms }),
     }
 }
 
-impl Into<ReactionStepSkipDto> for ReactionStepSkipModel {
-    fn into(self: ReactionStepSkipModel) -> ReactionStepSkipDto {
-        match self {
-            ReactionStepSkipModel::None => ReactionStepSkipDto::ImmediatelyAfter,
-            ReactionStepSkipModel::AfterMilliseconds { after_ms } => ReactionStepSkipDto::AfterMilliseconds(after_ms)
-        }
+pub(crate) fn from_model_to_dto(model: Option<ReactionStepSkipModel>) -> ReactionStepSkipDto {
+    match model {
+        None => ReactionStepSkipDto::ImmediatelyAfter,
+        Some(ReactionStepSkipModel::AfterMilliseconds { ms }) => ReactionStepSkipDto::AfterMilliseconds(ms),
+        Some(ReactionStepSkipModel::AfterStep { extra_ms }) => ReactionStepSkipDto::AfterStepWithExtraMilliseconds(extra_ms),
     }
 }
 

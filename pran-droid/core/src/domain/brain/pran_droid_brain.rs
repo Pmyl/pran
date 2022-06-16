@@ -25,18 +25,16 @@ impl PranDroidBrain {
     }
 
     fn handle_chat_message(&self, message: String) -> Option<Reaction> {
-        let reaction = self.chat_reactions.iter()
+        self.chat_reactions.iter()
             .find(|definition| {
                 match definition.trigger {
-                    ReactionTrigger::Chat(ref chat_trigger) => chat_trigger.matches(&message)
+                    ReactionTrigger::Chat(ref chat_trigger) => chat_trigger.matches(&message),
+                    _ => false
                 }
-            });
-
-        if let Some(reaction) = reaction {
-            debug!("Matching reaction found {:?}", reaction);
-            From::from(Reaction::create(&self.text_phonemiser, reaction))
-        } else {
-            None
-        }
+            })
+            .map(|definition| {
+                debug!("Matching reaction found {:?}", definition);
+                Reaction::create(&self.text_phonemiser, definition)
+            })
     }
 }

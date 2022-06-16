@@ -34,7 +34,7 @@ pub struct TalkingReactionStep {
 pub enum ReactionStepSkip {
     ImmediatelyAfter,
     AfterMilliseconds(Milliseconds),
-    //AfterStep(AfterStep, Milliseconds)
+    AfterStepWithExtraMilliseconds(Milliseconds)
 }
 
 #[derive(Clone, Debug)]
@@ -42,13 +42,6 @@ pub enum ReactionStepText {
     Instant(String),
     LetterByLetter(String)
 }
-
-// #[derive(Clone, Debug)]
-// pub enum AfterStep {
-//     Animation,
-//     Text,
-//     All
-// }
 
 #[derive(Clone, Debug)]
 pub struct Milliseconds(pub u16);

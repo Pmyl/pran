@@ -247,7 +247,7 @@ fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefinitionRepo
             emotion_id: happy_emotion.id.clone(),
             // Random, ask pranessa
             text: String::from("Hi ${user}!!"),
-            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 10 seconds
             // Authorisation level Everyone
             step_index: 0,
@@ -263,7 +263,7 @@ fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefinitionRepo
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
             text: String::from("Beep boob boop"), // Random between "Beep boob boop" "Bo-beep" "Beeeeeeeee" "Boop boop" "Beep"
-            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
             step_index: 0,
@@ -279,7 +279,7 @@ fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefinitionRepo
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
             text: String::from("Enjoy the lurk ${user}"),
-            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
             step_index: 0,
@@ -296,7 +296,7 @@ fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefinitionRepo
             emotion_id: happy_emotion.id.clone(),
             // Random, ask pranessa
             text: String::from("AI doesn’t have to be evil to destroy humanity – if AI has a goal and humanity just happens to come in the way, it will destroy humanity as a matter of course without even thinking about it, no hard feelings."),
-            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
             step_index: 0,
@@ -313,7 +313,7 @@ fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefinitionRepo
             emotion_id: happy_emotion.id.clone(),
             // Random, ask pranessa
             text: String::from("Go grab a glass of water!"),
-            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
             step_index: 0,
@@ -329,7 +329,7 @@ fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefinitionRepo
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
             text: String::from("EXTERMINATE!"),
-            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
             step_index: 0,
@@ -345,7 +345,7 @@ fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefinitionRepo
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
             text: String::from("I'm just a droid, I can't do much"),
-            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
             step_index: 0,
@@ -361,7 +361,7 @@ fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefinitionRepo
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
             text: String::from("Do you know Aria? She's a cutie"),
-            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
             step_index: 0,
@@ -378,7 +378,7 @@ fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefinitionRepo
             emotion_id: happy_emotion.id.clone(),
             // Implement count!
             text: String::from("There are ${count} stars in the sky!"),
-            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
             step_index: 0,
@@ -395,7 +395,7 @@ fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefinitionRepo
             emotion_id: happy_emotion.id.clone(),
             // Random, ask pranessa
             text: String::from("The sight of such a friendly town fills you with determination."),
-            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
             step_index: 0,
@@ -412,7 +412,7 @@ fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefinitionRepo
             emotion_id: happy_emotion.id.clone(),
             // Random, ask pranessa
             text: String::from("[FIGHT]"),
-            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
             step_index: 0,
@@ -429,7 +429,7 @@ fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefinitionRepo
             emotion_id: happy_emotion.id.clone(),
             // Random, ask pranessa
             text: String::from("Did you say ${1}?! I've heard amazing things about them! "),
-            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
             step_index: 0,
@@ -445,7 +445,7 @@ fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefinitionRepo
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
             text: String::from("My name, my real name. That is not the point."),
-            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
             step_index: 0,
@@ -461,7 +461,7 @@ fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefinitionRepo
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
             text: String::from("People tell me I'm a heavy patter ${1}"),
-            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
             step_index: 0,
@@ -477,7 +477,7 @@ fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefinitionRepo
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
             text: String::from("Time to break things I guess"),
-            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
             step_index: 0,
@@ -494,7 +494,7 @@ fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefinitionRepo
             emotion_id: happy_emotion.id.clone(),
             // Random, ask pranessa
             text: String::from("A freshly baked cookie for you!"),
-            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
             step_index: 0,
@@ -510,7 +510,7 @@ fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefinitionRepo
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
             text: String::from("CONGRATULATIONS! You won a life-long subscription to our unlimited croissant stock!"),
-            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
             step_index: 0,
@@ -527,7 +527,7 @@ fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefinitionRepo
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
             text: String::from("${1} is an incredible artist. You do your best. Your best is enough. People do not hate you."),
-            skip: ReactionStepSkipDto::ImmediatelyAfter, // After text wait extra 3 seconds
+            skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
             step_index: 0,

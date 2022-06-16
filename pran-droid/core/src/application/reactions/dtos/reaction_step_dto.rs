@@ -41,6 +41,7 @@ pub struct AnimationFrameDto {
 pub enum ReactionStepSkipDto {
     ImmediatelyAfter,
     AfterMilliseconds(u16),
+    AfterStepWithExtraMilliseconds(u16),
 }
 
 impl From<ReactionStepDefinition> for ReactionStepDto {
@@ -66,7 +67,8 @@ impl From<ReactionStepSkipDefinition> for ReactionStepSkipDto {
     fn from(skip: ReactionStepSkipDefinition) -> Self {
         match skip {
             ReactionStepSkipDefinition::AfterMilliseconds(ms) => ReactionStepSkipDto::AfterMilliseconds(ms.0),
-            ReactionStepSkipDefinition::ImmediatelyAfter => ReactionStepSkipDto::ImmediatelyAfter
+            ReactionStepSkipDefinition::ImmediatelyAfter => ReactionStepSkipDto::ImmediatelyAfter,
+            ReactionStepSkipDefinition::AfterStepWithExtraMilliseconds(ms) => ReactionStepSkipDto::AfterStepWithExtraMilliseconds(ms.0),
         }
     }
 }
@@ -75,7 +77,8 @@ impl Into<ReactionStepSkipDefinition> for ReactionStepSkipDto {
     fn into(self) -> ReactionStepSkipDefinition {
         match self {
             ReactionStepSkipDto::AfterMilliseconds(ms) => ReactionStepSkipDefinition::AfterMilliseconds(Milliseconds(ms)),
-            ReactionStepSkipDto::ImmediatelyAfter => ReactionStepSkipDefinition::ImmediatelyAfter
+            ReactionStepSkipDto::ImmediatelyAfter => ReactionStepSkipDefinition::ImmediatelyAfter,
+            ReactionStepSkipDto::AfterStepWithExtraMilliseconds(ms) => ReactionStepSkipDefinition::AfterStepWithExtraMilliseconds(Milliseconds(ms)),
         }
     }
 }

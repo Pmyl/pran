@@ -122,7 +122,7 @@ async fn main() {
 }
 
 fn init_logger() {
-    if let Err(_) = SimpleLogger::init(LevelFilter::Info, simplelog::Config::default()) {
+    if let Err(_) = SimpleLogger::init(LevelFilter::Debug, simplelog::Config::default()) {
         eprintln!("Failed initializing logger for the application, nothing will be logged.");
     }
 }

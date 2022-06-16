@@ -108,7 +108,7 @@ mod tests {
             ..base_request()
         }, &repository, &emotion_repo).expect("Expected insert step not to fail");
 
-        let talking_step = get_talking_animation_step_at(&repository, reaction.id.0, 0);
+        let talking_step = get_talking_animation_step_at(&repository, &reaction.id.0, 0);
 
         assert!(matches!(talking_step.text, ReactionStepTextDto::LetterByLetter(text) if text == "some text"));
     }
@@ -152,15 +152,25 @@ mod tests {
             ..base_request()
         }, &repository, &emotion_repo).expect("Expected second insert step not to fail");
 
-        let first_talking_step = get_talking_animation_step_at(&repository, reaction.id.0.clone(), 0);
-        let second_talking_step = get_talking_animation_step_at(&repository, reaction.id.0, 1);
+        insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
+            reaction_id: reaction.id.0.clone(),
+            step_index: 2,
+            emotion_id: String::from("sad"),
+            skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(10),
+            ..base_request()
+        }, &repository, &emotion_repo).expect("Expected second insert step not to fail");
+
+        let first_talking_step = get_talking_animation_step_at(&repository, &reaction.id.0, 0);
+        let second_talking_step = get_talking_animation_step_at(&repository, &reaction.id.0, 1);
+        let third_talking_step = get_talking_animation_step_at(&repository, &reaction.id.0, 2);
 
         assert!(matches!(first_talking_step.skip, ReactionStepSkipDto::ImmediatelyAfter));
         assert!(matches!(second_talking_step.skip, ReactionStepSkipDto::AfterMilliseconds(ms) if ms == 12));
+        assert!(matches!(third_talking_step.skip, ReactionStepSkipDto::AfterStepWithExtraMilliseconds(ms) if ms == 10));
     }
 
-    fn get_talking_animation_step_at(repository: &Arc<dyn ReactionDefinitionRepository>, reaction_id: String, index: usize) -> TalkingReactionStepDto {
-        let step = try_get_animation_step_at(repository, reaction_id.clone(), index)
+    fn get_talking_animation_step_at(repository: &Arc<dyn ReactionDefinitionRepository>, reaction_id: &String, index: usize) -> TalkingReactionStepDto {
+        let step = try_get_animation_step_at(repository, reaction_id, index)
             .expect(format!("should have saved a step at index {}", index).as_str());
         if let ReactionStepDto::Talking(talking_step) = step {
             talking_step.clone()
@@ -169,7 +179,7 @@ mod tests {
         }
     }
 
-    fn try_get_animation_step_at(repository: &Arc<dyn ReactionDefinitionRepository>, reaction_id: String, index: usize) -> Result<ReactionStepDto, String> {
+    fn try_get_animation_step_at(repository: &Arc<dyn ReactionDefinitionRepository>, reaction_id: &String, index: usize) -> Result<ReactionStepDto, String> {
         let updated_reaction = get_reaction(GetReactionRequest { id: reaction_id.clone() }, &repository)
             .expect(format!("should have a reaction with id {}", reaction_id).as_str());
         let maybe_step: Option<&ReactionStepDto> = updated_reaction.steps.get(index);

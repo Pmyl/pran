@@ -7,5 +7,10 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-pyo3 = "0.14.2"
 dotenv = "0.15.0"
+grapheme_to_phoneme = "0.1.0"
+lazy_static = "1.4.0"
+pyo3 = { version = "0.14.2", optional = true }
+
+[features]
+audio = ["pyo3"]

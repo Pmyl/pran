@@ -37,10 +37,12 @@ pub(crate) struct AnimationFrameOutput {
 }
 
 #[derive(Clone, Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(tag = "type")]
 pub(crate) enum ReactionStepSkipOutput {
-    #[serde(rename = "afterMs")]
-    AfterMilliseconds(u16)
+    #[serde(rename = "AfterTime", rename_all = "camelCase")]
+    AfterMilliseconds { ms: u16 },
+    #[serde(rename = "AfterStep", rename_all = "camelCase")]
+    AfterStep { extra_ms: u16 }
 }
 
 impl From<Reaction> for ReactionOutput {
@@ -56,7 +58,8 @@ impl From<Reaction> for ReactionOutput {
                         }).collect(),
                         skip: match &moving_step.skip {
                             ReactionStepSkip::ImmediatelyAfter => None,
-                            ReactionStepSkip::AfterMilliseconds(ms) => Some(ReactionStepSkipOutput::AfterMilliseconds(ms.0))
+                            ReactionStepSkip::AfterMilliseconds(ms) => Some(ReactionStepSkipOutput::AfterMilliseconds { ms: ms.0 }),
+                            ReactionStepSkip::AfterStepWithExtraMilliseconds(ms) => Some(ReactionStepSkipOutput::AfterStep { extra_ms: ms.0 }),
                         }
                     }),
                     ReactionStep::Talking(ref talking_step) => ReactionStepOutput::Talking(TalkingReactionStepOutput {
@@ -68,7 +71,8 @@ impl From<Reaction> for ReactionOutput {
                         emotion: talking_step.emotion_id.0.clone(),
                         skip: match &talking_step.skip {
                             ReactionStepSkip::ImmediatelyAfter => None,
-                            ReactionStepSkip::AfterMilliseconds(ms) => Some(ReactionStepSkipOutput::AfterMilliseconds(ms.0))
+                            ReactionStepSkip::AfterMilliseconds(ms) => Some(ReactionStepSkipOutput::AfterMilliseconds { ms: ms.0 }),
+                            ReactionStepSkip::AfterStepWithExtraMilliseconds(ms) => Some(ReactionStepSkipOutput::AfterStep { extra_ms: ms.0 }),
                         }
                     }),
                     ReactionStep::CompositeTalking(_) => todo!("Handle composite talking")

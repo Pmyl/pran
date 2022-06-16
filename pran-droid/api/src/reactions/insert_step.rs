@@ -6,7 +6,7 @@ use rocket::{Request, response, State};
 use pran_droid_core::application::reactions::insert_movement_step::{AddMovementStepToReactionError, insert_movement_step_to_reaction, InsertMovementStepToReactionRequest};
 use pran_droid_core::domain::reactions::reaction_definition_repository::{ReactionDefinitionRepository};
 use pran_droid_core::domain::images::image_repository::ImageRepository;
-use crate::reactions::models::reaction_step_model::{AnimationFrameModel, ReactionStepModel, ReactionStepSkipModel};
+use crate::reactions::models::reaction_step_model::{AnimationFrameModel, from_model_to_dto, ReactionStepModel, ReactionStepSkipModel};
 
 #[put("/reactions/<reaction_id>/steps", format = "json", data = "<payload>")]
 pub fn api_insert_reaction_step(reaction_id: String, payload: Json<InsertReactionStepApiRequest>, repo: &State<Arc<dyn ReactionDefinitionRepository>>, image_repo: &State<Arc<dyn ImageRepository>>) -> Result<Json<ReactionStepModel>, Error> {
@@ -16,7 +16,7 @@ pub fn api_insert_reaction_step(reaction_id: String, payload: Json<InsertReactio
 #[derive(Deserialize)]
 pub struct InsertReactionStepApiRequest {
     index: usize,
-    skip: ReactionStepSkipModel,
+    skip: Option<ReactionStepSkipModel>,
     animation: Vec<AnimationFrameModel>
 }
 
@@ -25,7 +25,7 @@ impl InsertReactionStepApiRequest {
         InsertMovementStepToReactionRequest {
             reaction_id,
             step_index: self.index,
-            skip: self.skip.into(),
+            skip: from_model_to_dto(self.skip),
             animation: self.animation.into_iter().map(Into::into).collect()
         }
     }

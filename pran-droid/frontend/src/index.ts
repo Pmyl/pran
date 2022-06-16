@@ -24,9 +24,14 @@ interface BrainMovingReaction {
   type: ReactionType.Moving;
   animation: { frameStart: number, frameEnd: number, imageId: string }[];
   bubble?: string | { text: string; letterByLetter: boolean; };
-  skip?: PranDroidSkipAfterMs | { after: PranDroidReactionSkipAfter, waitExtraMs?: number };
+  skip?: PranDroidSkip;
 }
 
+const enum SkipType {
+  AfterTime = 'AfterTime',
+  AfterStep = 'AfterStep',
+}
+type PranDroidSkip = { type: SkipType.AfterTime, ms: number } | { type: SkipType.AfterStep, extraMs?: number };
 type DroidBrainReaction = { steps: (BrainMovingReaction | TalkingReaction | CompositeTalkingReaction)[] };
 
 function connectToBrain(pranDroid: PranDroid) {
@@ -167,7 +172,7 @@ function setupDemoData(pranDroid: PranDroid) {
       emotion: 'happy',
       phonemes: 'HH AH L OW , M AY N EY M IH Z P R AH N EH S AH AH N D AY W AA N T T UW L EH T Y UW N OW DH AE T .'.split(' '),
       bubble: 'hello my name is prandroid and I want to let you know that',
-      skip: { after: PranDroidReactionSkipAfter.LatestBubbleMovements, waitExtraMs: 500 }
+      skip: { type: SkipType.AfterStep, extraMs: 500 }
     },
     {
       type: ReactionType.CompositeTalking,
@@ -177,21 +182,21 @@ function setupDemoData(pranDroid: PranDroid) {
           emotion: 'glad',
           phonemes: 'UW'.split(' '),
           bubble: { text: 'YOU', letterByLetter: false },
-          skip: { after: PranDroidReactionSkipAfter.LatestBubbleMovements, waitExtraMs: 500 }
+          skip: { type: SkipType.AfterStep, extraMs: 500 }
         },
         {
           type: ReactionType.Talking,
           emotion: 'glad',
           phonemes: 'AY R R'.split(' '),
           bubble: { text: ' ARE', letterByLetter: true },
-          skip: { after: PranDroidReactionSkipAfter.LatestBubbleMovements, waitExtraMs: 500 }
+          skip: { type: SkipType.AfterStep, extraMs: 500 }
         },
         {
           type: ReactionType.Talking,
           emotion: 'glad',
           phonemes: 'K OW OW L'.split(' '),
           bubble: { text: ' COOL', letterByLetter: false },
-          skip: { after: PranDroidReactionSkipAfter.LatestBubbleMovements, waitExtraMs: 1000 }
+          skip: { type: SkipType.AfterStep, extraMs: 1000 }
         }
       ]
     },
@@ -200,7 +205,7 @@ function setupDemoData(pranDroid: PranDroid) {
       emotion: 'crazy',
       phonemes: 'EY N D AY L OW EY OW UH .'.split(' '),
       bubble: 'and I love you',
-      skip: { after: PranDroidReactionSkipAfter.Bubble, waitExtraMs: 2000 }
+      skip: { type: SkipType.AfterStep, extraMs: 2000 }
     }
   ];
   pranDroid.react(reactions);
@@ -295,19 +300,13 @@ class PranDroid {
   }
 
   private _waitReactionTime(reaction: MovingReaction | TalkingReaction, speechResult: { durationMs: number }, animationExecution: Promise<unknown>): Promise<unknown> {
-    if (isSkipAfterMs(reaction.skip)) {
-      return waitFor(reaction.skip.afterMs);
-    } else {
-      const skip = reaction.skip ?? { after: PranDroidReactionSkipAfter.LatestBubbleMovements };
+    const skip = reaction.skip;
 
-      switch (skip.after) {
-        case PranDroidReactionSkipAfter.Movements:
-          return animationExecution;
-        case PranDroidReactionSkipAfter.Bubble:
-          return waitFor((skip.waitExtraMs || 0) + speechResult.durationMs);
-        case PranDroidReactionSkipAfter.LatestBubbleMovements:
-          return Promise.all([animationExecution, waitFor((skip.waitExtraMs || 0) + speechResult.durationMs)]);
-      }
+    if (isSkipAfterMs(skip)) {
+      return waitFor(skip.ms);
+    } else {
+      return Promise.all([animationExecution, waitFor(speechResult.durationMs)])
+        .then(() => waitFor((skip?.extraMs || 0)));
     }
   }
 
@@ -361,8 +360,8 @@ class ConfigurableEmotion implements Emotion {
   }
 }
 
-function isSkipAfterMs(skip: (MovingReaction | TalkingReaction)['skip'] | undefined): skip is PranDroidSkipAfterMs {
-  return (skip as PranDroidSkipAfterMs)?.afterMs !== undefined;
+function isSkipAfterMs(skip: (MovingReaction | TalkingReaction)['skip'] | undefined): skip is { type: SkipType.AfterTime, ms: number } {
+  return skip.type === SkipType.AfterTime;
 }
 
 enum ReactionType {
@@ -375,7 +374,7 @@ interface MovingReaction {
   type: ReactionType.Moving;
   movements: AnimationRun;
   bubble?: string | { text: string; letterByLetter: boolean; };
-  skip?: PranDroidSkipAfterMs | { after: PranDroidReactionSkipAfter, waitExtraMs?: number };
+  skip?: PranDroidSkip;
 }
 
 interface CompositeTalkingReaction {
@@ -388,20 +387,10 @@ interface TalkingReaction {
   emotion: string;
   phonemes: string[];
   bubble?: string | { text: string; letterByLetter: boolean; };
-  skip?: PranDroidSkipAfterMs | { after: PranDroidReactionSkipAfter, waitExtraMs?: number };
+  skip?: PranDroidSkip;
 }
 
 type PranDroidReaction = MovingReaction | TalkingReaction | CompositeTalkingReaction;
-
-interface PranDroidSkipAfterMs {
-  afterMs: number;
-}
-
-enum PranDroidReactionSkipAfter {
-  Movements,
-  Bubble,
-  LatestBubbleMovements
-}
 
 async function setupPranDroidAnimation(pranCanvas: Container): Promise<PranDroidAnimationPlayer> {
   const images = (await fetch("/api/images").then(r => r.json())).data;
@@ -434,7 +423,7 @@ async function setupEmotions(pranDroid: PranDroid): Promise<void> {
   console.log("Emotions", emotions);
 
   pranDroid.setEmotionRange(emotions.reduce((acc, emotion) => {
-    acc[emotion.name] = new ConfigurableEmotion(emotion.layers.map(layer => layer.type === 'Mouth'
+    acc[emotion.id] = new ConfigurableEmotion(emotion.layers.map(layer => layer.type === 'Mouth'
     ? 'Mouth'
     : () => animationToTimelineActions(layer.frames)), emotion.mouth_mapping);
 
