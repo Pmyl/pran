@@ -5,7 +5,8 @@
   "license": "ISC",
   "description": "",
   "scripts": {
-    "pran-echo:prepare-deploy": "npm ci && npm run build -w pran-echo/frontend"
+    "pran-echo:prepare-deploy": "npm ci && npm run build -w pran-echo/frontend",
+    "pran-droid:prepare-deploy": "npm ci && npm run build -w pran-droid/frontend"
   },
   "workspaces": [
     "pran-gular/frontend",
