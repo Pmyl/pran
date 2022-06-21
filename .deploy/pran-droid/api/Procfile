@@ -1,2 +1,0 @@
-release: npm run build -w pran-droid-frontend
-web: API_PORT=$PORT ROCKET_KEEP_ALIVE=0 STATIC_PATH=../frontend/dist ./pran-droid/api/target/release/pran-droid-api
