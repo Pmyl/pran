@@ -40,7 +40,7 @@ impl Config {
     pub fn new() -> Config {
         Config {
             static_path: env::var("STATIC_PATH").expect("STATIC_PATH missing in env variables. .env not existing?"),
-            api_port: env::var("API_PORT").or(Ok("8000".to_string())).and_then(|port| port.parse::<u16>()).expect("PORT not a number"),
+            api_port: env::var("API_PORT").or(Ok("8000".to_string())).and_then(|port| port.parse::<u16>()).expect("API_PORT not a number"),
         }
     }
 }

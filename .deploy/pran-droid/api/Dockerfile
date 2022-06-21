@@ -26,4 +26,4 @@ RUN cargo build --release
 ENV ROCKET_ADDRESS=0.0.0.0
 ENV STATIC_PATH=../frontend/dist
 
-CMD ["./target/release/pran-droid-api"]
+CMD API_PORT=$PORT ./target/release/pran-droid-api
