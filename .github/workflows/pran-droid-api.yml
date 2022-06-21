@@ -21,3 +21,5 @@ jobs:
           dockerfile_directory: ./.deploy/pran-droid/api/
           dockerfile_name: Dockerfile
           docker_options: "--no-cache"
+        env:
+          DOCKER_CONTEXT: .
