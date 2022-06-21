@@ -1,13 +1,14 @@
 use std::fmt::Debug;
 use std::clone::Clone;
 use std::cmp::PartialEq;
+use crate::domain::brain::stimuli::Stimulus;
 use crate::domain::emotions::emotion::EmotionId;
 use crate::domain::reactions::reaction::{MovingReactionStep, ReactionStepSkip, ReactionStepText};
 
 #[derive(Clone, Debug)]
 pub struct ReactionDefinition {
     pub id: ReactionDefinitionId,
-    pub trigger: ReactionTrigger,
+    pub triggers: Vec<ReactionTrigger>,
     pub steps: Vec<ReactionStepDefinition>
 }
 
@@ -16,15 +17,15 @@ pub struct ReactionDefinitionId(pub String);
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ReactionTrigger {
-    Chat(ChatTrigger)
+    ChatCommand(ChatCommandTrigger)
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct ChatTrigger {
+pub struct ChatCommandTrigger {
     pub text: String
 }
 
-impl ChatTrigger {
+impl ChatCommandTrigger {
     pub fn matches(&self, message_text: &str) -> bool {
         message_text.contains(&self.text)
     }
@@ -34,8 +35,17 @@ impl ReactionDefinition {
     pub(crate) fn new_empty(id: ReactionDefinitionId, trigger: ReactionTrigger) -> Self {
         Self {
             id,
-            trigger,
+            triggers: vec![trigger],
             steps: vec![]
+        }
+    }
+
+    pub(crate) fn update_triggers(&mut self, triggers: Vec<ReactionTrigger>) -> Result<(), ()> {
+        if triggers.is_empty() {
+            Err(())
+        } else {
+            self.triggers = triggers;
+            Ok(())
         }
     }
 
@@ -55,7 +65,7 @@ impl ReactionTrigger {
             return Err(());
         }
 
-        Ok(ReactionTrigger::Chat(ChatTrigger { text: trigger }))
+        Ok(ReactionTrigger::ChatCommand(ChatCommandTrigger { text: trigger }))
     }
 }
 
@@ -79,10 +89,31 @@ pub type ReactionStepSkipDefinition = ReactionStepSkip;
 pub type ReactionStepTextDefinition = ReactionStepText;
 
 impl ReactionStepTextDefinition {
-    pub fn get_text(&self) -> String {
+    pub fn contextualise_text_reaction(&self, stimulus: &Stimulus) -> ReactionStepText {
         match self {
-            ReactionStepTextDefinition::Instant(text) => text.clone(),
-            ReactionStepTextDefinition::LetterByLetter(text) => text.clone()
+            ReactionStepTextDefinition::Instant(_) => ReactionStepText::Instant(self.apply_context(stimulus)),
+            ReactionStepTextDefinition::LetterByLetter(_) => ReactionStepText::LetterByLetter(self.apply_context(stimulus)),
         }
+    }
+
+    fn apply_context(&self, stimulus: &Stimulus) -> String {
+        let mut text = self.get_text();
+        if text.contains("${user}") {
+            text = text.replace("${user}", &stimulus.get_source_name())
+        }
+
+        match stimulus {
+            Stimulus::ChatMessage(message) => {
+                if text.contains("${target}") {
+                    text = text.replace("${target}", &message.get_target().unwrap_or_else(|| "".to_string()))
+                }
+
+                if text.contains("${touser}") {
+                    text = text.replace("${touser}", &message.get_target().unwrap_or_else(|| stimulus.get_source_name()))
+                }
+            }
+        }
+
+        text
     }
 }

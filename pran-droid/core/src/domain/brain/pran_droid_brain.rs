@@ -19,22 +19,28 @@ impl PranDroidBrain {
 
     pub fn stimulate(&self, stimulus: Stimulus) -> Option<Reaction> {
         debug!("Brain stimulated with {:?}", stimulus);
-        match stimulus {
-            Stimulus::ChatMessage(ChatMessageStimulus { text: chat_message, .. }) => self.handle_chat_message(chat_message),
+        match &stimulus {
+            Stimulus::ChatMessage(ChatMessageStimulus{ text, .. }) => self.handle_chat_message(text, &stimulus),
         }
     }
 
-    fn handle_chat_message(&self, message: String) -> Option<Reaction> {
+    fn handle_chat_message(&self, text: &String, stimulus: &Stimulus) -> Option<Reaction> {
         self.chat_reactions.iter()
             .find(|definition| {
-                match definition.trigger {
-                    ReactionTrigger::Chat(ref chat_trigger) => chat_trigger.matches(&message),
-                    _ => false
+                for trigger in &definition.triggers {
+                    if match trigger {
+                        ReactionTrigger::ChatCommand(ref chat_trigger) => chat_trigger.matches(text),
+                        _ => false
+                    } {
+                        return true
+                    }
                 }
+
+                false
             })
             .map(|definition| {
                 debug!("Matching reaction found {:?}", definition);
-                Reaction::create(&self.text_phonemiser, definition)
+                Reaction::create(&self.text_phonemiser, definition, stimulus)
             })
     }
 }

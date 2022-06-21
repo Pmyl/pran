@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use crate::application::brain::pran_droid_brain::TextPhonemiser;
 use crate::domain::animations::animation::Animation;
+use crate::domain::brain::stimuli::Stimulus;
 use crate::domain::emotions::emotion::EmotionId;
 use crate::domain::reactions::reaction_definition::{ReactionDefinition, ReactionStepDefinition, TalkingReactionStepDefinition};
 
@@ -47,30 +48,42 @@ pub enum ReactionStepText {
 pub struct Milliseconds(pub u16);
 
 impl Reaction {
-    pub(crate) fn create(text_phonemiser: &Arc<dyn TextPhonemiser>, definition: &ReactionDefinition) -> Self {
+    pub(crate) fn create(text_phonemiser: &Arc<dyn TextPhonemiser>, definition: &ReactionDefinition, stimulus: &Stimulus) -> Self {
         Reaction {
-            steps: definition.steps.iter().map(|step| ReactionStep::create(text_phonemiser, step)).collect()
+            steps: definition.steps.iter().map(|step| ReactionStep::create(text_phonemiser, step, stimulus)).collect()
         }
     }
 }
 
 impl ReactionStep {
-    pub(crate) fn create(text_phonemiser: &Arc<dyn TextPhonemiser>, definition: &ReactionStepDefinition) -> Self {
+    pub(crate) fn create(text_phonemiser: &Arc<dyn TextPhonemiser>, definition: &ReactionStepDefinition, stimulus: &Stimulus) -> Self {
         match definition {
-            ReactionStepDefinition::Moving(moving_step_definition) => ReactionStep::Moving(moving_step_definition.clone()),
-            ReactionStepDefinition::Talking(talking_step_definition) => ReactionStep::Talking(TalkingReactionStep::create(text_phonemiser, talking_step_definition)),
-            ReactionStepDefinition::CompositeTalking(_) => todo!("should never get here")
+            ReactionStepDefinition::Moving(moving_step_definition) =>
+                ReactionStep::Moving(moving_step_definition.clone()),
+            ReactionStepDefinition::Talking(talking_step_definition) =>
+                ReactionStep::Talking(TalkingReactionStep::create(text_phonemiser, talking_step_definition, stimulus)),
+            ReactionStepDefinition::CompositeTalking(_) =>
+                todo!("should never get here because not implemented")
         }
     }
 }
 
 impl TalkingReactionStep {
-    fn create(text_phonemiser: &Arc<dyn TextPhonemiser>, definition: &TalkingReactionStepDefinition) -> Self {
+    fn create(text_phonemiser: &Arc<dyn TextPhonemiser>, definition: &TalkingReactionStepDefinition, stimulus: &Stimulus) -> Self {
         TalkingReactionStep {
             skip: definition.skip.clone(),
-            text: definition.text.clone(),
+            text: definition.text.contextualise_text_reaction(stimulus),
             emotion_id: definition.emotion_id.clone(),
             phonemes: text_phonemiser.phonemise_text(definition.text.get_text())
+        }
+    }
+}
+
+impl ReactionStepText {
+    pub fn get_text(&self) -> String {
+        match self {
+            ReactionStepText::Instant(text) => text.clone(),
+            ReactionStepText::LetterByLetter(text) => text.clone()
         }
     }
 }

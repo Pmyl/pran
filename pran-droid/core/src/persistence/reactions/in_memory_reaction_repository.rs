@@ -1,20 +1,26 @@
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use crate::domain::reactions::reaction_definition::{ReactionDefinition, ReactionDefinitionId, ReactionTrigger};
 use crate::domain::reactions::reaction_definition_repository::{ReactionDefinitionRepository, ReactionInsertError, ReactionUpdateError};
+use crate::persistence::id_generation::id_generation::{IdGenerator, IdGeneratorInMemoryIncremental, IdGeneratorUuid};
 
 pub struct InMemoryReactionRepository {
     reactions: Mutex<Vec<ReactionDefinition>>,
+    id_generator: Arc<Mutex<dyn IdGenerator>>,
 }
 
 impl InMemoryReactionRepository {
     pub fn new() -> InMemoryReactionRepository {
-        InMemoryReactionRepository { reactions: Mutex::new(vec!()) }
+        InMemoryReactionRepository { reactions: Mutex::new(vec!()), id_generator: Arc::new(Mutex::new(IdGeneratorUuid::new())) }
+    }
+
+    pub fn new_with_id_deterministic() -> InMemoryReactionRepository {
+        InMemoryReactionRepository { reactions: Mutex::new(vec!()), id_generator: Arc::new(Mutex::new(IdGeneratorInMemoryIncremental::new())) }
     }
 }
 
 impl ReactionDefinitionRepository for InMemoryReactionRepository {
     fn next_id(&self) -> ReactionDefinitionId {
-        ReactionDefinitionId(uuid::Uuid::new_v4().to_string())
+        ReactionDefinitionId(self.id_generator.lock().unwrap().next_id())
     }
 
     fn insert(&self, reaction: &ReactionDefinition) -> Result<(), ReactionInsertError> {
@@ -35,7 +41,15 @@ impl ReactionDefinitionRepository for InMemoryReactionRepository {
     fn exists_with_trigger(&self, trigger: &ReactionTrigger) -> bool {
         let lock = self.reactions.lock().unwrap();
 
-        lock.iter().any(|stored_reaction| &stored_reaction.trigger == trigger)
+        lock.iter().any(|stored_reaction| stored_reaction.triggers.iter().any(|stored_trigger| stored_trigger == trigger))
+    }
+
+    fn other_exists_with_trigger(&self, trigger: &ReactionTrigger, excluded_reaction_definition_id: &ReactionDefinitionId) -> bool {
+        let lock = self.reactions.lock().unwrap();
+
+        lock.iter()
+            .filter(|stored_reaction| &stored_reaction.id != excluded_reaction_definition_id)
+            .any(|stored_reaction| stored_reaction.triggers.iter().any(|stored_trigger| stored_trigger == trigger))
     }
 
     fn get(&self, id: &ReactionDefinitionId) -> Option<ReactionDefinition> {

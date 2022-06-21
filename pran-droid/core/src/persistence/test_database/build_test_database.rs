@@ -1,20 +1,21 @@
 use std::fs;
 use std::path::Path;
 use std::sync::Arc;
-use pran_droid_core::application::emotions::create::{create_emotion, CreateEmotionRequest};
-use pran_droid_core::application::emotions::get_by_name::{get_emotion_by_name, GetEmotionByNameRequest};
-use pran_droid_core::application::emotions::update_layer::{AddEmotionAnimationLayerRequest, update_emotion_animation_layer};
-use pran_droid_core::application::emotions::update_mouth_mapping::{update_emotion_mouth_mapping, UpdateEmotionMouthMappingElementRequest, UpdateEmotionMouthMappingRequest};
-use pran_droid_core::application::images::create::{create_image, CreateImageRequest};
-use pran_droid_core::application::reactions::create::{create_reaction, CreateReactionRequest};
-use pran_droid_core::application::reactions::dtos::reaction_step_dto::{AnimationFrameDto, ReactionStepSkipDto};
-use pran_droid_core::application::reactions::insert_movement_step::{insert_movement_step_to_reaction, InsertMovementStepToReactionRequest};
-use pran_droid_core::application::reactions::insert_talking_step::{insert_talking_step_to_reaction, InsertTalkingStepToReactionRequest};
-use pran_droid_core::domain::emotions::emotion::{MouthPositionName};
-use pran_droid_core::domain::emotions::emotion_repository::EmotionRepository;
-use pran_droid_core::domain::images::image_repository::ImageRepository;
-use pran_droid_core::domain::images::image_storage::ImageStorage;
-use pran_droid_core::domain::reactions::reaction_definition_repository::ReactionDefinitionRepository;
+use crate::application::emotions::create::{create_emotion, CreateEmotionRequest};
+use crate::application::emotions::get_by_name::{get_emotion_by_name, GetEmotionByNameRequest};
+use crate::application::emotions::update_layer::{AddEmotionAnimationLayerRequest, update_emotion_animation_layer};
+use crate::application::emotions::update_mouth_mapping::{update_emotion_mouth_mapping, UpdateEmotionMouthMappingElementRequest, UpdateEmotionMouthMappingRequest};
+use crate::application::images::create::{create_image, CreateImageRequest};
+use crate::application::reactions::create::{create_reaction, CreateReactionRequest};
+use crate::application::reactions::dtos::reaction_step_dto::{AnimationFrameDto, ReactionStepSkipDto};
+use crate::application::reactions::insert_movement_step::{insert_movement_step_to_reaction, InsertMovementStepToReactionRequest};
+use crate::application::reactions::insert_talking_step::{insert_talking_step_to_reaction, InsertTalkingStepToReactionRequest};
+use crate::application::reactions::update::{update_reaction, UpdateReactionRequest};
+use crate::domain::emotions::emotion::{MouthPositionName};
+use crate::domain::emotions::emotion_repository::EmotionRepository;
+use crate::domain::images::image_repository::ImageRepository;
+use crate::domain::images::image_storage::ImageStorage;
+use crate::domain::reactions::reaction_definition_repository::ReactionDefinitionRepository;
 
 pub fn build_test_database(reaction_repository: Arc<dyn ReactionDefinitionRepository>, emotion_repository: Arc<dyn EmotionRepository>, image_repository: Arc<dyn ImageRepository>, image_storage: Arc<dyn ImageStorage>) {
     build_images_database(&image_repository, &image_storage);
@@ -149,7 +150,7 @@ fn build_images_database(image_repository: &Arc<dyn ImageRepository>, image_stor
 }
 
 fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefinitionRepository>, image_repository: &Arc<dyn ImageRepository>, emotion_repository: &Arc<dyn EmotionRepository>) {
-    let reaction1 = create_reaction(CreateReactionRequest { trigger: String::from("!hello") }, &reaction_repository).expect("error creating reaction");
+    let reaction1 = create_reaction(CreateReactionRequest { trigger: String::from("!custom") }, &reaction_repository).expect("error creating reaction");
     let reaction2 = create_reaction(CreateReactionRequest { trigger: String::from("!move") }, &reaction_repository).expect("error creating reaction");
     let sad_emotion = get_emotion_by_name(GetEmotionByNameRequest { name: String::from("sad") }, &emotion_repository).expect("error getting sad emotion");
     let happy_emotion = get_emotion_by_name(GetEmotionByNameRequest { name: String::from("happy") }, &emotion_repository).expect("error getting happy emotion");
@@ -241,8 +242,12 @@ fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefinitionRepo
     // !hi
     {
         let reaction = create_reaction(CreateReactionRequest {
-            trigger: String::from("!hi") // Alias !hello
+            trigger: String::from("!hi")
         }, &reaction_repository).expect("error creating reaction");
+        update_reaction(UpdateReactionRequest {
+            id: reaction.id.clone(),
+            triggers: vec![String::from("!hi"), String::from("!hello")]
+        }, &reaction_repository).expect("error updating reaction");
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
             // Random, ask pranessa
@@ -428,7 +433,7 @@ fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefinitionRepo
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
             // Random, ask pranessa
-            text: String::from("Did you say ${1}?! I've heard amazing things about them! "),
+            text: String::from("Did you say ${target}?! I've heard amazing things about them! "),
             skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
@@ -460,7 +465,7 @@ fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefinitionRepo
         }, &reaction_repository).expect("error creating reaction");
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
-            text: String::from("People tell me I'm a heavy patter ${1}"),
+            text: String::from("People tell me I'm a heavy patter ${target}"),
             skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
@@ -521,12 +526,15 @@ fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefinitionRepo
     // !mantra
     {
         let reaction = create_reaction(CreateReactionRequest {
-            // Alias !bs
             trigger: String::from("!mantra")
         }, &reaction_repository).expect("error creating reaction");
+        update_reaction(UpdateReactionRequest {
+            id: reaction.id.clone(),
+            triggers: vec![String::from("!mantra"), String::from("!bs")]
+        }, &reaction_repository).expect("error updating reaction");
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
-            text: String::from("${1} is an incredible artist. You do your best. Your best is enough. People do not hate you."),
+            text: String::from("${target} is an incredible artist. You do your best. Your best is enough. People do not hate you."),
             skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone

@@ -13,10 +13,12 @@ pub fn create_droid_brain(reaction_repository: &Arc<dyn ReactionDefinitionReposi
     let mut brain_builder = PranDroidBrainBuilder::new(text_phonemiser.clone());
 
     for reaction in reactions {
-        match reaction.trigger {
-            ReactionTrigger::Chat(_) => {
-                brain_builder.with_reaction_to_chat(reaction)
-            }
+        // TODO: fix this, it won't work once we add more triggers types
+        // Example: a reaction has both chat and bits trigger, where do we put it?
+        // A way to fix it is to just not do this separation.
+        // A more complex way to do it is to have more structures to keep track of the trigger -> reaction connection
+        if reaction.triggers.iter().any(|trigger| matches!(trigger, ReactionTrigger::ChatCommand(_))) {
+            brain_builder.with_reaction_to_chat(reaction)
         }
     }
 
@@ -170,6 +172,131 @@ mod tests {
             if let ReactionStep::Talking(TalkingReactionStep { phonemes, .. }) = &reaction.steps[0] {
                 assert_eq!(phonemes.len(), 9);
                 assert_eq!(phonemes.into_iter().map(|s| s.as_str()).collect::<Vec<&str>>().as_slice(), ["s", "o", "m", "e", " ", "t", "e", "x", "t"]);
+            }
+        }
+    }
+
+    #[test]
+    fn create_droid_brain_talking_reaction_interpolate_chat_message_with_user() {
+        let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
+        let mut reaction_definition = ReactionDefinition::new_empty(
+            ReactionDefinitionId(String::from("0")),
+            ReactionTrigger::new_chat(String::from("!hello")).unwrap(),
+        );
+        reaction_definition.steps.push(ReactionStepDefinition::Talking(TalkingReactionStepDefinition {
+            skip: ReactionStepSkip::ImmediatelyAfter,
+            text: ReactionStepText::LetterByLetter(String::from("Hello I am ${user}")),
+            emotion_id: EmotionId(String::from("an emotion id"))
+        }));
+        reaction_repository.insert(&reaction_definition).unwrap();
+
+        let brain = create_droid_brain(&reaction_repository, &text_phonemiser);
+
+        let reaction = stimulate_with_chat_message(&brain, |stimulus| {
+            stimulus.text = String::from("!hello");
+            stimulus.source.user_name = String::from("Pmyl")
+        });
+
+        assert!(reaction.is_some());
+        if let Some(reaction) = reaction {
+            assert_eq!(reaction.steps.len(), 1);
+            assert!(matches!(&reaction.steps[0], &ReactionStep::Talking(_)));
+            if let ReactionStep::Talking(TalkingReactionStep { text, .. }) = &reaction.steps[0] {
+                assert_eq!(text.get_text(), "Hello I am Pmyl");
+            }
+        }
+    }
+
+    #[test]
+    fn create_droid_brain_talking_reaction_interpolate_chat_message_with_target() {
+        let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
+        let mut reaction_definition = ReactionDefinition::new_empty(
+            ReactionDefinitionId(String::from("0")),
+            ReactionTrigger::new_chat(String::from("!hello")).unwrap(),
+        );
+        reaction_definition.steps.push(ReactionStepDefinition::Talking(TalkingReactionStepDefinition {
+            skip: ReactionStepSkip::ImmediatelyAfter,
+            text: ReactionStepText::LetterByLetter(String::from("Hello ${target}!")),
+            emotion_id: EmotionId(String::from("an emotion id"))
+        }));
+        reaction_repository.insert(&reaction_definition).unwrap();
+
+        let brain = create_droid_brain(&reaction_repository, &text_phonemiser);
+
+        let reaction = stimulate_with_chat_message(&brain, |stimulus| stimulus.text = String::from("!hello Pmyl"));
+
+        assert!(reaction.is_some());
+        if let Some(reaction) = reaction {
+            assert_eq!(reaction.steps.len(), 1);
+            assert!(matches!(&reaction.steps[0], &ReactionStep::Talking(_)));
+            if let ReactionStep::Talking(TalkingReactionStep { text, .. }) = &reaction.steps[0] {
+                assert_eq!(text.get_text(), "Hello Pmyl!");
+            }
+        }
+    }
+
+    #[test]
+    fn create_droid_brain_talking_reaction_interpolate_chat_message_with_touser_user_if_target_missing() {
+        let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
+        let mut reaction_definition = ReactionDefinition::new_empty(
+            ReactionDefinitionId(String::from("0")),
+            ReactionTrigger::new_chat(String::from("!hello")).unwrap(),
+        );
+        reaction_definition.steps.push(ReactionStepDefinition::Talking(TalkingReactionStepDefinition {
+            skip: ReactionStepSkip::ImmediatelyAfter,
+            text: ReactionStepText::LetterByLetter(String::from("Hello ${touser}!")),
+            emotion_id: EmotionId(String::from("an emotion id"))
+        }));
+        reaction_repository.insert(&reaction_definition).unwrap();
+
+        let brain = create_droid_brain(&reaction_repository, &text_phonemiser);
+
+        let reaction = stimulate_with_chat_message(&brain, |stimulus| {
+            stimulus.text = String::from("!hello");
+            stimulus.source.user_name = String::from("Pmyl");
+        });
+
+        assert!(reaction.is_some());
+        if let Some(reaction) = reaction {
+            assert_eq!(reaction.steps.len(), 1);
+            assert!(matches!(&reaction.steps[0], &ReactionStep::Talking(_)));
+            if let ReactionStep::Talking(TalkingReactionStep { text, .. }) = &reaction.steps[0] {
+                assert_eq!(text.get_text(), "Hello Pmyl!");
+            }
+        }
+    }
+
+    #[test]
+    fn create_droid_brain_talking_reaction_interpolate_chat_message_with_touser_target_if_present() {
+        let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
+        let mut reaction_definition = ReactionDefinition::new_empty(
+            ReactionDefinitionId(String::from("0")),
+            ReactionTrigger::new_chat(String::from("!hello")).unwrap(),
+        );
+        reaction_definition.steps.push(ReactionStepDefinition::Talking(TalkingReactionStepDefinition {
+            skip: ReactionStepSkip::ImmediatelyAfter,
+            text: ReactionStepText::LetterByLetter(String::from("Hello ${touser}!")),
+            emotion_id: EmotionId(String::from("an emotion id"))
+        }));
+        reaction_repository.insert(&reaction_definition).unwrap();
+
+        let brain = create_droid_brain(&reaction_repository, &text_phonemiser);
+
+        let reaction = stimulate_with_chat_message(&brain, |stimulus| {
+            stimulus.text = String::from("!hello PranDroid");
+            stimulus.source.user_name = String::from("Pmyl");
+        });
+
+        assert!(reaction.is_some());
+        if let Some(reaction) = reaction {
+            assert_eq!(reaction.steps.len(), 1);
+            assert!(matches!(&reaction.steps[0], &ReactionStep::Talking(_)));
+            if let ReactionStep::Talking(TalkingReactionStep { text, .. }) = &reaction.steps[0] {
+                assert_eq!(text.get_text(), "Hello PranDroid!");
             }
         }
     }

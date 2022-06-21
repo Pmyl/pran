@@ -11,7 +11,7 @@ pub struct ReactionDto {
 
 impl From<ReactionDefinition> for ReactionDto {
     fn from(value: ReactionDefinition) -> Self {
-        Self { id: value.id.0, trigger: value.trigger.into(), steps: value.steps.into_iter().map(From::from).collect() }
+        Self { id: value.id.0, trigger: value.triggers.into_iter().next().unwrap().into(), steps: value.steps.into_iter().map(From::from).collect() }
     }
 }
 
@@ -23,7 +23,7 @@ pub enum ReactionTriggerDto {
 impl From<ReactionTrigger> for ReactionTriggerDto {
     fn from(value: ReactionTrigger) -> Self {
         match value {
-            ReactionTrigger::Chat(chat) => ReactionTriggerDto::Chat(chat.text),
+            ReactionTrigger::ChatCommand(chat) => ReactionTriggerDto::Chat(chat.text),
         }
     }
 }

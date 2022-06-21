@@ -1,20 +1,26 @@
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use crate::domain::emotions::emotion::{Emotion, EmotionId, EmotionName};
 use crate::domain::emotions::emotion_repository::{EmotionInsertError, EmotionRepository, EmotionUpdateError};
+use crate::persistence::id_generation::id_generation::{IdGenerator, IdGeneratorInMemoryIncremental, IdGeneratorUuid};
 
 pub struct InMemoryEmotionRepository {
     emotions: Mutex<Vec<Emotion>>,
+    id_generator: Arc<Mutex<dyn IdGenerator>>,
 }
 
 impl InMemoryEmotionRepository {
     pub fn new() -> InMemoryEmotionRepository {
-        InMemoryEmotionRepository { emotions: Mutex::new(vec!()) }
+        InMemoryEmotionRepository { emotions: Mutex::new(vec!()), id_generator: Arc::new(Mutex::new(IdGeneratorUuid::new())) }
+    }
+
+    pub fn new_with_id_deterministic() -> InMemoryEmotionRepository {
+        InMemoryEmotionRepository { emotions: Mutex::new(vec!()), id_generator: Arc::new(Mutex::new(IdGeneratorInMemoryIncremental::new())) }
     }
 }
 
 impl EmotionRepository for InMemoryEmotionRepository {
     fn next_id(&self) -> EmotionId {
-        EmotionId(uuid::Uuid::new_v4().to_string())
+        EmotionId(self.id_generator.lock().unwrap().next_id())
     }
 
     fn insert(&self, emotion: &Emotion) -> Result<(), EmotionInsertError> {

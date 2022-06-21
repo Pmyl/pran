@@ -20,6 +20,7 @@ pub trait ReactionDefinitionRepository: Send + Sync {
     fn next_id(&self) -> ReactionDefinitionId;
     fn insert(&self, reaction: &ReactionDefinition) -> Result<(), ReactionInsertError>;
     fn exists_with_trigger(&self, trigger: &ReactionTrigger) -> bool;
+    fn other_exists_with_trigger(&self, trigger: &ReactionTrigger, excluded_reaction_definition_id: &ReactionDefinitionId) -> bool;
     fn get(&self, id: &ReactionDefinitionId) -> Option<ReactionDefinition>;
     fn get_all(&self) -> Vec<ReactionDefinition>;
     fn update(&self, reaction: &ReactionDefinition) -> Result<(), ReactionUpdateError>;
