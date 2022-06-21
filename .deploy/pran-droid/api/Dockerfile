@@ -13,6 +13,7 @@ COPY ./package-lock.json ./app/
 COPY ./package.json ./app/
 COPY ./pran-phonemes/ ./app/pran-phonemes/
 COPY ./pran-animation/ ./app/pran-animation/
+COPY ./pran-gular/ ./app/pran-gular/
 COPY ./pran-droid/ ./app/pran-droid/
 
 WORKDIR /app
