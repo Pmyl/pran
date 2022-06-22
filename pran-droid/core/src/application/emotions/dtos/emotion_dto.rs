@@ -6,12 +6,11 @@ pub struct EmotionDto {
     pub id: String,
     pub name: String,
     pub animation: Vec<EmotionLayerDto>,
-    pub mouth_mapping: HashMap<String, String>
 }
 
 pub enum EmotionLayerDto {
     Animation(Vec<AnimationFrameDto>),
-    Mouth
+    Mouth { mouth_mapping: HashMap<String, String> }
 }
 
 impl From<Emotion> for EmotionDto {
@@ -20,7 +19,6 @@ impl From<Emotion> for EmotionDto {
             id: emotion.id.0,
             name: emotion.name.0,
             animation: emotion.animation.into_iter().map(From::from).collect(),
-            mouth_mapping: emotion.mouth_mapping.into_iter().map(|(pos, id)| (pos.into(), id.0)).collect()
         }
     }
 }
@@ -28,7 +26,9 @@ impl From<Emotion> for EmotionDto {
 impl From<EmotionLayer> for EmotionLayerDto {
     fn from(layer: EmotionLayer) -> Self {
         match layer {
-            EmotionLayer::Mouth => EmotionLayerDto::Mouth,
+            EmotionLayer::Mouth { mouth_mapping } => EmotionLayerDto::Mouth {
+                mouth_mapping: mouth_mapping.into_iter().map(|(pos, id)| (pos.into(), id.0)).collect()
+            },
             EmotionLayer::Animation(animation) => EmotionLayerDto::Animation(animation.frames.into())
         }
     }

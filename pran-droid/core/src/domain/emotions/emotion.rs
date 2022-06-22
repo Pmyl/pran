@@ -6,7 +6,6 @@ use crate::domain::images::image::ImageId;
 pub struct Emotion {
     pub id: EmotionId,
     pub name: EmotionName,
-    pub mouth_mapping: HashMap<MouthPositionName, ImageId>,
     pub animation: Vec<EmotionLayer>
 }
 
@@ -35,7 +34,7 @@ pub enum MouthPositionName {
 #[derive(Clone, Debug)]
 pub enum EmotionLayer {
     Animation(Animation),
-    Mouth
+    Mouth { mouth_mapping: HashMap<MouthPositionName, ImageId> }
 }
 
 impl Emotion {
@@ -43,8 +42,7 @@ impl Emotion {
         Emotion {
             id,
             name,
-            animation: vec![EmotionLayer::Mouth],
-            mouth_mapping: HashMap::new()
+            animation: vec![EmotionLayer::Mouth { mouth_mapping: HashMap::new() }],
         }
     }
 
@@ -52,7 +50,7 @@ impl Emotion {
         if self.animation.len() == index {
             self.animation.push(EmotionLayer::Animation(animation));
             Ok(())
-        } else if self.animation.len() < index || matches!(self.animation[index], EmotionLayer::Mouth) {
+        } else if self.animation.len() < index || matches!(self.animation[index], EmotionLayer::Mouth { .. }) {
             Err(())
         } else {
             self.animation.remove(index);
@@ -62,11 +60,19 @@ impl Emotion {
     }
 
     pub(super) fn set_mouth_position(&mut self, position_name: MouthPositionName, image_id: ImageId) {
-        if self.mouth_mapping.contains_key(&position_name) {
-            self.mouth_mapping.remove(&position_name);
-        }
+        let mouth_index = self.animation.iter().position(|layer| matches!(layer, EmotionLayer::Mouth { .. })).unwrap();
+        let mouth_layer = self.animation.get_mut(mouth_index).unwrap();
 
-        self.mouth_mapping.insert(position_name, image_id);
+        match mouth_layer {
+            EmotionLayer::Animation(_) => {}
+            EmotionLayer::Mouth { ref mut mouth_mapping } => {
+                if mouth_mapping.contains_key(&position_name) {
+                    mouth_mapping.remove(&position_name);
+                }
+
+                mouth_mapping.insert(position_name, image_id);
+            }
+        }
     }
 }
 

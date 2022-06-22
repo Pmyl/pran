@@ -91,7 +91,7 @@ mod tests {
 
         let emotion = get_emotion(GetEmotionRequest { id: emotion.id.0 }, &repository).expect("Emotion expected");
         assert_eq!(emotion.animation.len(), 2);
-        assert!(matches!(emotion.animation.get(0).unwrap(), EmotionLayerDto::Mouth));
+        assert!(matches!(emotion.animation.get(0).unwrap(), EmotionLayerDto::Mouth { .. }));
         assert!(matches!(emotion.animation.get(1).unwrap(), EmotionLayerDto::Animation(_)));
 
         if let EmotionLayerDto::Animation(layer) = emotion.animation.get(1).unwrap() {
@@ -151,7 +151,7 @@ mod tests {
 
         let emotion = get_emotion(GetEmotionRequest { id: emotion.id.0 }, &repository).expect("Expected emotion");
         assert_eq!(emotion.animation.len(), 3);
-        assert!(matches!(emotion.animation.get(0).unwrap(), EmotionLayerDto::Mouth));
+        assert!(matches!(emotion.animation.get(0).unwrap(), EmotionLayerDto::Mouth { .. }));
         assert!(matches!(emotion.animation.get(1).unwrap(), EmotionLayerDto::Animation(_)));
         assert!(matches!(emotion.animation.get(2).unwrap(), EmotionLayerDto::Animation(_)));
 
@@ -239,7 +239,7 @@ mod tests {
 
         let emotion = get_emotion(GetEmotionRequest { id: emotion.id.0 }, &repository).expect("Expected emotion");
         assert_eq!(emotion.animation.len(), 2);
-        assert!(matches!(emotion.animation.get(0).unwrap(), EmotionLayerDto::Mouth));
+        assert!(matches!(emotion.animation.get(0).unwrap(), EmotionLayerDto::Mouth { .. }));
         assert!(matches!(emotion.animation.get(1).unwrap(), EmotionLayerDto::Animation(_)));
 
         if let EmotionLayerDto::Animation(layer) = emotion.animation.get(1).unwrap() {

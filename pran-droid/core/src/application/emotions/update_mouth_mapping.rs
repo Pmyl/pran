@@ -44,6 +44,8 @@ pub fn update_emotion_mouth_mapping(request: UpdateEmotionMouthMappingRequest, r
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+    use crate::application::emotions::dtos::emotion_dto::{EmotionDto, EmotionLayerDto};
     use crate::application::emotions::get::{get_emotion, GetEmotionRequest};
     use crate::domain::emotions::emotion_repository::tests::setup_dummy_emotion;
     use crate::domain::images::image_repository::ImageRepository;
@@ -118,11 +120,12 @@ mod tests {
             Ok(_) => {
                 match get_emotion(GetEmotionRequest { id: emotion.id.0 }, &repository) {
                     Some(emotion) => {
-                        assert!(emotion.mouth_mapping.contains_key(&element_name_aah()));
-                        assert_eq!(emotion.mouth_mapping.get(&element_name_aah()).unwrap(), "id1");
+                        let mouth_mapping = get_mouth_mapping(emotion);
+                        assert!(mouth_mapping.contains_key(&element_name_aah()));
+                        assert_eq!(mouth_mapping.get(&element_name_aah()).unwrap(), "id1");
 
-                        assert!(emotion.mouth_mapping.contains_key(&element_name_o()));
-                        assert_eq!(emotion.mouth_mapping.get(&element_name_o()).unwrap(), "id2");
+                        assert!(mouth_mapping.contains_key(&element_name_o()));
+                        assert_eq!(mouth_mapping.get(&element_name_o()).unwrap(), "id2");
                     },
                     None => unreachable!("emotion should have existed")
                 }
@@ -207,12 +210,13 @@ mod tests {
             Ok(_) => {
                 match get_emotion(GetEmotionRequest { id: emotion.id.0 }, &repository) {
                     Some(emotion) => {
-                        assert_eq!(emotion.mouth_mapping.len(), 2);
-                        assert!(emotion.mouth_mapping.contains_key(&element_name_aah()));
-                        assert_eq!(emotion.mouth_mapping.get(&element_name_aah()).unwrap(), "id1");
+                        let mouth_mapping = get_mouth_mapping(emotion);
+                        assert_eq!(mouth_mapping.len(), 2);
+                        assert!(mouth_mapping.contains_key(&element_name_aah()));
+                        assert_eq!(mouth_mapping.get(&element_name_aah()).unwrap(), "id1");
 
-                        assert!(emotion.mouth_mapping.contains_key(&element_name_o()));
-                        assert_eq!(emotion.mouth_mapping.get(&element_name_o()).unwrap(), "id4");
+                        assert!(mouth_mapping.contains_key(&element_name_o()));
+                        assert_eq!(mouth_mapping.get(&element_name_o()).unwrap(), "id4");
                     },
                     None => unreachable!("emotion should have existed")
                 }
@@ -227,5 +231,19 @@ mod tests {
 
     fn element_name_o() -> String {
         String::from("o")
+    }
+
+    fn get_mouth_mapping(emotion: EmotionDto) -> HashMap<String, String> {
+        emotion.animation.iter()
+            .find(|layer| match layer {
+                EmotionLayerDto::Animation(_) => false,
+                EmotionLayerDto::Mouth { .. } => true
+            })
+            .and_then(|layer| match layer {
+                EmotionLayerDto::Animation(_) => None,
+                EmotionLayerDto::Mouth { mouth_mapping } => Some(mouth_mapping)
+            })
+            .cloned()
+            .expect("Emotion expected to have a mouth layer")
     }
 }

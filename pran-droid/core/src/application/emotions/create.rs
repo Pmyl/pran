@@ -60,7 +60,7 @@ mod tests {
         match create_emotion(request, &repository) {
             Ok(emotion) => {
                 assert_eq!(emotion.animation.len(), 1);
-                assert!(matches!(emotion.animation.first().unwrap(), EmotionLayerDto::Mouth));
+                assert!(matches!(emotion.animation.first().unwrap(), EmotionLayerDto::Mouth { .. }));
             },
             _ => unreachable!("expected create emotion to not fail")
         }
@@ -73,7 +73,7 @@ mod tests {
 
         match create_emotion(request, &repository) {
             Ok(emotion) => {
-                assert_eq!(emotion.mouth_mapping.len(), 0);
+                assert!(matches!(emotion.animation.first().unwrap(), EmotionLayerDto::Mouth { mouth_mapping } if mouth_mapping.len() == 0));
             },
             _ => unreachable!("expected create emotion to not fail")
         }

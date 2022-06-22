@@ -42,8 +42,7 @@ async function setupEmotions(pranDroid: PranDroid): Promise<void> {
   const emotions: {
     id: string,
     name: string,
-    layers: ({ type: 'Mouth' } | { type: 'Animation', frames: { frameStart: number, frameEnd: number, imageId: string }[]})[],
-    mouthMapping: { [key: string]: string }
+    layers: ({ type: 'Mouth', mouthMapping: { [key: string]: string } } | { type: 'Animation', frames: { frameStart: number, frameEnd: number, imageId: string }[]})[],
   }[] = (await retryFetch("/api/emotions").then(r => r.json())).data;
   console.log("Emotions", emotions);
 
@@ -51,7 +50,7 @@ async function setupEmotions(pranDroid: PranDroid): Promise<void> {
     acc[emotion.id] = new ConfigurableEmotion(emotion.layers.map(layer => {
       switch (layer.type) {
         case 'Mouth':
-          return { type: EmotionLayer.Mouth, mouthMapping: emotion.mouthMapping };
+          return { type: EmotionLayer.Mouth, mouthMapping: layer.mouthMapping };
         case 'Animation':
           return { type: EmotionLayer.Animation, animation: () => animationToTimelineActions(layer.frames) };
       }

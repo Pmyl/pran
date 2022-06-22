@@ -4,19 +4,18 @@ use rocket::serde::Serialize;
 use crate::reactions::models::reaction_step_model::AnimationFrameModel;
 
 #[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct EmotionResponse {
     id: String,
     name: String,
     layers: Vec<EmotionLayerResponse>,
-    mouth_mapping: HashMap<String, String>
 }
 
 #[derive(Serialize)]
 #[serde(tag = "type")]
 pub enum EmotionLayerResponse {
     Animation { frames: Vec<AnimationFrameModel> },
-    Mouth
+    #[serde(rename_all = "camelCase")]
+    Mouth { mouth_mapping: HashMap<String, String> }
 }
 
 impl From<EmotionDto> for EmotionResponse {
@@ -25,7 +24,6 @@ impl From<EmotionDto> for EmotionResponse {
             id: dto.id,
             name: dto.name,
             layers: dto.animation.into_iter().map(Into::into).collect(),
-            mouth_mapping: dto.mouth_mapping.clone()
         }
     }
 }
@@ -35,7 +33,7 @@ impl From<EmotionLayerDto> for EmotionLayerResponse {
         match dto {
             EmotionLayerDto::Animation(animation) =>
                 EmotionLayerResponse::Animation { frames: animation.into_iter().map(Into::into).collect() },
-            EmotionLayerDto::Mouth => EmotionLayerResponse::Mouth
+            EmotionLayerDto::Mouth { mouth_mapping } => EmotionLayerResponse::Mouth { mouth_mapping }
         }
     }
 }

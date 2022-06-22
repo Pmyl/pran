@@ -57,7 +57,7 @@ export class ConfigurableEmotion implements Emotion {
 
       return actions;
     });
-    talkingActions.push(drawId(mouthMapping['smile']));
+    talkingActions.push(drawId(mouthMapping ? mouthMapping['smile'] : 'smile'));
 
     return talkingActions;
   }
