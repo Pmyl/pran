@@ -5,7 +5,7 @@ use crate::domain::reactions::reaction_definition::ReactionTrigger;
 use crate::domain::reactions::reaction_definition_repository::ReactionDefinitionRepository;
 
 pub trait TextPhonemiser: Send + Sync {
-    fn phonemise_text(&self, text: String) -> Vec<String>;
+    fn phonemise_text(&self, text: &str) -> Vec<String>;
 }
 
 pub fn create_droid_brain(reaction_repository: &Arc<dyn ReactionDefinitionRepository>, text_phonemiser: &Arc<dyn TextPhonemiser>) -> PranDroidBrain {
@@ -301,6 +301,41 @@ mod tests {
         }
     }
 
+    #[test]
+    fn create_droid_brain_talking_reaction_interpolate_chat_message_before_phonemising_text() {
+        let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
+        let mut reaction_definition = ReactionDefinition::new_empty(
+            ReactionDefinitionId(String::from("0")),
+            ReactionTrigger::new_chat(String::from("!hello")).unwrap(),
+        );
+        reaction_definition.steps.push(ReactionStepDefinition::Talking(TalkingReactionStepDefinition {
+            skip: ReactionStepSkip::ImmediatelyAfter,
+            text: ReactionStepText::LetterByLetter(String::from("Hello ${user}!")),
+            emotion_id: EmotionId(String::from("an emotion id"))
+        }));
+        reaction_repository.insert(&reaction_definition).unwrap();
+
+        let brain = create_droid_brain(&reaction_repository, &text_phonemiser);
+
+        let reaction = stimulate_with_chat_message(&brain, |stimulus| {
+            stimulus.text = String::from("!hello");
+            stimulus.source.user_name = String::from("Pmyl");
+        });
+
+        assert!(reaction.is_some());
+        if let Some(reaction) = reaction {
+            assert_eq!(reaction.steps.len(), 1);
+            assert!(matches!(&reaction.steps[0], &ReactionStep::Talking(_)));
+            if let ReactionStep::Talking(TalkingReactionStep { phonemes, .. }) = &reaction.steps[0] {
+                assert_eq!(
+                    phonemes.into_iter().map(|s| s.as_str()).collect::<Vec<&str>>().as_slice(),
+                    vec!["H", "e", "l", "l", "o", " ", "P", "m", "y", "l", "!"]
+                );
+            }
+        }
+    }
+
     fn stimulate_with_chat_message<F>(brain: &PranDroidBrain, func: F) -> Option<Reaction> where F: Fn(&mut ChatMessageStimulus) -> () {
         brain.stimulate(create_chat_stimulus(func))
     }
@@ -318,7 +353,7 @@ mod tests {
     struct SplitLettersTextPhonemiser {}
 
     impl TextPhonemiser for SplitLettersTextPhonemiser {
-        fn phonemise_text(&self, text: String) -> Vec<String> {
+        fn phonemise_text(&self, text: &str) -> Vec<String> {
             text.chars().map(|s| s.to_string()).collect()
         }
     }

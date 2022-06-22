@@ -70,11 +70,13 @@ impl ReactionStep {
 
 impl TalkingReactionStep {
     fn create(text_phonemiser: &Arc<dyn TextPhonemiser>, definition: &TalkingReactionStepDefinition, stimulus: &Stimulus) -> Self {
+        let text = definition.text.contextualise_text_reaction(stimulus);
+
         TalkingReactionStep {
             skip: definition.skip.clone(),
-            text: definition.text.contextualise_text_reaction(stimulus),
+            phonemes: text_phonemiser.phonemise_text(&text.get_text()),
+            text,
             emotion_id: definition.emotion_id.clone(),
-            phonemes: text_phonemiser.phonemise_text(definition.text.get_text())
         }
     }
 }

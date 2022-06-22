@@ -8,3 +8,4 @@ export * from './timeline/helpers';
 export * from './canvas-controller/canvas-controller';
 export * from './canvas-controller/main-canvas-controller';
 export * from './canvas-controller/canvas-controller-factory';
+export * from './helpers/converters';

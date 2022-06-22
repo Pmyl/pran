@@ -4,6 +4,7 @@ use rocket::serde::Serialize;
 use crate::reactions::models::reaction_step_model::AnimationFrameModel;
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct EmotionResponse {
     id: String,
     name: String,

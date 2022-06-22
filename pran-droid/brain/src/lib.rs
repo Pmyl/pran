@@ -27,9 +27,9 @@ mod websocket_output;
 struct PranTextPhonemiser {}
 
 impl TextPhonemiser for PranTextPhonemiser {
-    fn phonemise_text(&self, text: String) -> Vec<String> {
-        debug!("Start phonemise {}", text.clone());
-        let result = phonemise_text(text).unwrap().phonemes.into_iter().flat_map(|s| s).collect();
+    fn phonemise_text(&self, text: &str) -> Vec<String> {
+        debug!("Start phonemise {}", text);
+        let result = phonemise_text(text.to_string()).unwrap().phonemes.into_iter().flat_map(|s| s).collect();
         debug!("End phonemise {:?}", &result);
 
         result

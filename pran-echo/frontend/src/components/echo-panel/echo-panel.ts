@@ -3,7 +3,7 @@ import {
   PlayerState,
   PranEditorControls
 } from 'pran-animation-editor-frontend';
-import { ActionType, drawId, ManagerTimelineAction, wait } from 'pran-animation-frontend';
+import { ActionType, drawId, FRAMES_TO_SECONDS, ManagerTimelineAction, SECONDS_TO_FRAMES, wait } from 'pran-animation-frontend';
 import { ComponentControls, inlineComponent, onChange, onClick } from 'pran-gular-frontend';
 import { phonemesMapper } from 'pran-phonemes-frontend';
 import './echo-panel.css';
@@ -11,9 +11,6 @@ import { MouthMapping } from '../../mapping/mouth-mapping';
 import { createCustomMapping } from '../custom-mapping/custom-mapping';
 import { createEchoRecordingModal } from './echo-recording-modal';
 import { setupInitialAnimation } from './initial-animation';
-
-const TO_FRAMES: number = 60;
-const TO_SECONDS: number = 1 / 60;
 
 interface EchoPanelSideInputs {
   audioFile: File;
@@ -227,8 +224,8 @@ function updateAnimationAndData(audioData: AudioData, controls: EchoPanelControl
   let lastEnd: number = 0;
 
   const mouthAnimations: Array<ManagerTimelineAction> = audioData.words.flatMap(wordData => {
-    const waitBeforeInFrames: number = Math.floor((leftoverTime + wordData.start - lastEnd) * TO_FRAMES);
-    leftoverTime = leftoverTime + wordData.start - lastEnd - waitBeforeInFrames * TO_SECONDS;
+    const waitBeforeInFrames: number = Math.floor((leftoverTime + wordData.start - lastEnd) * SECONDS_TO_FRAMES);
+    leftoverTime = leftoverTime + wordData.start - lastEnd - waitBeforeInFrames * FRAMES_TO_SECONDS;
     lastEnd = wordData.end;
 
     let waitFrames: Array<ManagerTimelineAction> = [];
@@ -240,8 +237,8 @@ function updateAnimationAndData(audioData: AudioData, controls: EchoPanelControl
     }
 
     return [...waitFrames, ...wordData.phones.flatMap(phoneData => {
-      const durationInFrames: number = Math.floor((leftoverTime + phoneData.duration) * TO_FRAMES);
-      leftoverTime = leftoverTime + phoneData.duration - durationInFrames * TO_SECONDS;
+      const durationInFrames: number = Math.floor((leftoverTime + phoneData.duration) * SECONDS_TO_FRAMES);
+      leftoverTime = leftoverTime + phoneData.duration - durationInFrames * FRAMES_TO_SECONDS;
 
       const phoneme = normalisePhoneme(phoneData.phone);
       const mouthPositions = convertToMouthPosition(phoneme);
@@ -256,7 +253,7 @@ function updateAnimationAndData(audioData: AudioData, controls: EchoPanelControl
     })];
   });
 
-  const endWaitInFrames: number = Math.floor((audioData.duration - lastEnd) * TO_FRAMES);
+  const endWaitInFrames: number = Math.floor((audioData.duration - lastEnd) * SECONDS_TO_FRAMES);
   if (endWaitInFrames > 1) {
     mouthAnimations.push(drawId('smile'));
     mouthAnimations.push(wait(endWaitInFrames - 1));
@@ -272,7 +269,7 @@ function updateAnimationAndData(audioData: AudioData, controls: EchoPanelControl
     mouthAnimations.unshift(drawId('smile'));
   }
 
-  const totalDurationInFrames: number = audioData.duration * TO_FRAMES;
+  const totalDurationInFrames: number = audioData.duration * SECONDS_TO_FRAMES;
 
   const eyesAnimations = Array(Math.floor(totalDurationInFrames / 114)).fill(null).flatMap(() => {
     return [
