@@ -22,13 +22,15 @@ pub struct AddEmotionAnimationLayerRequest {
     pub index: usize
 }
 
-pub fn update_emotion_animation_layer(request: AddEmotionAnimationLayerRequest, repository: &Arc<dyn EmotionRepository>, image_repository: &Arc<dyn ImageRepository>) -> Result<(), AddEmotionAnimationLayerError> {
+pub async fn update_emotion_animation_layer(request: AddEmotionAnimationLayerRequest, repository: &Arc<dyn EmotionRepository>, image_repository: &Arc<dyn ImageRepository>) -> Result<(), AddEmotionAnimationLayerError> {
     let mut emotion = repository.get(&EmotionId(request.emotion_id.clone()))
+        .await
         .ok_or_else(|| AddEmotionAnimationLayerError::BadRequest(format!("Emotion with id {:?} does not exists", request.emotion_id)))?;
 
     update_layer_in_emotion(request.index, &mut emotion, frames_dtos_to_animation(request.animation)?, image_repository)
+        .await
         .map_err(|error| AddEmotionAnimationLayerError::BadRequest(error.0.clone()))?;
-    repository.update(&emotion).unwrap();
+    repository.update(&emotion).await.unwrap();
     Ok(())
 }
 

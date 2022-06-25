@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use std::sync::{Arc, Mutex};
 use crate::domain::emotions::emotion::{Emotion, EmotionId, EmotionName};
 use crate::domain::emotions::emotion_repository::{EmotionInsertError, EmotionRepository, EmotionUpdateError};
@@ -18,15 +19,16 @@ impl InMemoryEmotionRepository {
     }
 }
 
+#[async_trait]
 impl EmotionRepository for InMemoryEmotionRepository {
     fn next_id(&self) -> EmotionId {
         EmotionId(self.id_generator.lock().unwrap().next_id())
     }
 
-    fn insert(&self, emotion: &Emotion) -> Result<(), EmotionInsertError> {
+    async fn insert(&self, emotion: &Emotion) -> Result<(), EmotionInsertError> {
         let mut lock = match self.emotions.lock() {
             Ok(lock) => lock,
-            Err(_) => return Err(EmotionInsertError::Unexpected)
+            Err(_) => return Err(EmotionInsertError::Unexpected("Can't get hold of the in memory storage".to_string()))
         };
 
         if lock.iter().any(|stored_emotion| stored_emotion.id == emotion.id) {
@@ -38,7 +40,7 @@ impl EmotionRepository for InMemoryEmotionRepository {
         Ok(())
     }
 
-    fn update(&self, emotion: &Emotion) -> Result<(), EmotionUpdateError> {
+    async fn update(&self, emotion: &Emotion) -> Result<(), EmotionUpdateError> {
         let mut lock = self.emotions.lock().unwrap();
         if let Some(index) = lock.iter().position(|stored_emotion| stored_emotion.id == emotion.id) {
             lock.remove(index);
@@ -50,23 +52,23 @@ impl EmotionRepository for InMemoryEmotionRepository {
         Err(EmotionUpdateError::Missing)
     }
 
-    fn get(&self, id: &EmotionId) -> Option<Emotion> {
+    async fn get(&self, id: &EmotionId) -> Option<Emotion> {
         self.emotions.lock().unwrap().iter().find(|stored_emotion| &stored_emotion.id == id).cloned()
     }
 
-    fn get_all(&self) -> Vec<Emotion> {
+    async fn get_all(&self) -> Vec<Emotion> {
         self.emotions.lock().unwrap().to_vec()
     }
 
-    fn exists(&self, id: &EmotionId) -> bool {
+    async fn exists(&self, id: &EmotionId) -> bool {
         self.emotions.lock().unwrap().iter().any(|stored_emotion| &stored_emotion.id == id)
     }
 
-    fn get_by_name(&self, name: &EmotionName) -> Option<Emotion> {
+    async fn get_by_name(&self, name: &EmotionName) -> Option<Emotion> {
         self.emotions.lock().unwrap().iter().find(|stored_emotion| &stored_emotion.name == name).cloned()
     }
 
-    fn exists_with_name(&self, name: &EmotionName) -> bool {
+    async fn exists_with_name(&self, name: &EmotionName) -> bool {
         self.emotions.lock().unwrap().iter().any(|stored_emotion| &stored_emotion.name == name)
     }
 }

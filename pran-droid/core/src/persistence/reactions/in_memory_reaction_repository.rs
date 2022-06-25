@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use std::sync::{Arc, Mutex};
 use crate::domain::reactions::reaction_definition::{ReactionDefinition, ReactionDefinitionId, ReactionTrigger};
 use crate::domain::reactions::reaction_definition_repository::{ReactionDefinitionRepository, ReactionInsertError, ReactionUpdateError};
@@ -18,12 +19,13 @@ impl InMemoryReactionRepository {
     }
 }
 
+#[async_trait]
 impl ReactionDefinitionRepository for InMemoryReactionRepository {
     fn next_id(&self) -> ReactionDefinitionId {
         ReactionDefinitionId(self.id_generator.lock().unwrap().next_id())
     }
 
-    fn insert(&self, reaction: &ReactionDefinition) -> Result<(), ReactionInsertError> {
+    async fn insert(&self, reaction: &ReactionDefinition) -> Result<(), ReactionInsertError> {
         let mut lock = match self.reactions.lock() {
             Ok(lock) => lock,
             Err(_) => return Err(ReactionInsertError::Unexpected)
@@ -38,13 +40,13 @@ impl ReactionDefinitionRepository for InMemoryReactionRepository {
         Ok(())
     }
 
-    fn exists_with_trigger(&self, trigger: &ReactionTrigger) -> bool {
+    async fn exists_with_trigger(&self, trigger: &ReactionTrigger) -> bool {
         let lock = self.reactions.lock().unwrap();
 
         lock.iter().any(|stored_reaction| stored_reaction.triggers.iter().any(|stored_trigger| stored_trigger == trigger))
     }
 
-    fn other_exists_with_trigger(&self, trigger: &ReactionTrigger, excluded_reaction_definition_id: &ReactionDefinitionId) -> bool {
+    async fn other_exists_with_trigger(&self, trigger: &ReactionTrigger, excluded_reaction_definition_id: &ReactionDefinitionId) -> bool {
         let lock = self.reactions.lock().unwrap();
 
         lock.iter()
@@ -52,15 +54,15 @@ impl ReactionDefinitionRepository for InMemoryReactionRepository {
             .any(|stored_reaction| stored_reaction.triggers.iter().any(|stored_trigger| stored_trigger == trigger))
     }
 
-    fn get(&self, id: &ReactionDefinitionId) -> Option<ReactionDefinition> {
+    async fn get(&self, id: &ReactionDefinitionId) -> Option<ReactionDefinition> {
         self.reactions.lock().unwrap().iter().find(|stored_reaction| &stored_reaction.id == id).cloned()
     }
 
-    fn get_all(&self) -> Vec<ReactionDefinition> {
+    async fn get_all(&self) -> Vec<ReactionDefinition> {
         self.reactions.lock().unwrap().to_vec()
     }
 
-    fn update(&self, reaction: &ReactionDefinition) -> Result<(), ReactionUpdateError> {
+    async fn update(&self, reaction: &ReactionDefinition) -> Result<(), ReactionUpdateError> {
         let mut lock = self.reactions.lock().unwrap();
         if let Some(index) = lock.iter().position(|stored_reaction| stored_reaction.id == reaction.id) {
             lock.remove(index);

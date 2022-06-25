@@ -86,7 +86,7 @@ impl EmotionName {
     }
 }
 
-impl Into<String> for MouthPositionName {
+impl Into<String> for &MouthPositionName {
     fn into(self) -> String {
         match self {
             MouthPositionName::FV => String::from("fv"),
@@ -103,6 +103,10 @@ impl Into<String> for MouthPositionName {
             MouthPositionName::Smile => String::from("smile"),
         }
     }
+}
+
+impl Into<String> for MouthPositionName {
+    fn into(self) -> String { (&self).into() }
 }
 
 impl TryFrom<String> for MouthPositionName {

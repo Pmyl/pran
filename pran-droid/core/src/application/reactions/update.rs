@@ -21,18 +21,18 @@ pub struct UpdateReactionRequest {
     pub triggers: Vec<String>
 }
 
-pub fn update_reaction(request: UpdateReactionRequest, repository: &Arc<dyn ReactionDefinitionRepository>) -> Result<ReactionDto, UpdateReactionError> {
+pub async fn update_reaction(request: UpdateReactionRequest, repository: &Arc<dyn ReactionDefinitionRepository>) -> Result<ReactionDto, UpdateReactionError> {
     assert_no_duplicates(&request)?;
 
     let triggers = build_triggers(&request)?;
     let reaction_definition_id = ReactionDefinitionId(request.id);
-    assert_no_trigger_already_exists(&reaction_definition_id, &triggers, &repository)?;
+    assert_no_trigger_already_exists(&reaction_definition_id, &triggers, &repository).await?;
 
-    let mut definition = repository.get(&reaction_definition_id)
+    let mut definition = repository.get(&reaction_definition_id).await
         .ok_or_else(|| UpdateReactionError::BadRequest(String::from("The requested reaction id does not exist")))?;
     definition.update_triggers(triggers)
         .map_err(|_| UpdateReactionError::BadRequest(String::from("The triggers to update are malformed")))?;
-    repository.update(&definition).map_err(|_| UpdateReactionError::Unexpected)?;
+    repository.update(&definition).await.map_err(|_| UpdateReactionError::Unexpected)?;
 
     Ok(definition.into())
 }
@@ -57,9 +57,9 @@ fn assert_no_duplicates(request: &UpdateReactionRequest) -> Result<(), UpdateRea
     }
 }
 
-fn assert_no_trigger_already_exists(id: &ReactionDefinitionId, triggers: &Vec<ReactionTrigger>, repository: &Arc<dyn ReactionDefinitionRepository>) -> Result<(), UpdateReactionError> {
+async fn assert_no_trigger_already_exists(id: &ReactionDefinitionId, triggers: &Vec<ReactionTrigger>, repository: &Arc<dyn ReactionDefinitionRepository>) -> Result<(), UpdateReactionError> {
     for trigger in triggers.iter() {
-        if repository.other_exists_with_trigger(trigger, id) {
+        if repository.other_exists_with_trigger(trigger, id).await {
             return Err(UpdateReactionError::Conflict(trigger.clone()));
         }
     }

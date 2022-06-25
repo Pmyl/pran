@@ -11,9 +11,9 @@ use pran_droid_core::domain::images::image_storage::ImageStorage;
 use crate::images::responses::image_response::ImageResponse;
 
 #[post("/images", data = "<payload>")]
-pub fn api_create_image(payload: Form<CreateImageApiRequest<'_>>, repo: &State<Arc<dyn ImageRepository>>, storage: &State<Arc<dyn ImageStorage>>) -> Result<Json<ImageResponse>, Error> {
+pub async fn api_create_image(payload: Form<CreateImageApiRequest<'_>>, repo: &State<Arc<dyn ImageRepository>>, storage: &State<Arc<dyn ImageStorage>>) -> Result<Json<ImageResponse>, Error> {
     let request = into_request(payload)?;
-    Ok(Json(create_image(request, repo, storage)?.into()))
+    Ok(Json(create_image(request, repo, storage).await?.into()))
 }
 
 #[derive(FromForm)]

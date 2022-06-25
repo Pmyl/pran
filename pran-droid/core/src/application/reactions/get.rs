@@ -7,6 +7,6 @@ pub struct GetReactionRequest {
     pub id: String
 }
 
-pub fn get_reaction(request: GetReactionRequest, repository: &Arc<dyn ReactionDefinitionRepository>) -> Option<ReactionDto> {
-    repository.get(&ReactionDefinitionId(request.id)).map(|reaction| reaction.into())
+pub async fn get_reaction(request: GetReactionRequest, repository: &Arc<dyn ReactionDefinitionRepository>) -> Option<ReactionDto> {
+    repository.get(&ReactionDefinitionId(request.id)).await.map(|reaction| reaction.into())
 }

@@ -23,14 +23,16 @@ pub struct UpdateEmotionMouthMappingRequest {
     pub mapping: Vec<UpdateEmotionMouthMappingElementRequest>
 }
 
-pub fn update_emotion_mouth_mapping(request: UpdateEmotionMouthMappingRequest, repository: &Arc<dyn EmotionRepository>, image_repository: &Arc<dyn ImageRepository>) -> Result<(), UpdateEmotionMouthMappingError> {
+pub async fn update_emotion_mouth_mapping(request: UpdateEmotionMouthMappingRequest, repository: &Arc<dyn EmotionRepository>, image_repository: &Arc<dyn ImageRepository>) -> Result<(), UpdateEmotionMouthMappingError> {
     let mut emotion = repository.get(&EmotionId(request.emotion_id.clone()))
+        .await
         .ok_or_else(|| UpdateEmotionMouthMappingError::BadRequest(format!("Emotion with id {:?} does not exists", request.emotion_id)))?;
 
     for element in request.mapping.into_iter() {
         match (ImageId::try_from(element.image_id), MouthPositionName::try_from(element.name)) {
             (Ok(image_id), Ok(position_name)) =>
                 set_mouth_position(&mut emotion, position_name, image_id, image_repository)
+                    .await
                     .map_err(|error| match error {
                         SetMouthPositionToEmotionError::ImageNotFound(error) => UpdateEmotionMouthMappingError::BadRequest(format!("Image not found {}", error))
                     })?,
@@ -38,7 +40,7 @@ pub fn update_emotion_mouth_mapping(request: UpdateEmotionMouthMappingRequest, r
         }
     }
 
-    repository.update(&emotion).unwrap();
+    repository.update(&emotion).await.unwrap();
     Ok(())
 }
 

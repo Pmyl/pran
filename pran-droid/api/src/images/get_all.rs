@@ -19,6 +19,6 @@ impl From<Vec<ImageDto>> for GetAllImagesResponse {
 }
 
 #[get("/images")]
-pub fn api_get_all_images(repo: &State<Arc<dyn ImageRepository>>) -> Json<GetAllImagesResponse> {
-    Json(get_all_images(repo).into())
+pub async fn api_get_all_images(repo: &State<Arc<dyn ImageRepository>>) -> Json<GetAllImagesResponse> {
+    Json(get_all_images(repo).await.into())
 }

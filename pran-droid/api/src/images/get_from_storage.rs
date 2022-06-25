@@ -12,6 +12,7 @@ use pran_droid_core::domain::images::image_storage::ImageStorage;
 #[get("/images/<image_id>")]
 pub async fn api_get_image_from_storage<'t>(image_id: String, repository: &State<Arc<dyn ImageRepository>>, storage: &State<Arc<dyn ImageStorage>>) -> Option<ImageApiResponse> {
     repository.get(&ImageId(image_id))
+        .await
         .and_then(|image| storage.get(&image.url))
         .map(|image| ImageApiResponse(image.0))
 }

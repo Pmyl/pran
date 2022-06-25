@@ -19,13 +19,13 @@ pub struct CreateReactionRequest {
     pub trigger: String
 }
 
-pub fn create_reaction(request: CreateReactionRequest, repository: &Arc<dyn ReactionDefinitionRepository>) -> Result<ReactionDto, CreateReactionError> {
+pub async fn create_reaction(request: CreateReactionRequest, repository: &Arc<dyn ReactionDefinitionRepository>) -> Result<ReactionDto, CreateReactionError> {
     let trigger = ReactionTrigger::new_chat(request.trigger)
         .map_err(|_| CreateReactionError::BadRequest(String::from("Provided `trigger` is invalid")))?;
 
-    if !repository.exists_with_trigger(&trigger) {
+    if !repository.exists_with_trigger(&trigger).await {
         let reaction = ReactionDefinition::new_empty(repository.next_id(), trigger);
-        repository.insert(&reaction).map_err(|_| CreateReactionError::Unexpected)?;
+        repository.insert(&reaction).await.map_err(|_| CreateReactionError::Unexpected)?;
 
         Ok(reaction.into())
     } else {

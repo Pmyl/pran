@@ -1,10 +1,11 @@
+use async_trait::async_trait;
 use thiserror::Error;
 use crate::domain::emotions::emotion::{Emotion, EmotionId, EmotionName};
 
 #[derive(Debug, Error)]
 pub enum EmotionInsertError {
-    #[error("Unexpected error while inserting the emotion")]
-    Unexpected,
+    #[error("Unexpected error while inserting the emotion: {0}")]
+    Unexpected(String),
     #[error("Trying to insert an emotion with existing id")]
     Conflict
 }
@@ -15,15 +16,16 @@ pub enum EmotionUpdateError {
     Missing
 }
 
+#[async_trait]
 pub trait EmotionRepository: Send + Sync {
     fn next_id(&self) -> EmotionId;
-    fn insert(&self, emotion: &Emotion) -> Result<(), EmotionInsertError>;
-    fn update(&self, emotion: &Emotion) -> Result<(), EmotionUpdateError>;
-    fn get(&self, id: &EmotionId) -> Option<Emotion>;
-    fn get_all(&self) -> Vec<Emotion>;
-    fn exists(&self, id: &EmotionId) -> bool;
-    fn get_by_name(&self, name: &EmotionName) -> Option<Emotion>;
-    fn exists_with_name(&self, name: &EmotionName) -> bool;
+    async fn insert(&self, emotion: &Emotion) -> Result<(), EmotionInsertError>;
+    async fn update(&self, emotion: &Emotion) -> Result<(), EmotionUpdateError>;
+    async fn get(&self, id: &EmotionId) -> Option<Emotion>;
+    async fn get_all(&self) -> Vec<Emotion>;
+    async fn exists(&self, id: &EmotionId) -> bool;
+    async fn get_by_name(&self, name: &EmotionName) -> Option<Emotion>;
+    async fn exists_with_name(&self, name: &EmotionName) -> bool;
 }
 
 #[cfg(test)]

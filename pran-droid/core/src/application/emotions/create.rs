@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use thiserror::Error;
 use crate::application::emotions::dtos::emotion_dto::EmotionDto;
 use crate::domain::emotions::emotion::{Emotion, EmotionName};
-use crate::domain::emotions::emotion_repository::{EmotionRepository};
+use crate::domain::emotions::emotion_repository::{EmotionInsertError, EmotionRepository};
 
 #[derive(Debug, Error)]
 pub enum CreateEmotionError {
@@ -12,20 +12,23 @@ pub enum CreateEmotionError {
     #[error("Emotion with name {0:?} already exists")]
     Conflict(EmotionName),
     #[error("Unexpected error")]
-    Unexpected,
+    Unexpected(String),
 }
 
 pub struct CreateEmotionRequest {
     pub name: String
 }
 
-pub fn create_emotion(request: CreateEmotionRequest, repository: &Arc<dyn EmotionRepository>) -> Result<EmotionDto, CreateEmotionError> {
+pub async fn create_emotion(request: CreateEmotionRequest, repository: &Arc<dyn EmotionRepository>) -> Result<EmotionDto, CreateEmotionError> {
     let name = EmotionName::new(request.name)
         .map_err(|_| CreateEmotionError::BadRequest(String::from("Provided `name` is invalid")))?;
 
-    if !repository.exists_with_name(&name) {
+    if !repository.exists_with_name(&name).await {
         let emotion = Emotion::new_empty(repository.next_id(), name);
-        repository.insert(&emotion).map_err(|_| CreateEmotionError::Unexpected)?;
+        repository.insert(&emotion).await.map_err(|error| match error {
+            EmotionInsertError::Unexpected(message) => CreateEmotionError::Unexpected(message),
+            EmotionInsertError::Conflict => CreateEmotionError::Unexpected("Should not have encountered a conflict after the check".to_string())
+        })?;
 
         Ok(emotion.into())
     } else {

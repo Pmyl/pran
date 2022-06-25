@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use crate::domain::images::image::{Image, ImageId};
 use std::marker::{Send, Sync};
 use thiserror::Error;
@@ -10,11 +11,12 @@ pub enum InsertError {
     Unexpected
 }
 
+#[async_trait]
 pub trait ImageRepository: Send + Sync {
-    fn get(&self, id: &ImageId) -> Option<Image>;
-    fn get_all(&self) -> Vec<Image>;
-    fn has(&self, id: &ImageId) -> bool;
-    fn insert(&self, image: &Image) -> Result<(), InsertError>;
+    async fn get(&self, id: &ImageId) -> Option<Image>;
+    async fn get_all(&self) -> Vec<Image>;
+    async fn has(&self, id: &ImageId) -> bool;
+    async fn insert(&self, image: &Image) -> Result<(), InsertError>;
 }
 
 #[cfg(test)]

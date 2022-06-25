@@ -8,8 +8,8 @@ pub trait TextPhonemiser: Send + Sync {
     fn phonemise_text(&self, text: &str) -> Vec<String>;
 }
 
-pub fn create_droid_brain(reaction_repository: &Arc<dyn ReactionDefinitionRepository>, text_phonemiser: &Arc<dyn TextPhonemiser>) -> PranDroidBrain {
-    let reactions = reaction_repository.get_all();
+pub async fn create_droid_brain(reaction_repository: &Arc<dyn ReactionDefinitionRepository>, text_phonemiser: &Arc<dyn TextPhonemiser>) -> PranDroidBrain {
+    let reactions = reaction_repository.get_all().await;
     let mut brain_builder = PranDroidBrainBuilder::new(text_phonemiser.clone());
 
     for reaction in reactions {

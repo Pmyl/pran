@@ -9,6 +9,7 @@ edition = "2021"
 [dependencies]
 pran-phonemes-core = { path = "../../pran-phonemes/core" }
 pran-droid-core = { path = "../core" }
+pran-droid-persistence = { path = "../persistence/repositories" }
 futures = "0.3.21"
 log = "0.4.17"
 rand = "0.8.5"

@@ -25,27 +25,27 @@ pub struct InsertMovementStepToReactionRequest {
     pub skip: ReactionStepSkipDto
 }
 
-pub fn insert_movement_step_to_reaction(request: InsertMovementStepToReactionRequest, repository: &Arc<dyn ReactionDefinitionRepository>, image_repository: &Arc<dyn ImageRepository>) -> Result<ReactionStepDto, AddMovementStepToReactionError> {
-    let mut reaction = repository.get(&ReactionDefinitionId(request.reaction_id.clone()))
+pub async fn insert_movement_step_to_reaction(request: InsertMovementStepToReactionRequest, repository: &Arc<dyn ReactionDefinitionRepository>, image_repository: &Arc<dyn ImageRepository>) -> Result<ReactionStepDto, AddMovementStepToReactionError> {
+    let mut reaction = repository.get(&ReactionDefinitionId(request.reaction_id.clone())).await
         .ok_or_else(|| AddMovementStepToReactionError::BadRequest(String::from("The requested reaction id does not exist")))?;
 
     let reaction_step = MovingReactionStepDefinition {
         skip: request.skip.into(),
         animation: frames_dtos_to_animation(request.animation)?
     };
-    insert_step_in_correct_index(&mut reaction, reaction_step.clone(), request.step_index, image_repository)?;
-    repository.update(&reaction).unwrap();
+    insert_step_in_correct_index(&mut reaction, reaction_step.clone(), request.step_index, image_repository).await?;
+    repository.update(&reaction).await.unwrap();
 
     Ok(reaction_step.into())
 }
 
-fn insert_step_in_correct_index(reaction: &mut ReactionDefinition, reaction_step: MovingReactionStepDefinition, step_index: usize, image_repository: &Arc<dyn ImageRepository>) -> Result<(), AddMovementStepToReactionError> {
+async fn insert_step_in_correct_index(reaction: &mut ReactionDefinition, reaction_step: MovingReactionStepDefinition, step_index: usize, image_repository: &Arc<dyn ImageRepository>) -> Result<(), AddMovementStepToReactionError> {
     if step_index > reaction.steps.len() {
         return Err(AddMovementStepToReactionError::BadRequest(String::from("Index out of bounds")));
     } else if step_index == reaction.steps.len() {
-        add_moving_step_to_reaction(reaction, reaction_step, image_repository)?;
+        add_moving_step_to_reaction(reaction, reaction_step, image_repository).await?;
     } else {
-        replace_moving_step_in_reaction(reaction, reaction_step, step_index, image_repository)?;
+        replace_moving_step_in_reaction(reaction, reaction_step, step_index, image_repository).await?;
     }
 
     Ok(())

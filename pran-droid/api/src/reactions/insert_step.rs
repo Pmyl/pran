@@ -9,8 +9,8 @@ use pran_droid_core::domain::images::image_repository::ImageRepository;
 use crate::reactions::models::reaction_step_model::{AnimationFrameModel, from_model_to_dto, ReactionStepModel, ReactionStepSkipModel};
 
 #[put("/reactions/<reaction_id>/steps", format = "json", data = "<payload>")]
-pub fn api_insert_reaction_step(reaction_id: String, payload: Json<InsertReactionStepApiRequest>, repo: &State<Arc<dyn ReactionDefinitionRepository>>, image_repo: &State<Arc<dyn ImageRepository>>) -> Result<Json<ReactionStepModel>, Error> {
-    Ok(Json(insert_movement_step_to_reaction(payload.0.into_request(reaction_id), repo, image_repo)?.into()))
+pub async fn api_insert_reaction_step(reaction_id: String, payload: Json<InsertReactionStepApiRequest>, repo: &State<Arc<dyn ReactionDefinitionRepository>>, image_repo: &State<Arc<dyn ImageRepository>>) -> Result<Json<ReactionStepModel>, Error> {
+    Ok(Json(insert_movement_step_to_reaction(payload.0.into_request(reaction_id), repo, image_repo).await?.into()))
 }
 
 #[derive(Deserialize)]

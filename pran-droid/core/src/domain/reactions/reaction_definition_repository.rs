@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use std::fmt::Debug;
 use thiserror::Error;
 use crate::domain::reactions::reaction_definition::{ReactionDefinition, ReactionDefinitionId, ReactionTrigger};
@@ -16,14 +17,15 @@ pub enum ReactionUpdateError {
     Missing
 }
 
+#[async_trait]
 pub trait ReactionDefinitionRepository: Send + Sync {
     fn next_id(&self) -> ReactionDefinitionId;
-    fn insert(&self, reaction: &ReactionDefinition) -> Result<(), ReactionInsertError>;
-    fn exists_with_trigger(&self, trigger: &ReactionTrigger) -> bool;
-    fn other_exists_with_trigger(&self, trigger: &ReactionTrigger, excluded_reaction_definition_id: &ReactionDefinitionId) -> bool;
-    fn get(&self, id: &ReactionDefinitionId) -> Option<ReactionDefinition>;
-    fn get_all(&self) -> Vec<ReactionDefinition>;
-    fn update(&self, reaction: &ReactionDefinition) -> Result<(), ReactionUpdateError>;
+    async fn insert(&self, reaction: &ReactionDefinition) -> Result<(), ReactionInsertError>;
+    async fn exists_with_trigger(&self, trigger: &ReactionTrigger) -> bool;
+    async fn other_exists_with_trigger(&self, trigger: &ReactionTrigger, excluded_reaction_definition_id: &ReactionDefinitionId) -> bool;
+    async fn get(&self, id: &ReactionDefinitionId) -> Option<ReactionDefinition>;
+    async fn get_all(&self) -> Vec<ReactionDefinition>;
+    async fn update(&self, reaction: &ReactionDefinition) -> Result<(), ReactionUpdateError>;
 }
 
 #[cfg(test)]

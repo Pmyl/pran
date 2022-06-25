@@ -7,6 +7,6 @@ pub struct GetEmotionRequest {
     pub id: String
 }
 
-pub fn get_emotion(request: GetEmotionRequest, repository: &Arc<dyn EmotionRepository>) -> Option<EmotionDto> {
-    repository.get(&EmotionId(request.id)).map(From::from)
+pub async fn get_emotion(request: GetEmotionRequest, repository: &Arc<dyn EmotionRepository>) -> Option<EmotionDto> {
+    repository.get(&EmotionId(request.id)).await.map(From::from)
 }

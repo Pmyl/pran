@@ -9,8 +9,8 @@ use pran_droid_core::domain::reactions::reaction_definition_repository::{Reactio
 use crate::reactions::models::reaction_model::ReactionResponse;
 
 #[post("/reactions", format = "json", data = "<payload>")]
-pub fn api_create_reaction(payload: Json<CreateReactionApiRequest>, repo: &State<Arc<dyn ReactionDefinitionRepository>>) -> Result<Json<ReactionResponse>, Error> {
-    Ok(Json(create_reaction(payload.0.into(), repo)?.into()))
+pub async fn api_create_reaction(payload: Json<CreateReactionApiRequest>, repo: &State<Arc<dyn ReactionDefinitionRepository>>) -> Result<Json<ReactionResponse>, Error> {
+    Ok(Json(create_reaction(payload.0.into(), repo).await?.into()))
 }
 
 #[derive(Deserialize)]

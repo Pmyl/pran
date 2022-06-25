@@ -24,8 +24,8 @@ pub struct InsertTalkingStepToReactionRequest {
     pub text: String
 }
 
-pub fn insert_talking_step_to_reaction(request: InsertTalkingStepToReactionRequest, repository: &Arc<dyn ReactionDefinitionRepository>, emotion_repository: &Arc<dyn EmotionRepository>) -> Result<ReactionStepDto, AddTalkingStepToReactionError> {
-    let mut reaction = repository.get(&ReactionDefinitionId(request.reaction_id.clone()))
+pub async fn insert_talking_step_to_reaction(request: InsertTalkingStepToReactionRequest, repository: &Arc<dyn ReactionDefinitionRepository>, emotion_repository: &Arc<dyn EmotionRepository>) -> Result<ReactionStepDto, AddTalkingStepToReactionError> {
+    let mut reaction = repository.get(&ReactionDefinitionId(request.reaction_id.clone())).await
         .ok_or_else(|| AddTalkingStepToReactionError::BadRequest(String::from("The requested reaction id does not exist")))?;
 
     let reaction_step = TalkingReactionStepDefinition {
@@ -33,19 +33,19 @@ pub fn insert_talking_step_to_reaction(request: InsertTalkingStepToReactionReque
         emotion_id: EmotionId(request.emotion_id),
         text: ReactionStepTextDefinition::LetterByLetter(request.text)
     };
-    insert_step_in_correct_index(&mut reaction, reaction_step.clone(), request.step_index, emotion_repository)?;
-    repository.update(&reaction).unwrap();
+    insert_step_in_correct_index(&mut reaction, reaction_step.clone(), request.step_index, emotion_repository).await?;
+    repository.update(&reaction).await.unwrap();
 
     Ok(reaction_step.into())
 }
 
-fn insert_step_in_correct_index(reaction: &mut ReactionDefinition, reaction_step: TalkingReactionStepDefinition, step_index: usize, emotion_repository: &Arc<dyn EmotionRepository>) -> Result<(), AddTalkingStepToReactionError> {
+async fn insert_step_in_correct_index(reaction: &mut ReactionDefinition, reaction_step: TalkingReactionStepDefinition, step_index: usize, emotion_repository: &Arc<dyn EmotionRepository>) -> Result<(), AddTalkingStepToReactionError> {
     if step_index > reaction.steps.len() {
         return Err(AddTalkingStepToReactionError::BadRequest(String::from("Index out of bounds")));
     } else if step_index == reaction.steps.len() {
-        add_talking_step_to_reaction(reaction, reaction_step, emotion_repository)?;
+        add_talking_step_to_reaction(reaction, reaction_step, emotion_repository).await?;
     } else {
-        replace_talking_step_in_reaction(reaction, reaction_step, step_index, emotion_repository)?;
+        replace_talking_step_in_reaction(reaction, reaction_step, step_index, emotion_repository).await?;
     }
 
     Ok(())
