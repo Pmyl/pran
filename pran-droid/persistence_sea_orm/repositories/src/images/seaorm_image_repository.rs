@@ -3,9 +3,9 @@ use async_trait::async_trait;
 use sea_orm::{entity::*};
 use pran_droid_core::domain::images::image::{Image, ImageId, ImageUrl};
 use pran_droid_core::domain::images::image_repository::{ImageRepository, InsertError};
-use pran_droid_persistence_entities::images::image::Entity as ImageEntity;
-use pran_droid_persistence_entities::images::image::Model as ImageModel;
-use pran_droid_persistence_entities::images::image::ActiveModel as ImageActiveModel;
+use pran_droid_persistence_sea_orm_entities::images::image::Entity as ImageEntity;
+use pran_droid_persistence_sea_orm_entities::images::image::Model as ImageModel;
+use pran_droid_persistence_sea_orm_entities::images::image::ActiveModel as ImageActiveModel;
 use crate::connectors::connector::SeaOrmDatabaseConnector;
 
 fn into_table(image: &Image) -> ImageModel {

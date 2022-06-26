@@ -10,16 +10,16 @@ use pran_droid_core::domain::animations::animation::{Animation, AnimationFrame, 
 use pran_droid_core::domain::emotions::emotion::{Emotion, EmotionId, EmotionLayer, EmotionName, MouthPositionName};
 use pran_droid_core::domain::emotions::emotion_repository::{EmotionRepository, EmotionUpdateError, EmotionInsertError};
 use pran_droid_core::domain::images::image::ImageId;
-use pran_droid_persistence_entities::emotions::emotion::Entity as EmotionEntity;
-use pran_droid_persistence_entities::emotions::emotion::Model as EmotionModel;
-use pran_droid_persistence_entities::emotions::emotion::ActiveModel as EmotionActiveModel;
-use pran_droid_persistence_entities::emotions::emotion::Column as EmotionColumn;
-use pran_droid_persistence_entities::emotions::emotion_animation_layer::Entity as EmotionAnimationLayerEntity;
-use pran_droid_persistence_entities::emotions::emotion_animation_layer::Model as EmotionAnimationLayerModel;
-use pran_droid_persistence_entities::emotions::emotion_animation_layer::ActiveModel as EmotionAnimationLayerActiveModel;
-use pran_droid_persistence_entities::emotions::emotion_mouth_layer::Entity as EmotionMouthLayerEntity;
-use pran_droid_persistence_entities::emotions::emotion_mouth_layer::Model as EmotionMouthLayerModel;
-use pran_droid_persistence_entities::emotions::emotion_mouth_layer::ActiveModel as EmotionMouthLayerActiveModel;
+use pran_droid_persistence_sea_orm_entities::emotions::emotion::Entity as EmotionEntity;
+use pran_droid_persistence_sea_orm_entities::emotions::emotion::Model as EmotionModel;
+use pran_droid_persistence_sea_orm_entities::emotions::emotion::ActiveModel as EmotionActiveModel;
+use pran_droid_persistence_sea_orm_entities::emotions::emotion::Column as EmotionColumn;
+use pran_droid_persistence_sea_orm_entities::emotions::emotion_animation_layer::Entity as EmotionAnimationLayerEntity;
+use pran_droid_persistence_sea_orm_entities::emotions::emotion_animation_layer::Model as EmotionAnimationLayerModel;
+use pran_droid_persistence_sea_orm_entities::emotions::emotion_animation_layer::ActiveModel as EmotionAnimationLayerActiveModel;
+use pran_droid_persistence_sea_orm_entities::emotions::emotion_mouth_layer::Entity as EmotionMouthLayerEntity;
+use pran_droid_persistence_sea_orm_entities::emotions::emotion_mouth_layer::Model as EmotionMouthLayerModel;
+use pran_droid_persistence_sea_orm_entities::emotions::emotion_mouth_layer::ActiveModel as EmotionMouthLayerActiveModel;
 use crate::connectors::connector::SeaOrmDatabaseConnector;
 
 fn into_emotion_table(emotion: &Emotion) -> EmotionActiveModel {

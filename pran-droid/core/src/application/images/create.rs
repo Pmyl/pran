@@ -26,12 +26,13 @@ pub enum StoreImageError {
 pub async fn create_image(request: CreateImageRequest, repo: &Arc<dyn ImageRepository>, storage: &Arc<dyn ImageStorage>) -> Result<ImageDto, StoreImageError> {
     match (ImageId::try_from(request.id), ImageData::try_from(request.image)) {
         (Ok(id), Ok(image_data)) => {
-            let image_url = storage.save(&id, &image_data).map_err(|_| StoreImageError::StorageFail)?;
+            let image_url = storage.save(&id, &image_data).await.map_err(|_| StoreImageError::StorageFail)?;
+            let save_result = save_in_repo(&id, &image_url, repo).await;
 
-            save_in_repo(&id, &image_url, repo)
-                .await
-                .or_else(|e| storage.delete(&image_url).map_err(|_| StoreImageError::Unexpected).and(Err(e)))
-                .map(|image| image.into())
+            match save_result {
+                Ok(image) => Ok(image.into()),
+                Err(e) => Err(storage.delete(&image_url).await.map_err(|_| StoreImageError::Unexpected).and(Err(e))?)
+            }
         },
         _ => Err(StoreImageError::BadRequest)
     }

@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use std::clone::Clone;
 use std::fmt::Debug;
 use std::marker::{Send, Sync};
@@ -32,8 +33,9 @@ pub enum StorageDeleteError {
     Unexpected
 }
 
+#[async_trait]
 pub trait ImageStorage: Send + Sync {
-    fn get(&self, url: &ImageUrl) -> Option<ImageData>;
-    fn save(&self, id: &ImageId, data: &ImageData) -> Result<ImageUrl, StorageSaveError>;
-    fn delete(&self, url: &ImageUrl) -> Result<(), StorageDeleteError>;
+    async fn get(&self, url: &ImageUrl) -> Option<ImageData>;
+    async fn save(&self, id: &ImageId, data: &ImageData) -> Result<ImageUrl, StorageSaveError>;
+    async fn delete(&self, url: &ImageUrl) -> Result<(), StorageDeleteError>;
 }

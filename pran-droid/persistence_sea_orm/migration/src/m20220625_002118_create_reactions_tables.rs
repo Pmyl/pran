@@ -1,16 +1,16 @@
 use sea_orm_migration::prelude::*;
-use pran_droid_persistence_entities::reactions::reaction_definition::Entity as ReactionDefinitionEntity;
-use pran_droid_persistence_entities::reactions::reaction_definition::Column as ReactionDefinitionColumn;
-use pran_droid_persistence_entities::reactions::reaction_definition_step::Entity as ReactionDefinitionStepEntity;
-use pran_droid_persistence_entities::reactions::reaction_definition_step::Column as ReactionDefinitionStepColumn;
-use pran_droid_persistence_entities::reactions::reaction_definition_trigger::Entity as ReactionDefinitionTriggerEntity;
-use pran_droid_persistence_entities::reactions::reaction_definition_trigger::Column as ReactionDefinitionTriggerColumn;
-use pran_droid_persistence_entities::reactions::reaction_definition_moving_step_frame::Entity as ReactionDefinitionMovingStepFrameEntity;
-use pran_droid_persistence_entities::reactions::reaction_definition_moving_step_frame::Column as ReactionDefinitionMovingStepFrameColumn;
-use pran_droid_persistence_entities::emotions::emotion::Entity as EmotionEntity;
-use pran_droid_persistence_entities::emotions::emotion::Column as EmotionColumn;
-use pran_droid_persistence_entities::images::image::Entity as ImageEntity;
-use pran_droid_persistence_entities::images::image::Column as ImageColumn;
+use pran_droid_persistence_sea_orm_entities::reactions::reaction_definition::Entity as ReactionDefinitionEntity;
+use pran_droid_persistence_sea_orm_entities::reactions::reaction_definition::Column as ReactionDefinitionColumn;
+use pran_droid_persistence_sea_orm_entities::reactions::reaction_definition_step::Entity as ReactionDefinitionStepEntity;
+use pran_droid_persistence_sea_orm_entities::reactions::reaction_definition_step::Column as ReactionDefinitionStepColumn;
+use pran_droid_persistence_sea_orm_entities::reactions::reaction_definition_trigger::Entity as ReactionDefinitionTriggerEntity;
+use pran_droid_persistence_sea_orm_entities::reactions::reaction_definition_trigger::Column as ReactionDefinitionTriggerColumn;
+use pran_droid_persistence_sea_orm_entities::reactions::reaction_definition_moving_step_frame::Entity as ReactionDefinitionMovingStepFrameEntity;
+use pran_droid_persistence_sea_orm_entities::reactions::reaction_definition_moving_step_frame::Column as ReactionDefinitionMovingStepFrameColumn;
+use pran_droid_persistence_sea_orm_entities::emotions::emotion::Entity as EmotionEntity;
+use pran_droid_persistence_sea_orm_entities::emotions::emotion::Column as EmotionColumn;
+use pran_droid_persistence_sea_orm_entities::images::image::Entity as ImageEntity;
+use pran_droid_persistence_sea_orm_entities::images::image::Column as ImageColumn;
 
 pub struct Migration;
 

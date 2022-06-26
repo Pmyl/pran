@@ -1,15 +1,15 @@
 [package]
-name = "pran-droid-persistence-migration"
+name = "pran-droid-persistence-sea-orm-migration"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [lib]
-name = "pran_droid_persistence_migration"
+name = "pran_droid_persistence_sea_orm_migration"
 path = "src/lib.rs"
 
 [dependencies]
 async-std = "1.12.0"
 async-trait = "0.1.56"
 sea-orm-migration = "0.8.0"
-pran-droid-persistence-entities = { path = "../entities" }
+pran-droid-persistence-sea-orm-entities = { path = "../entities" }

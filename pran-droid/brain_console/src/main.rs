@@ -5,11 +5,11 @@ use std::sync::Arc;
 use log::{debug, LevelFilter};
 use simplelog::SimpleLogger;
 use pran_droid_brain::{PranDroidBrainConfig, start_droid_brain};
-use pran_droid_core::persistence::emotions::in_memory_emotion_repository::InMemoryEmotionRepository;
-use pran_droid_core::persistence::images::in_memory_image_repository::InMemoryImageRepository;
-use pran_droid_core::persistence::images::in_memory_image_storage::InMemoryImageStorage;
-use pran_droid_core::persistence::reactions::in_memory_reaction_repository::InMemoryReactionRepository;
 use crate::asciifier::asciify_gif;
+use pran_droid_persistence_deta::emotions::deta_emotion_repository::DetaEmotionRepository;
+use pran_droid_persistence_deta::images::deta_image_repository::DetaImageRepository;
+use pran_droid_persistence_deta::images::deta_image_storage::DetaImageStorage;
+use pran_droid_persistence_deta::reactions::deta_reaction_repository::DetaReactionRepository;
 
 mod asciifier;
 
@@ -23,6 +23,8 @@ struct Config {
     websocket_port: u16,
     log_level: LevelFilter,
     show_intro: bool,
+    deta_project_key: String,
+    deta_project_id: String,
 }
 
 impl Config {
@@ -40,6 +42,8 @@ impl Config {
                 _ => LevelFilter::Off
             }).expect("Unexpected error when parsing log_level env"),
             show_intro: !env::var("SKIP_INTRO").or(Ok("false".to_string())).and_then(|skip| skip.parse::<bool>()).expect("SKIP_INTRO is not a bool"),
+            deta_project_key: env::var("DETA_PROJECT_KEY").expect("DETA_PROJECT_KEY missing in env variables"),
+            deta_project_id: env::var("DETA_PROJECT_ID").expect("DETA_PROJECT_ID missing in env variables"),
         }
     }
 }
@@ -58,10 +62,10 @@ async fn main() {
 }
 
 fn start_brain(config: &Config) -> impl Future<Output=()> {
-    let reaction_repo = Arc::new(InMemoryReactionRepository::new_with_id_deterministic());
-    let emotion_repo = Arc::new(InMemoryEmotionRepository::new_with_id_deterministic());
-    let images_repo = Arc::new(InMemoryImageRepository::new());
-    let images_storage = Arc::new(InMemoryImageStorage::new());
+    let reaction_repo = Arc::new(DetaReactionRepository::new(config.deta_project_key.clone(), config.deta_project_id.clone()));
+    let emotion_repo = Arc::new(DetaEmotionRepository::new(config.deta_project_key.clone(), config.deta_project_id.clone()));
+    let images_repo = Arc::new(DetaImageRepository::new(config.deta_project_key.clone(), config.deta_project_id.clone()));
+    let images_storage = Arc::new(DetaImageStorage::new(config.deta_project_key.clone(), config.deta_project_id.clone()));
 
     let twitch_client_secret = config.twitch_client_secret.clone();
     let twitch_client_id = config.twitch_client_id.clone();

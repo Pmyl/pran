@@ -9,19 +9,15 @@ use simplelog::SimpleLogger;
 use std::fmt::{Debug};
 use std::sync::Arc;
 use std::{env};
-use pran_droid_persistence::connectors::connector::SeaOrmDatabaseConnector;
-use pran_droid_persistence::connectors::postgresql::SeaOrmPostgreSqlConnector;
-use pran_droid_persistence::connectors::sqlite::SeaOrmSqliteInMemoryConnector;
 use pran_droid_core::domain::emotions::emotion_repository::EmotionRepository;
 use pran_droid_core::domain::images::image_repository::ImageRepository;
 use pran_droid_core::domain::images::image_storage::ImageStorage;
 use pran_droid_core::domain::reactions::reaction_definition_repository::ReactionDefinitionRepository;
-use pran_droid_core::persistence::images::in_memory_image_storage::InMemoryImageStorage;
-use pran_droid_persistence::emotions::seaorm_emotion_repository::SeaOrmEmotionRepository;
-use pran_droid_persistence::images::seaorm_image_repository::SeaOrmImageRepository;
-use pran_droid_persistence::reactions::seaorm_reaction_definition_repository::SeaOrmReactionDefinitionRepository;
-use pran_droid_persistence::test_database::build_test_database::build_test_database;
-use pran_droid_persistence_migration::MigratorTrait;
+use pran_droid_persistence_sea_orm_repositories::test_database::build_test_database::build_test_database;
+use pran_droid_persistence_deta::emotions::deta_emotion_repository::DetaEmotionRepository;
+use pran_droid_persistence_deta::images::deta_image_repository::DetaImageRepository;
+use pran_droid_persistence_deta::images::deta_image_storage::DetaImageStorage;
+use pran_droid_persistence_deta::reactions::deta_reaction_repository::DetaReactionRepository;
 use crate::emotions::create::api_create_emotions;
 use crate::emotions::get_all::api_get_all_emotions;
 use crate::images::get_all::api_get_all_images;
@@ -45,8 +41,8 @@ enum ConfigDb {
 struct Config {
     static_path: String,
     api_port: u16,
-    db: ConfigDb,
-    postgre_sql_db_url: Option<String>
+    deta_project_key: String,
+    deta_project_id: String
 }
 
 impl Config {
@@ -54,12 +50,8 @@ impl Config {
         Config {
             static_path: env::var("STATIC_PATH").expect("STATIC_PATH missing in env variables. .env not existing?"),
             api_port: env::var("API_PORT").or(Ok("8000".to_string())).and_then(|port| port.parse::<u16>()).expect("API_PORT not a number"),
-            db: env::var("DATABASE").map(|db_input| match db_input.as_ref() {
-                "InMemory" => ConfigDb::InMemory,
-                "PostgreSql" => ConfigDb::PostgreSql,
-                _ => ConfigDb::InMemory
-            }).unwrap(),
-            postgre_sql_db_url: env::var("POSTGRE_SQL_DATABASE_URL").ok(),
+            deta_project_key: env::var("DETA_PROJECT_KEY").expect("DETA_PROJECT_KEY missing in env variables"),
+            deta_project_id: env::var("DETA_PROJECT_ID").expect("DETA_PROJECT_ID missing in env variables"),
         }
     }
 }
@@ -71,20 +63,10 @@ async fn main() {
     let config = Config::new();
     debug!("{:?}", config);
 
-    let connector: Arc<dyn SeaOrmDatabaseConnector> = match config.db {
-        ConfigDb::InMemory => Arc::new(SeaOrmSqliteInMemoryConnector::new().await),
-        ConfigDb::PostgreSql => {
-            let connector = Arc::new(SeaOrmPostgreSqlConnector::new(config.postgre_sql_db_url.clone().unwrap()).await);
-            let connection = connector.connect().await;
-            pran_droid_persistence_migration::Migrator::up(&connection, None).await.unwrap();
-            connector
-        }
-    };
-
-    let reaction_repo = Arc::new(SeaOrmReactionDefinitionRepository { connector: connector.clone() });
-    let emotion_repo = Arc::new(SeaOrmEmotionRepository { connector: connector.clone() });
-    let images_repo = Arc::new(SeaOrmImageRepository { connector });
-    let images_storage = Arc::new(InMemoryImageStorage::new());
+    let reaction_repo = Arc::new(DetaReactionRepository::new(config.deta_project_key.clone(), config.deta_project_id.clone()));
+    let emotion_repo = Arc::new(DetaEmotionRepository::new(config.deta_project_key.clone(), config.deta_project_id.clone()));
+    let images_repo = Arc::new(DetaImageRepository::new(config.deta_project_key.clone(), config.deta_project_id.clone()));
+    let images_storage = Arc::new(DetaImageStorage::new(config.deta_project_key.clone(), config.deta_project_id.clone()));
 
     // build_test_database(reaction_repo.clone(), emotion_repo.clone(), images_repo.clone(), images_storage.clone()).await;
 

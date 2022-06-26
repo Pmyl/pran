@@ -1,6 +1,6 @@
 use sea_orm_migration::prelude::*;
-use pran_droid_persistence_entities::images::image::Entity as ImageEntity;
-use pran_droid_persistence_entities::images::image::Column as ImageColumn;
+use pran_droid_persistence_sea_orm_entities::images::image::Entity as ImageEntity;
+use pran_droid_persistence_sea_orm_entities::images::image::Column as ImageColumn;
 
 pub struct Migration;
 

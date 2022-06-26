@@ -1,5 +1,5 @@
 [package]
-name = "pran-droid-persistence-entities"
+name = "pran-droid-persistence-sea-orm-entities"
 version = "0.1.0"
 authors = ["Pmyl <julo134@gmail.com>"]
 edition = "2021"

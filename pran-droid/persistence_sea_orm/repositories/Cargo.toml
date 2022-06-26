@@ -1,5 +1,5 @@
 [package]
-name = "pran-droid-persistence"
+name = "pran-droid-persistence-sea-orm-repositories"
 version = "0.1.0"
 authors = ["Pmyl <julo134@gmail.com>"]
 edition = "2021"
@@ -11,5 +11,5 @@ async-trait = "0.1.56"
 sea-orm = { version = "0.8.0", features = ["sqlx-sqlite", "sqlx-postgres", "runtime-tokio-native-tls", "macros"] }
 serde_json = "1.0.81"
 pran-droid-core = { path = "../../core" }
-pran-droid-persistence-entities = { path = "../entities" }
-pran-droid-persistence-migration = { path = "../migration" }
+pran-droid-persistence-sea-orm-entities = { path = "../entities" }
+pran-droid-persistence-sea-orm-migration = { path = "../migration" }

@@ -43,9 +43,9 @@ impl<'r, 'o: 'r> Responder<'r, 'o> for Error {
             Error::AddMovementStepToReactionError(error) => {
                 match error {
                     AddMovementStepToReactionError::WrongAnimationRequest(internal_error) =>
-                        status::Conflict(Some(format!("{:?}", internal_error))).respond_to(req),
+                        status::BadRequest(Some(format!("{:?}", internal_error))).respond_to(req),
                     AddMovementStepToReactionError::BadImageRequest(internal_error) =>
-                        status::Conflict(Some(format!("{:?}", internal_error))).respond_to(req),
+                        status::BadRequest(Some(format!("{:?}", internal_error))).respond_to(req),
                     AddMovementStepToReactionError::BadRequest(msg) => status::BadRequest(Some(msg)).respond_to(req),
                 }
             }

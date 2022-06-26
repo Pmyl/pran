@@ -11,19 +11,19 @@ use pran_droid_core::domain::reactions::reaction_definition::{ReactionDefinition
 use pran_droid_core::domain::images::image::ImageId;
 use pran_droid_core::domain::reactions::reaction::{Milliseconds, MovingReactionStep, ReactionStepSkip};
 use pran_droid_core::domain::reactions::reaction_definition_repository::{ReactionDefinitionRepository, ReactionInsertError, ReactionUpdateError};
-use pran_droid_persistence_entities::reactions::reaction_definition::Entity as ReactionDefinitionEntity;
-use pran_droid_persistence_entities::reactions::reaction_definition::Model as ReactionDefinitionModel;
-use pran_droid_persistence_entities::reactions::reaction_definition::ActiveModel as ReactionDefinitionActiveModel;
-use pran_droid_persistence_entities::reactions::reaction_definition_step::Entity as ReactionDefinitionStepEntity;
-use pran_droid_persistence_entities::reactions::reaction_definition_step::Model as ReactionDefinitionStepModel;
-use pran_droid_persistence_entities::reactions::reaction_definition_step::ActiveModel as ReactionDefinitionStepActiveModel;
-use pran_droid_persistence_entities::reactions::reaction_definition_trigger::Entity as ReactionDefinitionTriggerEntity;
-use pran_droid_persistence_entities::reactions::reaction_definition_trigger::Model as ReactionDefinitionTriggerModel;
-use pran_droid_persistence_entities::reactions::reaction_definition_trigger::ActiveModel as ReactionDefinitionTriggerActiveModel;
-use pran_droid_persistence_entities::reactions::reaction_definition_trigger::Column as ReactionDefinitionTriggerColumn;
-use pran_droid_persistence_entities::reactions::reaction_definition_moving_step_frame::Entity as ReactionDefinitionMovingStepFrameEntity;
-use pran_droid_persistence_entities::reactions::reaction_definition_moving_step_frame::ActiveModel as ReactionDefinitionMovingStepFrameActiveModel;
-use pran_droid_persistence_entities::reactions::reaction_definition_moving_step_frame::Model as ReactionDefinitionMovingStepFrameModel;
+use pran_droid_persistence_sea_orm_entities::reactions::reaction_definition::Entity as ReactionDefinitionEntity;
+use pran_droid_persistence_sea_orm_entities::reactions::reaction_definition::Model as ReactionDefinitionModel;
+use pran_droid_persistence_sea_orm_entities::reactions::reaction_definition::ActiveModel as ReactionDefinitionActiveModel;
+use pran_droid_persistence_sea_orm_entities::reactions::reaction_definition_step::Entity as ReactionDefinitionStepEntity;
+use pran_droid_persistence_sea_orm_entities::reactions::reaction_definition_step::Model as ReactionDefinitionStepModel;
+use pran_droid_persistence_sea_orm_entities::reactions::reaction_definition_step::ActiveModel as ReactionDefinitionStepActiveModel;
+use pran_droid_persistence_sea_orm_entities::reactions::reaction_definition_trigger::Entity as ReactionDefinitionTriggerEntity;
+use pran_droid_persistence_sea_orm_entities::reactions::reaction_definition_trigger::Model as ReactionDefinitionTriggerModel;
+use pran_droid_persistence_sea_orm_entities::reactions::reaction_definition_trigger::ActiveModel as ReactionDefinitionTriggerActiveModel;
+use pran_droid_persistence_sea_orm_entities::reactions::reaction_definition_trigger::Column as ReactionDefinitionTriggerColumn;
+use pran_droid_persistence_sea_orm_entities::reactions::reaction_definition_moving_step_frame::Entity as ReactionDefinitionMovingStepFrameEntity;
+use pran_droid_persistence_sea_orm_entities::reactions::reaction_definition_moving_step_frame::ActiveModel as ReactionDefinitionMovingStepFrameActiveModel;
+use pran_droid_persistence_sea_orm_entities::reactions::reaction_definition_moving_step_frame::Model as ReactionDefinitionMovingStepFrameModel;
 use crate::connectors::connector::SeaOrmDatabaseConnector;
 
 fn into_reaction_table(reaction: &ReactionDefinition) -> ReactionDefinitionActiveModel {

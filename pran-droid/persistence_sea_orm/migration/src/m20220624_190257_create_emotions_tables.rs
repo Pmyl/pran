@@ -1,12 +1,12 @@
 use sea_orm_migration::prelude::*;
-use pran_droid_persistence_entities::emotions::emotion::Entity as EmotionEntity;
-use pran_droid_persistence_entities::emotions::emotion::Column as EmotionColumn;
-use pran_droid_persistence_entities::emotions::emotion_animation_layer::Entity as EmotionAnimationLayerEntity;
-use pran_droid_persistence_entities::emotions::emotion_animation_layer::Column as EmotionAnimationLayerColumn;
-use pran_droid_persistence_entities::emotions::emotion_mouth_layer::Entity as EmotionMouthLayerEntity;
-use pran_droid_persistence_entities::emotions::emotion_mouth_layer::Column as EmotionMouthLayerColumn;
-use pran_droid_persistence_entities::images::image::Entity as ImageEntity;
-use pran_droid_persistence_entities::images::image::Column as ImageColumn;
+use pran_droid_persistence_sea_orm_entities::emotions::emotion::Entity as EmotionEntity;
+use pran_droid_persistence_sea_orm_entities::emotions::emotion::Column as EmotionColumn;
+use pran_droid_persistence_sea_orm_entities::emotions::emotion_animation_layer::Entity as EmotionAnimationLayerEntity;
+use pran_droid_persistence_sea_orm_entities::emotions::emotion_animation_layer::Column as EmotionAnimationLayerColumn;
+use pran_droid_persistence_sea_orm_entities::emotions::emotion_mouth_layer::Entity as EmotionMouthLayerEntity;
+use pran_droid_persistence_sea_orm_entities::emotions::emotion_mouth_layer::Column as EmotionMouthLayerColumn;
+use pran_droid_persistence_sea_orm_entities::images::image::Entity as ImageEntity;
+use pran_droid_persistence_sea_orm_entities::images::image::Column as ImageColumn;
 
 pub struct Migration;
 

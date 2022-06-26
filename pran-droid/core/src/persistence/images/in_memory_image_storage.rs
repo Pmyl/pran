@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::Mutex;
 use crate::domain::images::image::{ImageId, ImageUrl};
@@ -14,8 +15,9 @@ impl InMemoryImageStorage {
     }
 }
 
+#[async_trait]
 impl ImageStorage for InMemoryImageStorage {
-    fn get(&self, url: &ImageUrl) -> Option<ImageData> {
+    async fn get(&self, url: &ImageUrl) -> Option<ImageData> {
         let lock = match self.file_system.lock() {
             Ok(lock) => lock,
             _ => return None,
@@ -23,7 +25,7 @@ impl ImageStorage for InMemoryImageStorage {
         lock.get(&url.0.clone()).cloned()
     }
 
-    fn save(&self, id: &ImageId, data: &ImageData) -> Result<ImageUrl, StorageSaveError> {
+    async fn save(&self, id: &ImageId, data: &ImageData) -> Result<ImageUrl, StorageSaveError> {
         if self.error_on_save {
             return Err(StorageSaveError::Unexpected);
         }
@@ -41,7 +43,7 @@ impl ImageStorage for InMemoryImageStorage {
         Ok(ImageUrl(url))
     }
 
-    fn delete(&self, url: &ImageUrl) -> Result<(), StorageDeleteError> {
+    async fn delete(&self, url: &ImageUrl) -> Result<(), StorageDeleteError> {
         let mut lock = match self.file_system.lock() {
             Ok(lock) => lock,
             _ => return Err(StorageDeleteError::Unexpected),

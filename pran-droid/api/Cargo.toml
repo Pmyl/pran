@@ -15,5 +15,4 @@ simplelog = "0.12.0"
 thiserror = "1.0.30"
 tokio = "1.19.2"
 pran-droid-core = { path = "../core" }
-pran-droid-persistence = { path = "../persistence/repositories" }
-pran-droid-persistence-migration = { path = "../persistence/migration" }
+pran-droid-persistence-deta = { path = "../persistence_deta" }

@@ -1,0 +1,1 @@
+pub mod deta_emotion_repository;

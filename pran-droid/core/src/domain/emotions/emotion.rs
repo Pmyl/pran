@@ -109,10 +109,10 @@ impl Into<String> for MouthPositionName {
     fn into(self) -> String { (&self).into() }
 }
 
-impl TryFrom<String> for MouthPositionName {
+impl TryFrom<&String> for MouthPositionName {
     type Error = ();
 
-    fn try_from(position_name: String) -> Result<Self, Self::Error> {
+    fn try_from(position_name: &String) -> Result<Self, Self::Error> {
         match position_name.as_ref() {
             "fv" => Ok(MouthPositionName::FV),
             "ur" => Ok(MouthPositionName::UR),
@@ -128,5 +128,13 @@ impl TryFrom<String> for MouthPositionName {
             "smile" => Ok(MouthPositionName::Smile),
             _ => Err(())
         }
+    }
+}
+
+impl TryFrom<String> for MouthPositionName {
+    type Error = ();
+
+    fn try_from(position_name: String) -> Result<Self, Self::Error> {
+        (&position_name).try_into()
     }
 }
