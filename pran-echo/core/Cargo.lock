@@ -1218,6 +1218,7 @@ dependencies = [
  "grapheme_to_phoneme",
  "lazy_static",
  "pyo3",
+ "regex",
 ]
 
 [[package]]

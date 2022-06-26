@@ -1371,6 +1371,7 @@ dependencies = [
  "dotenv",
  "grapheme_to_phoneme",
  "lazy_static",
+ "regex",
 ]
 
 [[package]]

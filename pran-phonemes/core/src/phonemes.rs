@@ -12,6 +12,7 @@ use lazy_static::lazy_static;
 lazy_static! {
     static ref ARPABET: grapheme_to_phoneme::arpabet::Arpabet = grapheme_to_phoneme::arpabet::Arpabet::new();
     static ref GRAPHEME_TO_PHONEME: grapheme_to_phoneme::Model = grapheme_to_phoneme::Model::load_in_memory().unwrap();
+    static ref MATCH_ALL_UNACCEPTED_CHARACTERS: regex::Regex = regex::Regex::new(r"[^\x00-\x7F]").unwrap();
 }
 
 #[cfg(feature="audio")]
@@ -53,14 +54,17 @@ pub fn transcribe_audio(audio_path: String) -> Result<String, PyErr> {
 
 pub fn phonemise_text(text: String) -> Result<PhonemiseTextResult, GraphToPhoneError> {
     let mut result: Vec<Vec<String>> = vec![];
-    for word in text.split_whitespace() {
-        let arpabet_result = ARPABET.borrow().get_polyphone_str(word)
+    let arpabet = ARPABET.borrow();
+    let grapheme_to_phoneme = GRAPHEME_TO_PHONEME.borrow();
+
+    for word in MATCH_ALL_UNACCEPTED_CHARACTERS.borrow().replace_all(text.as_str(), "").split_whitespace() {
+        let arpabet_result = arpabet.get_polyphone_str(word)
             .map(|phonemes| phonemes.into_iter().map(remove_digit).collect());
 
         if let Some(arpabet_result) = arpabet_result {
             result.push(arpabet_result);
         } else {
-            result.push(GRAPHEME_TO_PHONEME.borrow().predict_phonemes_strs(word)?.into_iter().map(remove_digit).collect::<Vec<String>>());
+            result.push(grapheme_to_phoneme.predict_phonemes_strs(word)?.into_iter().map(remove_digit).collect::<Vec<String>>());
         }
     }
 

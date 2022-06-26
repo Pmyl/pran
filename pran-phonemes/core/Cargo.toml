@@ -11,6 +11,7 @@ dotenv = "0.15.0"
 grapheme_to_phoneme = "0.1.0"
 lazy_static = "1.4.0"
 pyo3 = { version = "0.14.2", optional = true }
+regex = "1.5.6"
 
 [features]
 audio = ["pyo3"]
