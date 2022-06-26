@@ -6,9 +6,7 @@ use rocket::{figment::{Figment, providers::Env}, Config as RocketConfig };
 use rocket::data::{Limits, ToByteUnit};
 use rocket::fs::FileServer;
 use simplelog::SimpleLogger;
-use std::fmt::{Debug};
 use std::sync::Arc;
-use std::{env};
 use pran_droid_core::domain::emotions::emotion_repository::EmotionRepository;
 use pran_droid_core::domain::images::image_repository::ImageRepository;
 use pran_droid_core::domain::images::image_storage::ImageStorage;
@@ -23,34 +21,16 @@ use crate::emotions::get_all::api_get_all_emotions;
 use crate::images::get_all::api_get_all_images;
 use crate::images::create::api_create_image;
 use crate::images::get_from_storage::api_get_image_from_storage;
+use crate::infrastructure::config::Config;
 use crate::reactions::create::api_create_reaction;
 use crate::reactions::get::api_get_reaction;
 use crate::reactions::insert_step::api_insert_reaction_step;
 
-mod authentication;
+mod infrastructure;
 mod emotions;
 mod images;
 mod reactions;
 mod test_database;
-
-#[derive(Debug)]
-struct Config {
-    static_path: String,
-    api_port: u16,
-    deta_project_key: String,
-    deta_project_id: String
-}
-
-impl Config {
-    pub fn new() -> Config {
-        Config {
-            static_path: env::var("STATIC_PATH").expect("STATIC_PATH missing in env variables. .env not existing?"),
-            api_port: env::var("API_PORT").or(Ok("8000".to_string())).and_then(|port| port.parse::<u16>()).expect("API_PORT not a number"),
-            deta_project_key: env::var("DETA_PROJECT_KEY").expect("DETA_PROJECT_KEY missing in env variables"),
-            deta_project_id: env::var("DETA_PROJECT_ID").expect("DETA_PROJECT_ID missing in env variables"),
-        }
-    }
-}
 
 #[rocket::main]
 async fn main() {

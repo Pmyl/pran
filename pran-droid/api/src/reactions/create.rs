@@ -6,7 +6,7 @@ use rocket::{Request, response, State};
 use rocket::http::Status;
 use pran_droid_core::application::reactions::create::{create_reaction, CreateReactionError, CreateReactionRequest};
 use pran_droid_core::domain::reactions::reaction_definition_repository::{ReactionDefinitionRepository};
-use crate::authentication::authenticated::Authenticated;
+use crate::infrastructure::authenticated::Authenticated;
 use crate::reactions::models::reaction_model::ReactionResponse;
 
 #[post("/reactions", format = "json", data = "<payload>")]

@@ -6,7 +6,7 @@ use rocket::http::Status;
 use rocket::serde::json::Json;
 use pran_droid_core::application::emotions::create::{create_emotion, CreateEmotionError, CreateEmotionRequest};
 use pran_droid_core::domain::emotions::emotion_repository::EmotionRepository;
-use crate::authentication::authenticated::Authenticated;
+use crate::infrastructure::authenticated::Authenticated;
 use crate::emotions::responses::emotion_response::EmotionResponse;
 
 #[derive(Deserialize)]

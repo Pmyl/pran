@@ -5,7 +5,7 @@ use rocket::serde::json::Json;
 use pran_droid_core::application::emotions::dtos::emotion_dto::EmotionDto;
 use pran_droid_core::application::emotions::get_all::get_all_emotions;
 use pran_droid_core::domain::emotions::emotion_repository::EmotionRepository;
-use crate::authentication::authenticated::Authenticated;
+use crate::infrastructure::authenticated::AuthenticatedReadOnly;
 use crate::emotions::responses::emotion_response::EmotionResponse;
 
 #[derive(Serialize)]
@@ -20,6 +20,6 @@ impl From<Vec<EmotionDto>> for GetAllEmotionsResponse {
 }
 
 #[get("/emotions")]
-pub async fn api_get_all_emotions(_authenticated: Authenticated, repo: &State<Arc<dyn EmotionRepository>>) -> Json<GetAllEmotionsResponse> {
+pub async fn api_get_all_emotions(_authenticated: AuthenticatedReadOnly, repo: &State<Arc<dyn EmotionRepository>>) -> Json<GetAllEmotionsResponse> {
     Json(get_all_emotions(repo).await.into())
 }

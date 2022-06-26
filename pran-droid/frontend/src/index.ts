@@ -1,5 +1,5 @@
 import { ActionType, Animator, AnimatorManager, CanvasControllerFactory, drawId, wait } from 'pran-animation-frontend';
-import { Container } from 'pran-gular-frontend';
+import { Container, inlineComponent } from 'pran-gular-frontend';
 import { randomFramesBetweenInMs } from './animation/helpers/random';
 import { PlayerController } from './animation/player-controller';
 import { PranDroidAnimationPlayer } from './animation/pran-droid-animation-player';
@@ -17,7 +17,25 @@ import { animationToTimelineActions } from './helpers/animation-to-timeline-acti
 import './index.css';
 import { SpeechBubble } from './speech-bubble/speech-bubble';
 
+const missing_authorization_message = inlineComponent(controls => {
+  controls.setup("missing-authorization-message");
+  return () => `<p style="font-size: 3em; background-color: lightcoral; padding: 5px;">Missing authorization, make sure you've copied the entire url</p>`;
+})
+
 document.addEventListener('DOMContentLoaded', async() => {
+  const apiSecretKey = new URLSearchParams(window.location.search).get("api_secret_key");
+
+  if (!!apiSecretKey) {
+    document.cookie = `api_secret_key=${apiSecretKey}`;
+    await start();
+  } else {
+    const body: Container = Container.CreateBody();
+    body.append(missing_authorization_message());
+    body.render();
+  }
+});
+
+async function start() {
   const body: Container = Container.CreateBody();
   const pranCanvas: Container = Container.CreateEmptyElement('canvas');
   (pranCanvas.componentElement as HTMLCanvasElement).width = 500;
@@ -38,7 +56,7 @@ document.addEventListener('DOMContentLoaded', async() => {
 
   pranDroid.start();
   connectToBrain(pranDroid);
-});
+}
 
 function setupDemoData(pranDroid: PranDroid) {
   pranDroid.setEmotionRange({

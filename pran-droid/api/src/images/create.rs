@@ -8,7 +8,7 @@ use rocket::serde::json::Json;
 use pran_droid_core::application::images::create::{create_image, CreateImageRequest, StoreImageError};
 use pran_droid_core::domain::images::image_repository::ImageRepository;
 use pran_droid_core::domain::images::image_storage::ImageStorage;
-use crate::authentication::authenticated::Authenticated;
+use crate::infrastructure::authenticated::Authenticated;
 use crate::images::responses::image_response::ImageResponse;
 
 #[post("/images", data = "<payload>")]

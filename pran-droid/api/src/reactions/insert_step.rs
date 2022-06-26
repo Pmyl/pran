@@ -6,7 +6,7 @@ use rocket::{Request, response, State};
 use pran_droid_core::application::reactions::insert_movement_step::{AddMovementStepToReactionError, insert_movement_step_to_reaction, InsertMovementStepToReactionRequest};
 use pran_droid_core::domain::reactions::reaction_definition_repository::{ReactionDefinitionRepository};
 use pran_droid_core::domain::images::image_repository::ImageRepository;
-use crate::authentication::authenticated::Authenticated;
+use crate::infrastructure::authenticated::Authenticated;
 use crate::reactions::models::reaction_step_model::{AnimationFrameModel, from_model_to_dto, ReactionStepModel, ReactionStepSkipModel};
 
 #[put("/reactions/<reaction_id>/steps", format = "json", data = "<payload>")]

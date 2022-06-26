@@ -6,10 +6,10 @@ use rocket::response::{Responder};
 use pran_droid_core::domain::images::image::ImageId;
 use pran_droid_core::domain::images::image_repository::ImageRepository;
 use pran_droid_core::domain::images::image_storage::ImageStorage;
-use crate::authentication::authenticated::Authenticated;
+use crate::infrastructure::authenticated::AuthenticatedReadOnly;
 
 #[get("/images/<image_id>")]
-pub async fn api_get_image_from_storage<'t>(_authenticated: Authenticated, image_id: String, repository: &State<Arc<dyn ImageRepository>>, storage: &State<Arc<dyn ImageStorage>>) -> Option<ImageApiResponse> {
+pub async fn api_get_image_from_storage<'t>(_authenticated: AuthenticatedReadOnly, image_id: String, repository: &State<Arc<dyn ImageRepository>>, storage: &State<Arc<dyn ImageStorage>>) -> Option<ImageApiResponse> {
     let image = repository.get(&ImageId(image_id)).await;
 
     match image {

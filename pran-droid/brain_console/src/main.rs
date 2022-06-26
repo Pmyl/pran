@@ -22,6 +22,7 @@ struct Config {
     show_intro: bool,
     deta_project_key: String,
     deta_project_id: String,
+    api_secret_key: String,
 }
 
 impl Config {
@@ -41,6 +42,7 @@ impl Config {
             show_intro: !env::var("SKIP_INTRO").or(Ok("false".to_string())).and_then(|skip| skip.parse::<bool>()).expect("SKIP_INTRO is not a bool"),
             deta_project_key: env::var("DETA_PROJECT_KEY").expect("DETA_PROJECT_KEY missing in env variables"),
             deta_project_id: env::var("DETA_PROJECT_ID").expect("DETA_PROJECT_ID missing in env variables"),
+            api_secret_key: env::var("API_SECRET_KEY").expect("API_SECRET_KEY missing in env variables"),
         }
     }
 }
