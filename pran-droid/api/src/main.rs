@@ -13,11 +13,11 @@ use pran_droid_core::domain::emotions::emotion_repository::EmotionRepository;
 use pran_droid_core::domain::images::image_repository::ImageRepository;
 use pran_droid_core::domain::images::image_storage::ImageStorage;
 use pran_droid_core::domain::reactions::reaction_definition_repository::ReactionDefinitionRepository;
-use pran_droid_persistence_sea_orm_repositories::test_database::build_test_database::build_test_database;
 use pran_droid_persistence_deta::emotions::deta_emotion_repository::DetaEmotionRepository;
 use pran_droid_persistence_deta::images::deta_image_repository::DetaImageRepository;
 use pran_droid_persistence_deta::images::deta_image_storage::DetaImageStorage;
 use pran_droid_persistence_deta::reactions::deta_reaction_repository::DetaReactionRepository;
+use crate::test_database::build_test_database::build_test_database;
 use crate::emotions::create::api_create_emotions;
 use crate::emotions::get_all::api_get_all_emotions;
 use crate::images::get_all::api_get_all_images;
@@ -30,12 +30,7 @@ use crate::reactions::insert_step::api_insert_reaction_step;
 mod emotions;
 mod images;
 mod reactions;
-
-#[derive(Debug)]
-enum ConfigDb {
-    InMemory,
-    PostgreSql
-}
+mod test_database;
 
 #[derive(Debug)]
 struct Config {

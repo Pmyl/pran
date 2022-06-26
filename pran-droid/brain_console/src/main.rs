@@ -6,9 +6,6 @@ use log::{debug, LevelFilter};
 use simplelog::SimpleLogger;
 use pran_droid_brain::{PranDroidBrainConfig, start_droid_brain};
 use crate::asciifier::asciify_gif;
-use pran_droid_persistence_deta::emotions::deta_emotion_repository::DetaEmotionRepository;
-use pran_droid_persistence_deta::images::deta_image_repository::DetaImageRepository;
-use pran_droid_persistence_deta::images::deta_image_storage::DetaImageStorage;
 use pran_droid_persistence_deta::reactions::deta_reaction_repository::DetaReactionRepository;
 
 mod asciifier;
@@ -63,9 +60,6 @@ async fn main() {
 
 fn start_brain(config: &Config) -> impl Future<Output=()> {
     let reaction_repo = Arc::new(DetaReactionRepository::new(config.deta_project_key.clone(), config.deta_project_id.clone()));
-    let emotion_repo = Arc::new(DetaEmotionRepository::new(config.deta_project_key.clone(), config.deta_project_id.clone()));
-    let images_repo = Arc::new(DetaImageRepository::new(config.deta_project_key.clone(), config.deta_project_id.clone()));
-    let images_storage = Arc::new(DetaImageStorage::new(config.deta_project_key.clone(), config.deta_project_id.clone()));
 
     let twitch_client_secret = config.twitch_client_secret.clone();
     let twitch_client_id = config.twitch_client_id.clone();
@@ -82,7 +76,7 @@ fn start_brain(config: &Config) -> impl Future<Output=()> {
             twitch_channel,
             twitch_user,
             websocket_port,
-        }, reaction_repo, emotion_repo, images_repo, images_storage).await
+        }, reaction_repo).await
     }
 }
 
