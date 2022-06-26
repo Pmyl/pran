@@ -61,45 +61,45 @@ mod tests {
     use crate::domain::reactions::reaction_definition_repository::tests::setup_dummy_chat_reaction_definition;
     use crate::persistence::images::in_memory_image_repository::InMemoryImageRepository;
 
-    #[test]
-    fn insert_movement_step_to_reaction_wrong_id_return_error() {
+    #[tokio::test]
+    async fn insert_movement_step_to_reaction_wrong_id_return_error() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        setup_dummy_chat_reaction_definition(&repository);
+        setup_dummy_chat_reaction_definition(&repository).await;
 
         let result = insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
             reaction_id: String::from("new id"),
             step_index: 0,
             skip: ReactionStepSkipDto::ImmediatelyAfter,
             animation: vec![]
-        }, &repository, &image_repo);
+        }, &repository, &image_repo).await;
 
         assert!(matches!(result, Err(AddMovementStepToReactionError::BadRequest(_))), "Expected insert step to fail with bad request");
     }
 
-    #[test]
-    fn insert_movement_step_to_reaction_empty_animation_store_in_repository() {
+    #[tokio::test]
+    async fn insert_movement_step_to_reaction_empty_animation_store_in_repository() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let reaction = setup_dummy_chat_reaction_definition(&repository);
+        let reaction = setup_dummy_chat_reaction_definition(&repository).await;
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
             reaction_id: reaction.id.0.clone(),
             step_index: 0,
             skip: ReactionStepSkipDto::ImmediatelyAfter,
             animation: vec![]
-        }, &repository, &image_repo).expect("Expected insert step not to fail");
+        }, &repository, &image_repo).await.expect("Expected insert step not to fail");
 
-        let reaction = get_reaction(GetReactionRequest { id: reaction.id.0 }, &repository).expect("Expected reaction to exists");
+        let reaction = get_reaction(GetReactionRequest { id: reaction.id.0 }, &repository).await.expect("Expected reaction to exists");
         assert_eq!(reaction.steps.len(), 1);
     }
 
-    #[test]
-    fn insert_movement_step_to_reaction_correctly_map_the_animation_of_movement_step() {
+    #[tokio::test]
+    async fn insert_movement_step_to_reaction_correctly_map_the_animation_of_movement_step() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let reaction = setup_dummy_chat_reaction_definition(&repository);
-        setup_dummy_images(vec!["id1", "id2"], &image_repo);
+        let reaction = setup_dummy_chat_reaction_definition(&repository).await;
+        setup_dummy_images(vec!["id1", "id2"], &image_repo).await;
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
             reaction_id: reaction.id.0.clone(),
@@ -114,9 +114,9 @@ mod tests {
                 frame_end: 30,
                 image_id: String::from("id2")
             }]
-        }, &repository, &image_repo).expect("Expected insert step not to fail");
+        }, &repository, &image_repo).await.expect("Expected insert step not to fail");
 
-        let moving_step = get_moving_animation_step_at(&repository, reaction.id.0, 0);
+        let moving_step = get_moving_animation_step_at(&repository, reaction.id.0, 0).await;
         let (first_frame, second_frame) = (
             moving_step.animation.get(0).expect("expected frame 1"),
             moving_step.animation.get(1).expect("expected frame 2")
@@ -130,11 +130,11 @@ mod tests {
         assert_eq!(second_frame.image_id, String::from("id2"));
     }
 
-    #[test]
-    fn insert_movement_step_to_reaction_with_non_existing_image_id_errors() {
+    #[tokio::test]
+    async fn insert_movement_step_to_reaction_with_non_existing_image_id_errors() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let reaction = setup_dummy_chat_reaction_definition(&repository);
+        let reaction = setup_dummy_chat_reaction_definition(&repository).await;
 
         let result = insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
             reaction_id: reaction.id.0.clone(),
@@ -145,17 +145,17 @@ mod tests {
                 frame_end: 20,
                 image_id: String::from("not existing image id")
             }]
-        }, &repository, &image_repo);
+        }, &repository, &image_repo).await;
 
         assert!(matches!(result, Err(AddMovementStepToReactionError::BadImageRequest(_))), "Expected insert step to fail with bad image request");
     }
 
-    #[test]
-    fn insert_movement_step_to_existing_index_with_non_existing_image_id_errors() {
+    #[tokio::test]
+    async fn insert_movement_step_to_existing_index_with_non_existing_image_id_errors() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let reaction = setup_dummy_chat_reaction_definition(&repository);
-        setup_dummy_images(vec!["id1"], &image_repo);
+        let reaction = setup_dummy_chat_reaction_definition(&repository).await;
+        setup_dummy_images(vec!["id1"], &image_repo).await;
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
             reaction_id: reaction.id.0.clone(),
@@ -166,7 +166,7 @@ mod tests {
                 frame_end: 20,
                 image_id: String::from("id1")
             }]
-        }, &repository, &image_repo).expect("Expected insert step not to fail");
+        }, &repository, &image_repo).await.expect("Expected insert step not to fail");
         let replace_with_not_existing_image = insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
             reaction_id: reaction.id.0.clone(),
             step_index: 0,
@@ -176,17 +176,17 @@ mod tests {
                 frame_end: 20,
                 image_id: String::from("not existing image id")
             }]
-        }, &repository, &image_repo);
+        }, &repository, &image_repo).await;
 
         assert!(matches!(replace_with_not_existing_image, Err(AddMovementStepToReactionError::BadImageRequest(_))), "Expected insert step to fail with bad image request");
     }
 
-    #[test]
-    fn insert_multiple_movement_steps_to_reaction_save_all_of_them_at_provided_index() {
+    #[tokio::test]
+    async fn insert_multiple_movement_steps_to_reaction_save_all_of_them_at_provided_index() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let reaction = setup_dummy_chat_reaction_definition(&repository);
-        setup_dummy_images(vec!["id1", "id2"], &image_repo);
+        let reaction = setup_dummy_chat_reaction_definition(&repository).await;
+        setup_dummy_images(vec!["id1", "id2"], &image_repo).await;
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
             reaction_id: reaction.id.0.clone(),
@@ -197,7 +197,7 @@ mod tests {
                 frame_end: 20,
                 image_id: String::from("id1")
             }]
-        }, &repository, &image_repo).expect("Expected first insert step not to fail");
+        }, &repository, &image_repo).await.expect("Expected first insert step not to fail");
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
             reaction_id: reaction.id.0.clone(),
@@ -208,10 +208,10 @@ mod tests {
                 frame_end: 34,
                 image_id: String::from("id2")
             }]
-        }, &repository, &image_repo).expect("Expected second insert step not to fail");
+        }, &repository, &image_repo).await.expect("Expected second insert step not to fail");
 
-        let first_moving_step = get_moving_animation_step_at(&repository, reaction.id.0.clone(), 0);
-        let second_moving_step = get_moving_animation_step_at(&repository, reaction.id.0, 1);
+        let first_moving_step = get_moving_animation_step_at(&repository, reaction.id.0.clone(), 0).await;
+        let second_moving_step = get_moving_animation_step_at(&repository, reaction.id.0, 1).await;
 
         assert_eq!(first_moving_step.animation.len(), 1);
         let first_step_frame = first_moving_step.animation.get(0).unwrap();
@@ -226,29 +226,29 @@ mod tests {
         assert_eq!(second_step_frame.image_id, String::from("id2"));
     }
 
-    #[test]
-    fn insert_movement_step_to_reaction_save_skip_configuration() {
+    #[tokio::test]
+    async fn insert_movement_step_to_reaction_save_skip_configuration() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let reaction = setup_dummy_chat_reaction_definition(&repository);
-        setup_dummy_images(vec!["id1", "id2"], &image_repo);
+        let reaction = setup_dummy_chat_reaction_definition(&repository).await;
+        setup_dummy_images(vec!["id1", "id2"], &image_repo).await;
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
             reaction_id: reaction.id.0.clone(),
             step_index: 0,
             animation: vec![AnimationFrameDto { frame_start: 10, frame_end: 20, image_id: String::from("id1") }],
             skip: ReactionStepSkipDto::ImmediatelyAfter,
-        }, &repository, &image_repo).expect("Expected first insert step not to fail");
+        }, &repository, &image_repo).await.expect("Expected first insert step not to fail");
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
             reaction_id: reaction.id.0.clone(),
             step_index: 1,
             animation: vec![AnimationFrameDto { frame_start: 10, frame_end: 20, image_id: String::from("id2") }],
             skip: ReactionStepSkipDto::AfterMilliseconds(12),
-        }, &repository, &image_repo).expect("Expected second insert step not to fail");
+        }, &repository, &image_repo).await.expect("Expected second insert step not to fail");
 
-        let first_moving_step = get_moving_animation_step_at(&repository, reaction.id.0.clone(), 0);
-        let second_moving_step = get_moving_animation_step_at(&repository, reaction.id.0, 1);
+        let first_moving_step = get_moving_animation_step_at(&repository, reaction.id.0.clone(), 0).await;
+        let second_moving_step = get_moving_animation_step_at(&repository, reaction.id.0, 1).await;
 
         match first_moving_step.skip {
             ReactionStepSkipDto::ImmediatelyAfter => {},
@@ -262,68 +262,68 @@ mod tests {
         }
     }
 
-    #[test]
-    fn insert_movement_step_to_an_index_detached_from_existing_steps_errors() {
+    #[tokio::test]
+    async fn insert_movement_step_to_an_index_detached_from_existing_steps_errors() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let reaction = setup_dummy_chat_reaction_definition(&repository);
-        setup_dummy_images(vec!["id1", "id2", "id3"], &image_repo);
+        let reaction = setup_dummy_chat_reaction_definition(&repository).await;
+        setup_dummy_images(vec!["id1", "id2", "id3"], &image_repo).await;
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
             reaction_id: reaction.id.0.clone(),
             step_index: 0,
             animation: vec![AnimationFrameDto { frame_start: 10, frame_end: 20, image_id: String::from("id1") }],
             skip: ReactionStepSkipDto::ImmediatelyAfter,
-        }, &repository, &image_repo).expect("Expected insert step not to fail");
+        }, &repository, &image_repo).await.expect("Expected insert step not to fail");
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
             reaction_id: reaction.id.0.clone(),
             step_index: 1,
             animation: vec![AnimationFrameDto { frame_start: 10, frame_end: 20, image_id: String::from("id2") }],
             skip: ReactionStepSkipDto::AfterMilliseconds(12),
-        }, &repository, &image_repo).expect("Expected insert step not to fail");
+        }, &repository, &image_repo).await.expect("Expected insert step not to fail");
 
         let result_detached_step = insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
             reaction_id: reaction.id.0.clone(),
             step_index: 3,
             animation: vec![AnimationFrameDto { frame_start: 10, frame_end: 20, image_id: String::from("id3") }],
             skip: ReactionStepSkipDto::AfterMilliseconds(12),
-        }, &repository, &image_repo);
+        }, &repository, &image_repo).await;
 
         assert!(matches!(result_detached_step, Err(AddMovementStepToReactionError::BadRequest(_))), "Expected insert step to fail with bad request");
-        try_get_animation_step_at(&repository, reaction.id.0.clone(), 2).expect_err("should not have added any step");
-        try_get_animation_step_at(&repository, reaction.id.0, 3).expect_err("should not have added any step");
+        try_get_animation_step_at(&repository, reaction.id.0.clone(), 2).await.expect_err("should not have added any step");
+        try_get_animation_step_at(&repository, reaction.id.0, 3).await.expect_err("should not have added any step");
     }
 
-    #[test]
-    fn insert_movement_step_to_an_index_right_after_existing_steps_at_index() {
+    #[tokio::test]
+    async fn insert_movement_step_to_an_index_right_after_existing_steps_at_index() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let reaction = setup_dummy_chat_reaction_definition(&repository);
-        setup_dummy_images(vec!["id1", "id2"], &image_repo);
+        let reaction = setup_dummy_chat_reaction_definition(&repository).await;
+        setup_dummy_images(vec!["id1", "id2"], &image_repo).await;
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
             reaction_id: reaction.id.0.clone(),
             step_index: 0,
             animation: vec![AnimationFrameDto { frame_start: 10, frame_end: 20, image_id: String::from("id1") }],
             skip: ReactionStepSkipDto::ImmediatelyAfter,
-        }, &repository, &image_repo).expect("Expected insert step not to fail");
+        }, &repository, &image_repo).await.expect("Expected insert step not to fail");
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
             reaction_id: reaction.id.0.clone(),
             step_index: 1,
             animation: vec![AnimationFrameDto { frame_start: 10, frame_end: 20, image_id: String::from("id2") }],
             skip: ReactionStepSkipDto::AfterMilliseconds(12),
-        }, &repository, &image_repo).expect("Expected insert step not to fail");
+        }, &repository, &image_repo).await.expect("Expected insert step not to fail");
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
             reaction_id: reaction.id.0.clone(),
             step_index: 2,
             animation: vec![AnimationFrameDto { frame_start: 1, frame_end: 2, image_id: String::from("id1") }],
             skip: ReactionStepSkipDto::AfterMilliseconds(11),
-        }, &repository, &image_repo).expect("Expected insert step not to fail");
+        }, &repository, &image_repo).await.expect("Expected insert step not to fail");
 
-        let third_moving_step = get_moving_animation_step_at(&repository, reaction.id.0.clone(), 2);
+        let third_moving_step = get_moving_animation_step_at(&repository, reaction.id.0.clone(), 2).await;
 
         assert_eq!(third_moving_step.animation.len(), 1);
         let third_step_frame = third_moving_step.animation.get(0).unwrap();
@@ -332,36 +332,36 @@ mod tests {
         assert_eq!(third_step_frame.image_id, String::from("id1"));
     }
 
-    #[test]
-    fn insert_movement_step_to_an_index_with_existing_step_replace_existing_step() {
+    #[tokio::test]
+    async fn insert_movement_step_to_an_index_with_existing_step_replace_existing_step() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let reaction = setup_dummy_chat_reaction_definition(&repository);
-        setup_dummy_images(vec!["id1", "id2"], &image_repo);
+        let reaction = setup_dummy_chat_reaction_definition(&repository).await;
+        setup_dummy_images(vec!["id1", "id2"], &image_repo).await;
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
             reaction_id: reaction.id.0.clone(),
             step_index: 0,
             animation: vec![AnimationFrameDto { frame_start: 10, frame_end: 20, image_id: String::from("id1") }],
             skip: ReactionStepSkipDto::ImmediatelyAfter,
-        }, &repository, &image_repo).expect("Expected insert step not to fail");
+        }, &repository, &image_repo).await.expect("Expected insert step not to fail");
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
             reaction_id: reaction.id.0.clone(),
             step_index: 1,
             animation: vec![AnimationFrameDto { frame_start: 10, frame_end: 20, image_id: String::from("id2") }],
             skip: ReactionStepSkipDto::AfterMilliseconds(12),
-        }, &repository, &image_repo).expect("Expected insert step not to fail");
+        }, &repository, &image_repo).await.expect("Expected insert step not to fail");
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
             reaction_id: reaction.id.0.clone(),
             step_index: 1,
             animation: vec![AnimationFrameDto { frame_start: 1, frame_end: 2, image_id: String::from("id1") }],
             skip: ReactionStepSkipDto::AfterMilliseconds(11),
-        }, &repository, &image_repo).expect("Expected insert step not to fail");
+        }, &repository, &image_repo).await.expect("Expected insert step not to fail");
 
-        try_get_animation_step_at(&repository, reaction.id.0.clone(), 2).expect_err("should not have added a new step");
-        let second_moving_step = get_moving_animation_step_at(&repository, reaction.id.0.clone(), 1);
+        try_get_animation_step_at(&repository, reaction.id.0.clone(), 2).await.expect_err("should not have added a new step");
+        let second_moving_step = get_moving_animation_step_at(&repository, reaction.id.0.clone(), 1).await;
 
         assert_eq!(second_moving_step.animation.len(), 1);
         let second_step_frame = second_moving_step.animation.get(0).unwrap();
@@ -370,9 +370,9 @@ mod tests {
         assert_eq!(second_step_frame.image_id, String::from("id1"));
     }
 
-    fn get_moving_animation_step_at(repository: &Arc<dyn ReactionDefinitionRepository>, reaction_id: String, index: usize) -> MovingReactionStepDto {
+    async fn get_moving_animation_step_at(repository: &Arc<dyn ReactionDefinitionRepository>, reaction_id: String, index: usize) -> MovingReactionStepDto {
         let first_step = try_get_animation_step_at(repository, reaction_id.clone(), index)
-            .expect(format!("should have saved a step at index {}", index).as_str());
+            .await.expect(format!("should have saved a step at index {}", index).as_str());
         if let ReactionStepDto::Moving(moving_step) = first_step {
             moving_step.clone()
         } else {
@@ -380,9 +380,9 @@ mod tests {
         }
     }
 
-    fn try_get_animation_step_at(repository: &Arc<dyn ReactionDefinitionRepository>, reaction_id: String, index: usize) -> Result<ReactionStepDto, String> {
+    async fn try_get_animation_step_at(repository: &Arc<dyn ReactionDefinitionRepository>, reaction_id: String, index: usize) -> Result<ReactionStepDto, String> {
         let updated_reaction = get_reaction(GetReactionRequest { id: reaction_id.clone() }, &repository)
-            .expect(format!("should have a reaction with id {}", reaction_id).as_str());
+            .await.expect(format!("should have a reaction with id {}", reaction_id).as_str());
         let maybe_step: Option<&ReactionStepDto> = updated_reaction.steps.get(index);
         maybe_step.map(|step| step.clone()).ok_or(format!("missing step at index {}", index))
     }

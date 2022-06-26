@@ -56,12 +56,12 @@ mod tests {
     use crate::persistence::images::in_memory_image_repository::InMemoryImageRepository;
     use super::*;
 
-    #[test]
-    fn update_emotion_mouth_mapping_wrong_id_return_error() {
+    #[tokio::test]
+    async fn update_emotion_mouth_mapping_wrong_id_return_error() {
         let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
         let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        setup_dummy_emotion(&repository);
-        setup_dummy_images(vec!["id1"], &image_repository);
+        setup_dummy_emotion(&repository).await;
+        setup_dummy_images(vec!["id1"], &image_repository).await;
 
         let request = UpdateEmotionMouthMappingRequest {
             emotion_id: String::from("not existing id"),
@@ -71,7 +71,7 @@ mod tests {
             }]
         };
 
-        match update_emotion_mouth_mapping(request, &repository, &image_repository) {
+        match update_emotion_mouth_mapping(request, &repository, &image_repository).await {
             Ok(_) => unreachable!("expected update emotion mouth mapping to fail"),
             Err(error) => match error {
                 UpdateEmotionMouthMappingError::BadRequest(_) => {}
@@ -79,12 +79,12 @@ mod tests {
         }
     }
 
-    #[test]
-    fn update_emotion_mouth_mapping_correct_input_returns_nothing() {
+    #[tokio::test]
+    async fn update_emotion_mouth_mapping_correct_input_returns_nothing() {
         let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
         let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let emotion = setup_dummy_emotion(&repository);
-        setup_dummy_images(vec!["id1"], &image_repository);
+        let emotion = setup_dummy_emotion(&repository).await;
+        setup_dummy_images(vec!["id1"], &image_repository).await;
 
         let request = UpdateEmotionMouthMappingRequest {
             emotion_id: emotion.id.0,
@@ -94,18 +94,18 @@ mod tests {
             }]
         };
 
-        match update_emotion_mouth_mapping(request, &repository, &image_repository) {
+        match update_emotion_mouth_mapping(request, &repository, &image_repository).await {
             Ok(_) => {},
             Err(_) => unreachable!("expected update emotion mouth mapping not to fail")
         }
     }
 
-    #[test]
-    fn update_emotion_mouth_mapping_correct_input_updates_emotion() {
+    #[tokio::test]
+    async fn update_emotion_mouth_mapping_correct_input_updates_emotion() {
         let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
         let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let emotion = setup_dummy_emotion(&repository);
-        setup_dummy_images(vec!["id1", "id2"], &image_repository);
+        let emotion = setup_dummy_emotion(&repository).await;
+        setup_dummy_images(vec!["id1", "id2"], &image_repository).await;
 
         let request = UpdateEmotionMouthMappingRequest {
             emotion_id: emotion.id.0.clone(),
@@ -118,9 +118,9 @@ mod tests {
             }]
         };
 
-        match update_emotion_mouth_mapping(request, &repository, &image_repository) {
+        match update_emotion_mouth_mapping(request, &repository, &image_repository).await {
             Ok(_) => {
-                match get_emotion(GetEmotionRequest { id: emotion.id.0 }, &repository) {
+                match get_emotion(GetEmotionRequest { id: emotion.id.0 }, &repository).await {
                     Some(emotion) => {
                         let mouth_mapping = get_mouth_mapping(emotion);
                         assert!(mouth_mapping.contains_key(&element_name_aah()));
@@ -136,12 +136,12 @@ mod tests {
         }
     }
 
-    #[test]
-    fn update_emotion_mouth_mapping_of_unknown_position_returns_error() {
+    #[tokio::test]
+    async fn update_emotion_mouth_mapping_of_unknown_position_returns_error() {
         let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
         let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let emotion = setup_dummy_emotion(&repository);
-        setup_dummy_images(vec!["id1", "id2"], &image_repository);
+        let emotion = setup_dummy_emotion(&repository).await;
+        setup_dummy_images(vec!["id1", "id2"], &image_repository).await;
 
         let request = UpdateEmotionMouthMappingRequest {
             emotion_id: emotion.id.0.clone(),
@@ -151,7 +151,7 @@ mod tests {
             }]
         };
 
-        match update_emotion_mouth_mapping(request, &repository, &image_repository) {
+        match update_emotion_mouth_mapping(request, &repository, &image_repository).await {
             Ok(_) => unreachable!("expected update emotion mouth mapping to fail"),
             Err(error) => match error {
                 UpdateEmotionMouthMappingError::BadRequest(_) => {}
@@ -159,12 +159,12 @@ mod tests {
         }
     }
 
-    #[test]
-    fn update_emotion_mouth_mapping_of_unknown_image_id_returns_error() {
+    #[tokio::test]
+    async fn update_emotion_mouth_mapping_of_unknown_image_id_returns_error() {
         let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
         let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let emotion = setup_dummy_emotion(&repository);
-        setup_dummy_images(vec!["id1", "id2"], &image_repository);
+        let emotion = setup_dummy_emotion(&repository).await;
+        setup_dummy_images(vec!["id1", "id2"], &image_repository).await;
 
         let request = UpdateEmotionMouthMappingRequest {
             emotion_id: emotion.id.0.clone(),
@@ -174,7 +174,7 @@ mod tests {
             }]
         };
 
-        match update_emotion_mouth_mapping(request, &repository, &image_repository) {
+        match update_emotion_mouth_mapping(request, &repository, &image_repository).await {
             Ok(_) => unreachable!("expected update emotion mouth mapping to fail"),
             Err(error) => match error {
                 UpdateEmotionMouthMappingError::BadRequest(_) => {}
@@ -182,12 +182,12 @@ mod tests {
         }
     }
 
-    #[test]
-    fn update_emotion_mouth_mapping_existing_positions_replace_mappings() {
+    #[tokio::test]
+    async fn update_emotion_mouth_mapping_existing_positions_replace_mappings() {
         let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
         let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let emotion = setup_dummy_emotion(&repository);
-        setup_dummy_images(vec!["id1", "id2", "id4"], &image_repository);
+        let emotion = setup_dummy_emotion(&repository).await;
+        setup_dummy_images(vec!["id1", "id2", "id4"], &image_repository).await;
 
         update_emotion_mouth_mapping(UpdateEmotionMouthMappingRequest {
             emotion_id: emotion.id.0.clone(),
@@ -198,7 +198,7 @@ mod tests {
                 name: element_name_o(),
                 image_id: String::from("id2")
             }]
-        }, &repository, &image_repository).unwrap();
+        }, &repository, &image_repository).await.unwrap();
 
         let request = UpdateEmotionMouthMappingRequest {
             emotion_id: emotion.id.0.clone(),
@@ -208,9 +208,9 @@ mod tests {
             }]
         };
 
-        match update_emotion_mouth_mapping(request, &repository, &image_repository) {
+        match update_emotion_mouth_mapping(request, &repository, &image_repository).await {
             Ok(_) => {
-                match get_emotion(GetEmotionRequest { id: emotion.id.0 }, &repository) {
+                match get_emotion(GetEmotionRequest { id: emotion.id.0 }, &repository).await {
                     Some(emotion) => {
                         let mouth_mapping = get_mouth_mapping(emotion);
                         assert_eq!(mouth_mapping.len(), 2);

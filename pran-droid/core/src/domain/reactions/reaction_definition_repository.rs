@@ -33,25 +33,29 @@ pub mod tests {
     use std::sync::Arc;
     use super::*;
 
-    pub fn setup_dummy_chat_reaction_definition(repository: &Arc<dyn ReactionDefinitionRepository>) -> ReactionDefinition {
+    pub async fn setup_dummy_chat_reaction_definition(repository: &Arc<dyn ReactionDefinitionRepository>) -> ReactionDefinition {
         let definition = ReactionDefinition::new_empty(
             ReactionDefinitionId(String::from("an id")),
             ReactionTrigger::new_chat(String::from("a trigger")).unwrap()
         );
-        repository.insert(&definition).unwrap();
+        repository.insert(&definition).await.unwrap();
 
         definition
     }
 
-    pub fn setup_dummy_chat_reaction_definitions(chat_triggers: Vec<&str>, repository: &Arc<dyn ReactionDefinitionRepository>) -> Vec<ReactionDefinition> {
-        chat_triggers.iter().map(|trigger| {
+    pub async fn setup_dummy_chat_reaction_definitions(chat_triggers: Vec<&str>, repository: &Arc<dyn ReactionDefinitionRepository>) -> Vec<ReactionDefinition> {
+        let mut reactions = vec![];
+
+        for trigger in chat_triggers {
             let definition = ReactionDefinition::new_empty(
                 ReactionDefinitionId(format!("{}_id", trigger)),
                 ReactionTrigger::new_chat(trigger.to_string()).unwrap()
             );
-            repository.insert(&definition).unwrap();
+            repository.insert(&definition).await.unwrap();
 
-            definition
-        }).collect()
+            reactions.push(definition);
+        }
+
+        reactions
     }
 }

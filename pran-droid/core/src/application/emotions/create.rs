@@ -43,24 +43,24 @@ mod tests {
     use crate::persistence::emotions::in_memory_emotion_repository::InMemoryEmotionRepository;
     use super::*;
 
-    #[test]
-    fn create_emotion_return_new_emotion() {
+    #[tokio::test]
+    async fn create_emotion_return_new_emotion() {
         let name = String::from("happy");
         let request = CreateEmotionRequest { name: name.clone() };
         let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
 
-        match create_emotion(request, &repository) {
+        match create_emotion(request, &repository).await {
             Ok(emotion) => assert_eq!(emotion.name, name),
             _ => unreachable!("expected create emotion to not fail")
         }
     }
 
-    #[test]
-    fn create_emotion_return_new_emotion_with_only_mouth_layer() {
+    #[tokio::test]
+    async fn create_emotion_return_new_emotion_with_only_mouth_layer() {
         let request = CreateEmotionRequest { name: String::from("happy") };
         let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
 
-        match create_emotion(request, &repository) {
+        match create_emotion(request, &repository).await {
             Ok(emotion) => {
                 assert_eq!(emotion.animation.len(), 1);
                 assert!(matches!(emotion.animation.first().unwrap(), EmotionLayerDto::Mouth { .. }));
@@ -69,12 +69,12 @@ mod tests {
         }
     }
 
-    #[test]
-    fn create_emotion_return_new_emotion_without_mouth_mapping() {
+    #[tokio::test]
+    async fn create_emotion_return_new_emotion_without_mouth_mapping() {
         let request = CreateEmotionRequest { name: String::from("happy") };
         let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
 
-        match create_emotion(request, &repository) {
+        match create_emotion(request, &repository).await {
             Ok(emotion) => {
                 assert!(matches!(emotion.animation.first().unwrap(), EmotionLayerDto::Mouth { mouth_mapping } if mouth_mapping.len() == 0));
             },
@@ -82,23 +82,23 @@ mod tests {
         }
     }
 
-    #[test]
-    fn create_emotion_save_emotion_in_repository() {
+    #[tokio::test]
+    async fn create_emotion_save_emotion_in_repository() {
         let request = CreateEmotionRequest { name: String::from("sad") };
         let repository = Arc::new(InMemoryEmotionRepository::new());
 
-        match create_emotion(request, &(repository.clone() as Arc<dyn EmotionRepository>)) {
-            Ok(emotion) => assert!(repository.exists(&EmotionId(emotion.id))),
+        match create_emotion(request, &(repository.clone() as Arc<dyn EmotionRepository>)).await {
+            Ok(emotion) => assert!(repository.exists(&EmotionId(emotion.id)).await),
             _ => unreachable!("expected create emotion to not fail")
         }
     }
 
-    #[test]
-    fn create_emotion_empty_name_error() {
+    #[tokio::test]
+    async fn create_emotion_empty_name_error() {
         let request = CreateEmotionRequest { name: String::from("") };
         let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
 
-        match create_emotion(request, &repository) {
+        match create_emotion(request, &repository).await {
             Err(error) => match error {
                 CreateEmotionError::BadRequest(_) => {},
                 _ => unreachable!("expected create emotion to fail with bad request")
@@ -107,15 +107,15 @@ mod tests {
         }
     }
 
-    #[test]
-    fn create_emotion_twice_same_name_conflict_error() {
+    #[tokio::test]
+    async fn create_emotion_twice_same_name_conflict_error() {
         let name = String::from("sad");
         let request1 = CreateEmotionRequest { name: name.clone() };
         let request2 = CreateEmotionRequest { name: name.clone() };
         let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
-        create_emotion(request1, &repository.clone()).unwrap();
+        create_emotion(request1, &repository.clone()).await.unwrap();
 
-        match create_emotion(request2, &repository) {
+        match create_emotion(request2, &repository).await {
             Err(error) => match error {
                 CreateEmotionError::Conflict(_) => {},
                 _ => unreachable!("expected create emotion to fail with conflict")
@@ -124,14 +124,14 @@ mod tests {
         }
     }
 
-    #[test]
-    fn create_emotion_twice_different_name_not_fail() {
+    #[tokio::test]
+    async fn create_emotion_twice_different_name_not_fail() {
         let request1 = CreateEmotionRequest { name: String::from("happy") };
         let request2 = CreateEmotionRequest { name: String::from("sad") };
         let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
-        create_emotion(request1, &repository.clone()).unwrap();
+        create_emotion(request1, &repository.clone()).await.unwrap();
 
-        match create_emotion(request2, &repository) {
+        match create_emotion(request2, &repository).await {
             Ok(_) => {},
             _ => unreachable!("expected create emotion to not fail")
         }

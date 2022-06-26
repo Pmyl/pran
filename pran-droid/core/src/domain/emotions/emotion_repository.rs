@@ -33,18 +33,18 @@ pub mod tests {
     use std::sync::Arc;
     use super::*;
 
-    pub fn setup_dummy_emotion(repository: &Arc<dyn EmotionRepository>) -> Emotion {
+    pub async fn setup_dummy_emotion(repository: &Arc<dyn EmotionRepository>) -> Emotion {
         let id = String::from("happy");
         let emotion = Emotion::new_empty(EmotionId(id.clone()), EmotionName(format!("{}_name", id.clone())));
-        repository.insert(&emotion).unwrap();
+        repository.insert(&emotion).await.unwrap();
 
         emotion
     }
 
-    pub fn setup_dummy_emotions(ids: Vec<&str>, repository: &Arc<dyn EmotionRepository>) {
+    pub async fn setup_dummy_emotions(ids: Vec<&str>, repository: &Arc<dyn EmotionRepository>) {
         for id in ids {
             let emotion = Emotion::new_empty(EmotionId(id.to_string()), EmotionName(format!("{}_name", id.to_string())));
-            repository.insert(&emotion).unwrap();
+            repository.insert(&emotion).await.unwrap();
         }
     }
 }

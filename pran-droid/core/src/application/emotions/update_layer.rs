@@ -45,42 +45,42 @@ mod tests {
     use crate::persistence::images::in_memory_image_repository::InMemoryImageRepository;
     use super::*;
 
-    #[test]
-    fn update_emotion_animation_layer_wrong_id_return_error() {
+    #[tokio::test]
+    async fn update_emotion_animation_layer_wrong_id_return_error() {
         let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
         let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        setup_dummy_emotion(&repository);
-        setup_dummy_images(vec!["id1"], &image_repository);
+        setup_dummy_emotion(&repository).await;
+        setup_dummy_images(vec!["id1"], &image_repository).await;
 
         let result = update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
             index: 1,
             emotion_id: String::from("not existing id"),
             animation: vec![]
-        }, &repository, &image_repository);
+        }, &repository, &image_repository).await;
 
         assert!(matches!(result, Err(AddEmotionAnimationLayerError::BadRequest(_))), "Expected to fail with bad request but was {:?}", result);
     }
 
-    #[test]
-    fn update_emotion_animation_layer_correct_input_returns_nothing() {
+    #[tokio::test]
+    async fn update_emotion_animation_layer_correct_input_returns_nothing() {
         let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
         let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let emotion = setup_dummy_emotion(&repository);
-        setup_dummy_images(vec!["id1"], &image_repository);
+        let emotion = setup_dummy_emotion(&repository).await;
+        setup_dummy_images(vec!["id1"], &image_repository).await;
 
         update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
             index: 1,
             emotion_id: emotion.id.0,
             animation: vec![]
-        }, &repository, &image_repository).expect("expected add emotion animation layer not to fail");
+        }, &repository, &image_repository).await.expect("expected add emotion animation layer not to fail");
     }
 
-    #[test]
-    fn update_emotion_animation_layer_correct_input_updates_emotion() {
+    #[tokio::test]
+    async fn update_emotion_animation_layer_correct_input_updates_emotion() {
         let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
         let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let emotion = setup_dummy_emotion(&repository);
-        setup_dummy_images(vec!["id1", "id2"], &image_repository);
+        let emotion = setup_dummy_emotion(&repository).await;
+        setup_dummy_images(vec!["id1", "id2"], &image_repository).await;
 
         update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
             index: 1,
@@ -89,9 +89,9 @@ mod tests {
                 AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("id1") },
                 AnimationFrameDto { frame_start: 11, frame_end: 20, image_id: String::from("id2") }
             ]
-        }, &repository, &image_repository).expect("Expected update not to fail");
+        }, &repository, &image_repository).await.expect("Expected update not to fail");
 
-        let emotion = get_emotion(GetEmotionRequest { id: emotion.id.0 }, &repository).expect("Emotion expected");
+        let emotion = get_emotion(GetEmotionRequest { id: emotion.id.0 }, &repository).await.expect("Emotion expected");
         assert_eq!(emotion.animation.len(), 2);
         assert!(matches!(emotion.animation.get(0).unwrap(), EmotionLayerDto::Mouth { .. }));
         assert!(matches!(emotion.animation.get(1).unwrap(), EmotionLayerDto::Animation(_)));
@@ -108,12 +108,12 @@ mod tests {
         }
     }
 
-    #[test]
-    fn update_emotion_animation_layer_image_not_existing_returns_error() {
+    #[tokio::test]
+    async fn update_emotion_animation_layer_image_not_existing_returns_error() {
         let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
         let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let emotion = setup_dummy_emotion(&repository);
-        setup_dummy_images(vec!["id1", "id2"], &image_repository);
+        let emotion = setup_dummy_emotion(&repository).await;
+        setup_dummy_images(vec!["id1", "id2"], &image_repository).await;
 
         let result = update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
             index: 1,
@@ -122,17 +122,17 @@ mod tests {
                 AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("id4") },
                 AnimationFrameDto { frame_start: 11, frame_end: 20, image_id: String::from("id2") }
             ]
-        }, &repository, &image_repository);
+        }, &repository, &image_repository).await;
 
         assert!(matches!(result, Err(AddEmotionAnimationLayerError::BadRequest(_))), "Expected to fail with bad request but was {:?}", result);
     }
 
-    #[test]
-    fn update_emotion_animation_layer_two_on_incrementing_index_add_both_layers() {
+    #[tokio::test]
+    async fn update_emotion_animation_layer_two_on_incrementing_index_add_both_layers() {
         let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
         let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let emotion = setup_dummy_emotion(&repository);
-        setup_dummy_images(vec!["id1", "id2"], &image_repository);
+        let emotion = setup_dummy_emotion(&repository).await;
+        setup_dummy_images(vec!["id1", "id2"], &image_repository).await;
 
         update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
             index: 1,
@@ -141,7 +141,7 @@ mod tests {
                 AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("id1") },
                 AnimationFrameDto { frame_start: 11, frame_end: 20, image_id: String::from("id2") }
             ]
-        }, &repository, &image_repository).expect("Expected first update emotion not to fail");
+        }, &repository, &image_repository).await.expect("Expected first update emotion not to fail");
 
         update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
             index: 2,
@@ -149,9 +149,9 @@ mod tests {
             animation: vec![
                 AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("id2") }
             ]
-        }, &repository, &image_repository).expect("Expected second update emotion not to fail");
+        }, &repository, &image_repository).await.expect("Expected second update emotion not to fail");
 
-        let emotion = get_emotion(GetEmotionRequest { id: emotion.id.0 }, &repository).expect("Expected emotion");
+        let emotion = get_emotion(GetEmotionRequest { id: emotion.id.0 }, &repository).await.expect("Expected emotion");
         assert_eq!(emotion.animation.len(), 3);
         assert!(matches!(emotion.animation.get(0).unwrap(), EmotionLayerDto::Mouth { .. }));
         assert!(matches!(emotion.animation.get(1).unwrap(), EmotionLayerDto::Animation(_)));
@@ -176,12 +176,12 @@ mod tests {
         }
     }
 
-    #[test]
-    fn update_emotion_animation_layer_with_mouth_layer_index_error() {
+    #[tokio::test]
+    async fn update_emotion_animation_layer_with_mouth_layer_index_error() {
         let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
         let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let emotion = setup_dummy_emotion(&repository);
-        setup_dummy_images(vec!["id1", "id2"], &image_repository);
+        let emotion = setup_dummy_emotion(&repository).await;
+        setup_dummy_images(vec!["id1", "id2"], &image_repository).await;
 
         let result = update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
             index: 0,
@@ -190,17 +190,17 @@ mod tests {
                 AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("id1") },
                 AnimationFrameDto { frame_start: 11, frame_end: 20, image_id: String::from("id2") }
             ]
-        }, &repository, &image_repository);
+        }, &repository, &image_repository).await;
 
         assert!(matches!(result, Err(AddEmotionAnimationLayerError::BadRequest(_))), "Expected to fail with bad request but was {:?}", result);
     }
 
-    #[test]
-    fn update_emotion_animation_layer_with_out_of_bounds_index_returns_error() {
+    #[tokio::test]
+    async fn update_emotion_animation_layer_with_out_of_bounds_index_returns_error() {
         let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
         let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let emotion = setup_dummy_emotion(&repository);
-        setup_dummy_images(vec!["id1", "id2"], &image_repository);
+        let emotion = setup_dummy_emotion(&repository).await;
+        setup_dummy_images(vec!["id1", "id2"], &image_repository).await;
 
         let result = update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
             index: 2,
@@ -209,17 +209,17 @@ mod tests {
                 AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("id1") },
                 AnimationFrameDto { frame_start: 11, frame_end: 20, image_id: String::from("id2") }
             ]
-        }, &repository, &image_repository);
+        }, &repository, &image_repository).await;
 
         assert!(matches!(result, Err(AddEmotionAnimationLayerError::BadRequest(_))), "Expected to fail with bad request but was {:?}", result);
     }
 
-    #[test]
-    fn update_emotion_animation_layer_with_existing_custom_layer_index_then_replace_layer() {
+    #[tokio::test]
+    async fn update_emotion_animation_layer_with_existing_custom_layer_index_then_replace_layer() {
         let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
         let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let emotion = setup_dummy_emotion(&repository);
-        setup_dummy_images(vec!["id1", "id2"], &image_repository);
+        let emotion = setup_dummy_emotion(&repository).await;
+        setup_dummy_images(vec!["id1", "id2"], &image_repository).await;
 
         update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
             index: 1,
@@ -228,7 +228,7 @@ mod tests {
                 AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("id1") },
                 AnimationFrameDto { frame_start: 11, frame_end: 20, image_id: String::from("id2") }
             ]
-        }, &repository, &image_repository).expect("Expected update not to fail");
+        }, &repository, &image_repository).await.expect("Expected update not to fail");
 
         update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
             index: 1,
@@ -237,9 +237,9 @@ mod tests {
                 AnimationFrameDto { frame_start: 5, frame_end: 11, image_id: String::from("id2") },
                 AnimationFrameDto { frame_start: 12, frame_end: 23, image_id: String::from("id1") }
             ]
-        }, &repository, &image_repository).expect("Expected update not to fail");
+        }, &repository, &image_repository).await.expect("Expected update not to fail");
 
-        let emotion = get_emotion(GetEmotionRequest { id: emotion.id.0 }, &repository).expect("Expected emotion");
+        let emotion = get_emotion(GetEmotionRequest { id: emotion.id.0 }, &repository).await.expect("Expected emotion");
         assert_eq!(emotion.animation.len(), 2);
         assert!(matches!(emotion.animation.get(0).unwrap(), EmotionLayerDto::Mouth { .. }));
         assert!(matches!(emotion.animation.get(1).unwrap(), EmotionLayerDto::Animation(_)));

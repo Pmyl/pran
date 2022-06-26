@@ -37,13 +37,13 @@ mod tests {
     use crate::persistence::reactions::in_memory_reaction_repository::InMemoryReactionRepository;
     use super::*;
 
-    #[test]
-    fn create_droid_brain_reacts_to_stored_chat_reactions() {
+    #[tokio::test]
+    async fn create_droid_brain_reacts_to_stored_chat_reactions() {
         let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
-        setup_dummy_chat_reaction_definitions(vec!["!hello", "!hug"], &reaction_repository);
+        setup_dummy_chat_reaction_definitions(vec!["!hello", "!hug"], &reaction_repository).await;
 
-        let brain = create_droid_brain(&reaction_repository, &text_phonemiser);
+        let brain = create_droid_brain(&reaction_repository, &text_phonemiser).await;
 
         let reaction_hello = stimulate_with_chat_message(&brain, |stimulus| stimulus.text = String::from("!hello"));
         let reaction_hug = stimulate_with_chat_message(&brain, |stimulus| stimulus.text = String::from("!hug"));
@@ -54,8 +54,8 @@ mod tests {
         assert!(reaction_else.is_none());
     }
 
-    #[test]
-    fn create_droid_brain_reacts_to_stimulus_with_defined_moving_steps() {
+    #[tokio::test]
+    async fn create_droid_brain_reacts_to_stimulus_with_defined_moving_steps() {
         let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
         let mut reaction_definition = ReactionDefinition::new_empty(
@@ -78,9 +78,9 @@ mod tests {
                 ])
             }
         }));
-        reaction_repository.insert(&reaction_definition).unwrap();
+        reaction_repository.insert(&reaction_definition).await.unwrap();
 
-        let brain = create_droid_brain(&reaction_repository, &text_phonemiser);
+        let brain = create_droid_brain(&reaction_repository, &text_phonemiser).await;
 
         let reaction = stimulate_with_chat_message(&brain, |stimulus| stimulus.text = String::from("!hello"));
 
@@ -104,8 +104,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn create_droid_brain_reacts_to_stimulus_with_defined_talking_steps() {
+    #[tokio::test]
+    async fn create_droid_brain_reacts_to_stimulus_with_defined_talking_steps() {
         let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
         let mut reaction_definition = ReactionDefinition::new_empty(
@@ -122,9 +122,9 @@ mod tests {
             text: ReactionStepText::Instant(String::from("some text2")),
             emotion_id: EmotionId(String::from("an emotion id2"))
         }));
-        reaction_repository.insert(&reaction_definition).unwrap();
+        reaction_repository.insert(&reaction_definition).await.unwrap();
 
-        let brain = create_droid_brain(&reaction_repository, &text_phonemiser);
+        let brain = create_droid_brain(&reaction_repository, &text_phonemiser).await;
 
         let reaction = stimulate_with_chat_message(&brain, |stimulus| stimulus.text = String::from("!hello"));
 
@@ -146,8 +146,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn create_droid_brain_talking_reaction_phonemise_text() {
+    #[tokio::test]
+    async fn create_droid_brain_talking_reaction_phonemise_text() {
         let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
         let mut reaction_definition = ReactionDefinition::new_empty(
@@ -159,9 +159,9 @@ mod tests {
             text: ReactionStepText::LetterByLetter(String::from("some text")),
             emotion_id: EmotionId(String::from("an emotion id"))
         }));
-        reaction_repository.insert(&reaction_definition).unwrap();
+        reaction_repository.insert(&reaction_definition).await.unwrap();
 
-        let brain = create_droid_brain(&reaction_repository, &text_phonemiser);
+        let brain = create_droid_brain(&reaction_repository, &text_phonemiser).await;
 
         let reaction = stimulate_with_chat_message(&brain, |stimulus| stimulus.text = String::from("!hello"));
 
@@ -176,8 +176,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn create_droid_brain_talking_reaction_interpolate_chat_message_with_user() {
+    #[tokio::test]
+    async fn create_droid_brain_talking_reaction_interpolate_chat_message_with_user() {
         let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
         let mut reaction_definition = ReactionDefinition::new_empty(
@@ -189,9 +189,9 @@ mod tests {
             text: ReactionStepText::LetterByLetter(String::from("Hello I am ${user}")),
             emotion_id: EmotionId(String::from("an emotion id"))
         }));
-        reaction_repository.insert(&reaction_definition).unwrap();
+        reaction_repository.insert(&reaction_definition).await.unwrap();
 
-        let brain = create_droid_brain(&reaction_repository, &text_phonemiser);
+        let brain = create_droid_brain(&reaction_repository, &text_phonemiser).await;
 
         let reaction = stimulate_with_chat_message(&brain, |stimulus| {
             stimulus.text = String::from("!hello");
@@ -208,8 +208,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn create_droid_brain_talking_reaction_interpolate_chat_message_with_target() {
+    #[tokio::test]
+    async fn create_droid_brain_talking_reaction_interpolate_chat_message_with_target() {
         let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
         let mut reaction_definition = ReactionDefinition::new_empty(
@@ -221,9 +221,9 @@ mod tests {
             text: ReactionStepText::LetterByLetter(String::from("Hello ${target}!")),
             emotion_id: EmotionId(String::from("an emotion id"))
         }));
-        reaction_repository.insert(&reaction_definition).unwrap();
+        reaction_repository.insert(&reaction_definition).await.unwrap();
 
-        let brain = create_droid_brain(&reaction_repository, &text_phonemiser);
+        let brain = create_droid_brain(&reaction_repository, &text_phonemiser).await;
 
         let reaction = stimulate_with_chat_message(&brain, |stimulus| stimulus.text = String::from("!hello Pmyl"));
 
@@ -237,8 +237,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn create_droid_brain_talking_reaction_interpolate_chat_message_with_touser_user_if_target_missing() {
+    #[tokio::test]
+    async fn create_droid_brain_talking_reaction_interpolate_chat_message_with_touser_user_if_target_missing() {
         let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
         let mut reaction_definition = ReactionDefinition::new_empty(
@@ -250,9 +250,9 @@ mod tests {
             text: ReactionStepText::LetterByLetter(String::from("Hello ${touser}!")),
             emotion_id: EmotionId(String::from("an emotion id"))
         }));
-        reaction_repository.insert(&reaction_definition).unwrap();
+        reaction_repository.insert(&reaction_definition).await.unwrap();
 
-        let brain = create_droid_brain(&reaction_repository, &text_phonemiser);
+        let brain = create_droid_brain(&reaction_repository, &text_phonemiser).await;
 
         let reaction = stimulate_with_chat_message(&brain, |stimulus| {
             stimulus.text = String::from("!hello");
@@ -269,8 +269,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn create_droid_brain_talking_reaction_interpolate_chat_message_with_touser_target_if_present() {
+    #[tokio::test]
+    async fn create_droid_brain_talking_reaction_interpolate_chat_message_with_touser_target_if_present() {
         let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
         let mut reaction_definition = ReactionDefinition::new_empty(
@@ -282,9 +282,9 @@ mod tests {
             text: ReactionStepText::LetterByLetter(String::from("Hello ${touser}!")),
             emotion_id: EmotionId(String::from("an emotion id"))
         }));
-        reaction_repository.insert(&reaction_definition).unwrap();
+        reaction_repository.insert(&reaction_definition).await.unwrap();
 
-        let brain = create_droid_brain(&reaction_repository, &text_phonemiser);
+        let brain = create_droid_brain(&reaction_repository, &text_phonemiser).await;
 
         let reaction = stimulate_with_chat_message(&brain, |stimulus| {
             stimulus.text = String::from("!hello PranDroid");
@@ -301,8 +301,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn create_droid_brain_talking_reaction_interpolate_chat_message_before_phonemising_text() {
+    #[tokio::test]
+    async fn create_droid_brain_talking_reaction_interpolate_chat_message_before_phonemising_text() {
         let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
         let mut reaction_definition = ReactionDefinition::new_empty(
@@ -314,9 +314,9 @@ mod tests {
             text: ReactionStepText::LetterByLetter(String::from("Hello ${user}!")),
             emotion_id: EmotionId(String::from("an emotion id"))
         }));
-        reaction_repository.insert(&reaction_definition).unwrap();
+        reaction_repository.insert(&reaction_definition).await.unwrap();
 
-        let brain = create_droid_brain(&reaction_repository, &text_phonemiser);
+        let brain = create_droid_brain(&reaction_repository, &text_phonemiser).await;
 
         let reaction = stimulate_with_chat_message(&brain, |stimulus| {
             stimulus.text = String::from("!hello");

@@ -10,3 +10,6 @@ log = "0.4.17"
 rand = "0.8.5"
 thiserror = "1.0.30"
 uuid = { version = "0.8.2", features = ["v4"] }
+
+[dev-dependencies]
+tokio = { version = "1.19.2", features = ["macros", "rt-multi-thread"] }

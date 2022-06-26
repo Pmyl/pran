@@ -63,14 +63,14 @@ mod tests {
         "a string".to_string()
     }
 
-    #[test]
-    fn store_image_storage_errors_return_storage_fail() {
+    #[tokio::test]
+    async fn store_image_storage_errors_return_storage_fail() {
         let repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
         let mut storage = InMemoryImageStorage::new();
         storage.set_error_on_save();
         let storage_arc: Arc<dyn ImageStorage> = Arc::new(storage);
 
-        match create_image(CreateImageRequest { image: fake_image(), id: create_id() }, &repository, &storage_arc) {
+        match create_image(CreateImageRequest { image: fake_image(), id: create_id() }, &repository, &storage_arc).await {
             Err(e) => match e {
                 StoreImageError::StorageFail => {},
                 _ => unreachable!()
@@ -79,12 +79,12 @@ mod tests {
         }
     }
 
-    #[test]
-    fn store_image_empty_image_return_bad_request() {
+    #[tokio::test]
+    async fn store_image_empty_image_return_bad_request() {
         let repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
         let storage: Arc<dyn ImageStorage> = Arc::new(InMemoryImageStorage::new());
 
-        match create_image(CreateImageRequest { image: vec![], id: create_id() }, &repository, &storage) {
+        match create_image(CreateImageRequest { image: vec![], id: create_id() }, &repository, &storage).await {
             Err(e) => match e {
                 StoreImageError::BadRequest => {},
                 _ => unreachable!()
@@ -93,12 +93,12 @@ mod tests {
         }
     }
 
-    #[test]
-    fn store_image_empty_id_return_bad_request() {
+    #[tokio::test]
+    async fn store_image_empty_id_return_bad_request() {
         let repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
         let storage: Arc<dyn ImageStorage> = Arc::new(InMemoryImageStorage::new());
 
-        match create_image(CreateImageRequest { image: fake_image(), id: String::from("") }, &repository, &storage) {
+        match create_image(CreateImageRequest { image: fake_image(), id: String::from("") }, &repository, &storage).await {
             Err(e) => match e {
                 StoreImageError::BadRequest => {},
                 _ => unreachable!()
@@ -107,8 +107,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn store_image_conflict_return_conflict_and_image_not_on_fs() {
+    #[tokio::test]
+    async fn store_image_conflict_return_conflict_and_image_not_on_fs() {
         let repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
         let storage = Arc::new(InMemoryImageStorage::new());
         let image = fake_image();
@@ -116,27 +116,32 @@ mod tests {
         image_conflict.push(1);
         let id = create_id();
 
-        let first_image = create_image(CreateImageRequest { image: image.clone(), id: id.clone() }, &repository, &(storage.clone() as Arc<dyn ImageStorage>)).unwrap();
+        let first_image = create_image(CreateImageRequest { image: image.clone(), id: id.clone() }, &repository, &(storage.clone() as Arc<dyn ImageStorage>))
+            .await.unwrap();
 
         let error = create_image(CreateImageRequest { image: image_conflict, id: id.clone() }, &repository, &(storage.clone() as Arc<dyn ImageStorage>))
-            .expect_err("Creation of image with existing id should have errored");
+            .await.expect_err("Creation of image with existing id should have errored");
 
         assert!(matches!(error, StoreImageError::Conflict(_)));
-        assert!(matches!(storage.get(&ImageUrl(first_image.url)), Some(ImageData(i)) if i == image));
+        assert!(matches!(storage.get(&ImageUrl(first_image.url)).await, Some(ImageData(i)) if i == image));
         assert_eq!(storage.files_count(), 1);
     }
 
-    #[test]
-    fn store_image_save_in_repo_and_store_on_fs() {
+    #[tokio::test]
+    async fn store_image_save_in_repo_and_store_on_fs() {
         let repository = Arc::new(InMemoryImageRepository::new());
         let storage = Arc::new(InMemoryImageStorage::new());
         let image = fake_image();
         let id = create_id();
 
-        match create_image(CreateImageRequest { image, id: id.clone() }, &(repository.clone() as Arc<dyn ImageRepository>), &(storage.clone() as Arc<dyn ImageStorage>)) {
+        match create_image(
+            CreateImageRequest { image, id: id.clone() },
+            &(repository.clone() as Arc<dyn ImageRepository>),
+            &(storage.clone() as Arc<dyn ImageStorage>)
+        ).await {
             Ok(image) => {
                 assert_eq!(image.id, id.clone());
-                assert!(repository.has(&ImageId(image.id)));
+                assert!(repository.has(&ImageId(image.id)).await);
                 assert!(storage.has(&ImageUrl(image.url)));
             },
             _ => unreachable!()
