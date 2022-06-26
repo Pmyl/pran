@@ -6,10 +6,11 @@ use rocket::{Request, response, State};
 use rocket::http::Status;
 use pran_droid_core::application::reactions::create::{create_reaction, CreateReactionError, CreateReactionRequest};
 use pran_droid_core::domain::reactions::reaction_definition_repository::{ReactionDefinitionRepository};
+use crate::authentication::authenticated::Authenticated;
 use crate::reactions::models::reaction_model::ReactionResponse;
 
 #[post("/reactions", format = "json", data = "<payload>")]
-pub async fn api_create_reaction(payload: Json<CreateReactionApiRequest>, repo: &State<Arc<dyn ReactionDefinitionRepository>>) -> Result<Json<ReactionResponse>, Error> {
+pub async fn api_create_reaction(_authenticated: Authenticated, payload: Json<CreateReactionApiRequest>, repo: &State<Arc<dyn ReactionDefinitionRepository>>) -> Result<Json<ReactionResponse>, Error> {
     Ok(Json(create_reaction(payload.0.into(), repo).await?.into()))
 }
 

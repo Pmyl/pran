@@ -27,6 +27,7 @@ use crate::reactions::create::api_create_reaction;
 use crate::reactions::get::api_get_reaction;
 use crate::reactions::insert_step::api_insert_reaction_step;
 
+mod authentication;
 mod emotions;
 mod images;
 mod reactions;

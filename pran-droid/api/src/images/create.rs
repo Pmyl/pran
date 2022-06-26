@@ -8,10 +8,11 @@ use rocket::serde::json::Json;
 use pran_droid_core::application::images::create::{create_image, CreateImageRequest, StoreImageError};
 use pran_droid_core::domain::images::image_repository::ImageRepository;
 use pran_droid_core::domain::images::image_storage::ImageStorage;
+use crate::authentication::authenticated::Authenticated;
 use crate::images::responses::image_response::ImageResponse;
 
 #[post("/images", data = "<payload>")]
-pub async fn api_create_image(payload: Form<CreateImageApiRequest<'_>>, repo: &State<Arc<dyn ImageRepository>>, storage: &State<Arc<dyn ImageStorage>>) -> Result<Json<ImageResponse>, Error> {
+pub async fn api_create_image(_authenticated: Authenticated, payload: Form<CreateImageApiRequest<'_>>, repo: &State<Arc<dyn ImageRepository>>, storage: &State<Arc<dyn ImageStorage>>) -> Result<Json<ImageResponse>, Error> {
     let request = into_request(payload)?;
     Ok(Json(create_image(request, repo, storage).await?.into()))
 }

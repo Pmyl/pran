@@ -6,6 +6,7 @@ use rocket::http::Status;
 use rocket::serde::json::Json;
 use pran_droid_core::application::emotions::create::{create_emotion, CreateEmotionError, CreateEmotionRequest};
 use pran_droid_core::domain::emotions::emotion_repository::EmotionRepository;
+use crate::authentication::authenticated::Authenticated;
 use crate::emotions::responses::emotion_response::EmotionResponse;
 
 #[derive(Deserialize)]
@@ -14,7 +15,7 @@ pub struct CreateEmotionApiRequest {
 }
 
 #[post("/emotions", format = "json", data = "<payload>")]
-pub async fn api_create_emotions(payload: Json<CreateEmotionApiRequest>, repo: &State<Arc<dyn EmotionRepository>>) -> Result<Json<EmotionResponse>, Error> {
+pub async fn api_create_emotions(_authenticated: Authenticated, payload: Json<CreateEmotionApiRequest>, repo: &State<Arc<dyn EmotionRepository>>) -> Result<Json<EmotionResponse>, Error> {
     Ok(Json(create_emotion(CreateEmotionRequest { name: payload.name.clone() }, repo).await?.into()))
 }
 
