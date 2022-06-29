@@ -25,7 +25,7 @@ pub enum ReactionTrigger {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ChatCommandTrigger {
-    pub text: String
+    pub text: String,
 }
 
 #[derive(Debug, Clone)]
@@ -48,7 +48,7 @@ impl ChatCommandTrigger {
 
 impl ChatKeywordTrigger {
     pub fn new(text: String) -> Self {
-        Self { match_regex: regex::Regex::new(format!("(^| ){}($| )", regex::escape(&text)).as_str()).unwrap(), text}
+        Self { match_regex: regex::Regex::new(format!("(^| ){}($| )", regex::escape(&text)).as_str()).unwrap(), text }
     }
     pub fn matches(&self, message_text: &str) -> bool {
         self.match_regex.is_match(message_text)
@@ -62,7 +62,7 @@ impl ReactionDefinition {
             is_disabled: false,
             triggers: vec![trigger],
             steps: vec![],
-            count: 0
+            count: 0,
         }
     }
 
@@ -119,7 +119,7 @@ impl ReactionTrigger {
 pub enum ReactionStepDefinition {
     Moving(MovingReactionStep),
     Talking(TalkingReactionStepDefinition),
-    CompositeTalking(Vec<TalkingReactionStepDefinition>)
+    CompositeTalking(Vec<TalkingReactionStepDefinition>),
 }
 
 pub type MovingReactionStepDefinition = MovingReactionStep;
@@ -128,41 +128,53 @@ pub type MovingReactionStepDefinition = MovingReactionStep;
 pub struct TalkingReactionStepDefinition {
     pub emotion_id: EmotionId,
     pub skip: ReactionStepSkipDefinition,
-    pub text: ReactionStepTextDefinition
+    pub text: ReactionStepTextDefinition,
 }
 
 pub type ReactionStepSkipDefinition = ReactionStepSkip;
 pub type ReactionStepTextDefinition = ReactionStepText;
 
 impl ReactionStepTextDefinition {
-    pub fn contextualise_text_reaction(&self, context: &ReactionContext) -> ReactionStepText {
-        match self {
-            ReactionStepTextDefinition::Instant(_) => ReactionStepText::Instant(self.apply_context(context)),
-            ReactionStepTextDefinition::LetterByLetter(_) => ReactionStepText::LetterByLetter(self.apply_context(context)),
-        }
+    pub fn try_contextualise_text_reaction(&self, context: &ReactionContext) -> Option<ReactionStepText> {
+        Some(match self {
+            ReactionStepTextDefinition::Instant(_) => ReactionStepText::Instant(self.try_apply_context(context)?),
+            ReactionStepTextDefinition::LetterByLetter(_) => ReactionStepText::LetterByLetter(self.try_apply_context(context)?),
+        })
     }
 
-    fn apply_context(&self, context: &ReactionContext) -> String {
-        let mut text = self.get_text();
-        if text.contains("${user}") {
-            text = text.replace("${user}", &context.stimulus.get_source_name())
-        }
-        if text.contains("${count}") {
-            text = text.replace("${count}", &context.count.to_string())
-        }
+    fn try_apply_context(&self, context: &ReactionContext) -> Option<String> {
+        let text = self.get_text();
+        let template_chunks = text.split("$");
+        let mut output_message = vec![];
 
-        match &context.stimulus {
-            Stimulus::ChatMessage(message) => {
-                if text.contains("${target}") {
-                    text = text.replace("${target}", &message.get_target().unwrap_or_else(|| "".to_string()))
-                }
+        for template_chunk in template_chunks {
+            if template_chunk.starts_with("{user}") {
+                output_message.push(template_chunk.replace("{user}", &context.stimulus.get_source_name()));
+                continue;
+            }
 
-                if text.contains("${touser}") {
-                    text = text.replace("${touser}", &message.get_target().unwrap_or_else(|| context.stimulus.get_source_name()))
+            if template_chunk.starts_with("{count}") {
+                output_message.push(template_chunk.replace("{count}", &context.count.to_string()));
+                continue;
+            }
+
+            match &context.stimulus {
+                Stimulus::ChatMessage(message) => {
+                    if template_chunk.starts_with("{target}") {
+                        output_message.push(template_chunk.replace("{target}", &message.get_target()?));
+                        continue;
+                    }
+
+                    if template_chunk.starts_with("{touser}") {
+                        output_message.push(template_chunk.replace("{touser}", &message.get_target().unwrap_or_else(|| context.stimulus.get_source_name())));
+                        continue;
+                    }
                 }
             }
+
+            output_message.push(template_chunk.to_string());
         }
 
-        text
+        Some(output_message.join(""))
     }
 }

@@ -3,11 +3,12 @@ use crate::application::brain::pran_droid_brain::TextPhonemiser;
 use crate::domain::animations::animation::Animation;
 use crate::domain::brain::stimuli::Stimulus;
 use crate::domain::emotions::emotion::EmotionId;
-use crate::domain::reactions::reaction_definition::{ReactionDefinition, ReactionStepDefinition, TalkingReactionStepDefinition};
+use crate::domain::reactions::reaction_definition::{ReactionDefinition, ReactionDefinitionId, ReactionStepDefinition, TalkingReactionStepDefinition};
 
 #[derive(Clone, Debug)]
 pub struct Reaction {
-    pub steps: Vec<ReactionStep>
+    pub source_definition_id: ReactionDefinitionId,
+    pub steps: Vec<ReactionStep>,
 }
 
 #[derive(Clone, Debug)]
@@ -53,36 +54,39 @@ pub struct ReactionContext {
 }
 
 impl Reaction {
-    pub(crate) fn create(text_phonemiser: &Arc<dyn TextPhonemiser>, definition: &ReactionDefinition, context: &ReactionContext) -> Self {
-        Reaction {
-            steps: definition.steps.iter().map(|step| ReactionStep::create(text_phonemiser, step, context)).collect()
+    pub(crate) fn try_create(text_phonemiser: &Arc<dyn TextPhonemiser>, definition: &ReactionDefinition, context: &ReactionContext) -> Option<Self> {
+        let mut steps = vec![];
+        for step in &definition.steps {
+            steps.push(ReactionStep::try_create(text_phonemiser, step, context)?);
         }
+
+        Some(Reaction { source_definition_id: definition.id.clone(), steps })
     }
 }
 
 impl ReactionStep {
-    pub(crate) fn create(text_phonemiser: &Arc<dyn TextPhonemiser>, step_definition: &ReactionStepDefinition, context: &ReactionContext) -> Self {
-        match step_definition {
+    pub(crate) fn try_create(text_phonemiser: &Arc<dyn TextPhonemiser>, step_definition: &ReactionStepDefinition, context: &ReactionContext) -> Option<Self> {
+        Some(match step_definition {
             ReactionStepDefinition::Moving(moving_step_definition) =>
                 ReactionStep::Moving(moving_step_definition.clone()),
             ReactionStepDefinition::Talking(talking_step_definition) =>
-                ReactionStep::Talking(TalkingReactionStep::create(text_phonemiser, talking_step_definition, context)),
+                ReactionStep::Talking(TalkingReactionStep::try_create(text_phonemiser, talking_step_definition, context)?),
             ReactionStepDefinition::CompositeTalking(_) =>
                 todo!("should never get here because not implemented")
-        }
+        })
     }
 }
 
 impl TalkingReactionStep {
-    fn create(text_phonemiser: &Arc<dyn TextPhonemiser>, step_definition: &TalkingReactionStepDefinition, context: &ReactionContext) -> Self {
-        let text = step_definition.text.contextualise_text_reaction(context);
+    fn try_create(text_phonemiser: &Arc<dyn TextPhonemiser>, step_definition: &TalkingReactionStepDefinition, context: &ReactionContext) -> Option<Self> {
+        let text = step_definition.text.try_contextualise_text_reaction(context)?;
 
-        TalkingReactionStep {
+        Some(TalkingReactionStep {
             skip: step_definition.skip.clone(),
             phonemes: text_phonemiser.phonemise_text(&text.get_text()),
             text,
             emotion_id: step_definition.emotion_id.clone(),
-        }
+        })
     }
 }
 

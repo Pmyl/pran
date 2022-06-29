@@ -58,10 +58,10 @@ impl PranDroidBrain {
                 .find(|(trigger, _)| trigger.matches(text))
                 .map(|(_, definition_id)| definition_id));
 
-        self.react(stimulus, definition_id.cloned())
+        self.try_react(stimulus, definition_id.cloned())
     }
 
-    fn react(&mut self, stimulus: Stimulus, definition_id: Option<ReactionDefinitionId>) -> Option<Reaction> {
+    fn try_react(&mut self, stimulus: Stimulus, definition_id: Option<ReactionDefinitionId>) -> Option<Reaction> {
         if let Some(definition_id) = definition_id {
             let reaction_definition = self.reaction_definitions.get(&definition_id).unwrap();
             debug!("Matching reaction found {:?}", definition_id);
@@ -70,10 +70,10 @@ impl PranDroidBrain {
             let new_count = *self.reaction_counters.get(&definition_id).unwrap();
             self.reaction_notifier.notify_reaction_usage(&definition_id, new_count);
 
-            Some(Reaction::create(&self.text_phonemiser, reaction_definition, &ReactionContext {
+            Reaction::try_create(&self.text_phonemiser, reaction_definition, &ReactionContext {
                 count: new_count,
                 stimulus
-            }))
+            })
         } else {
             None
         }

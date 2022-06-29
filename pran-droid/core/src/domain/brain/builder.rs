@@ -23,6 +23,10 @@ impl PranDroidBrainBuilder {
     }
 
     pub fn with_reaction(&mut self, reaction: ReactionDefinition) {
+        if reaction.is_disabled {
+            return;
+        }
+
         for trigger in &reaction.triggers {
             match trigger {
                 ReactionTrigger::ChatCommand(command_trigger) => self.chat_command_triggers.push((command_trigger.clone(), reaction.id.clone())),
