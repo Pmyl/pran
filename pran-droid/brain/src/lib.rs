@@ -6,11 +6,15 @@ use futures::stream::{StreamExt};
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
+use serde::Serialize;
 use pran_phonemes_core::phonemes::phonemise_text;
+use reqwest::Client;
 use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::tungstenite::Message;
 use pran_droid_core::application::brain::pran_droid_brain::{create_droid_brain, TextPhonemiser};
+use pran_droid_core::domain::brain::pran_droid_brain::ReactionNotifier;
 use pran_droid_core::domain::brain::stimuli::{ChatMessageStimulus, Source, Stimulus};
+use pran_droid_core::domain::reactions::reaction_definition::ReactionDefinitionId;
 use pran_droid_core::domain::reactions::reaction_definition_repository::ReactionDefinitionRepository;
 use crate::future::join;
 use crate::stream_interface::events::{ChatEvent};
@@ -32,13 +36,35 @@ impl TextPhonemiser for PranTextPhonemiser {
     }
 }
 
+struct ApiReactionNotifier { api_secret_key: String, api_base_path: String }
+impl ReactionNotifier for ApiReactionNotifier {
+    fn notify_reaction_usage(&self, reaction_definition_id: &ReactionDefinitionId, new_count: u32) {
+        #[derive(Serialize)]
+        struct CountUpdatePatchRequest { count: u32 }
+
+        let definition_id = reaction_definition_id.0.clone();
+        let api_base_path = self.api_base_path.clone();
+        let api_secret_key = self.api_secret_key.clone();
+        tokio::spawn(async move {
+            Client::new().patch(format!("{}/reactions/{}", api_base_path, definition_id))
+                .body(serde_json::to_string(&CountUpdatePatchRequest { count: new_count }).unwrap())
+                .header("Content-Type", "application/json")
+                .header("api_secret_key", api_secret_key.as_str())
+                .send().await.ok();
+        });
+    }
+}
+
+
 pub struct PranDroidBrainConfig {
     pub twitch_client_secret: String,
     pub twitch_client_id: String,
     pub twitch_token: String,
     pub twitch_channel: String,
     pub twitch_user: String,
-    pub websocket_port: u16
+    pub websocket_port: u16,
+    pub api_base_path: String,
+    pub api_secret_key: String,
 }
 
 pub async fn start_droid_brain(
@@ -48,7 +74,11 @@ pub async fn start_droid_brain(
     pran_phonemes_core::phonemes::pran_phonemes().expect("PranPhonemes failed to initialise");
 
     let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(PranTextPhonemiser {});
-    let brain = create_droid_brain(&reaction_repository, &text_phonemiser).await;
+    let reaction_notifier: Arc<dyn ReactionNotifier> = Arc::new(ApiReactionNotifier {
+        api_base_path: config.api_base_path,
+        api_secret_key: config.api_secret_key
+    });
+    let mut brain = create_droid_brain(&reaction_repository, &text_phonemiser, &reaction_notifier).await;
 
     let token = authenticate(
         config.twitch_client_secret,

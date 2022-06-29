@@ -20,7 +20,7 @@ pub struct CreateReactionRequest {
 }
 
 pub async fn create_reaction(request: CreateReactionRequest, repository: &Arc<dyn ReactionDefinitionRepository>) -> Result<ReactionDto, CreateReactionError> {
-    let trigger = ReactionTrigger::new_chat(request.trigger)
+    let trigger = ReactionTrigger::new_chat_command(request.trigger)
         .map_err(|_| CreateReactionError::BadRequest(String::from("Provided `trigger` is invalid")))?;
 
     if !repository.exists_with_trigger(&trigger).await {
@@ -49,7 +49,7 @@ mod tests {
 
         match create_reaction(request, &repository).await {
             Ok(reaction) => match reaction.trigger {
-                ReactionTriggerDto::Chat(text) => assert_eq!(text, trigger),
+                ReactionTriggerDto::ChatCommand(text) => assert_eq!(text, trigger),
                 _ => unreachable!("expected reaction to trigger through chat")
             },
             _ => unreachable!("expected create reaction to not fail")
@@ -63,6 +63,28 @@ mod tests {
 
         match create_reaction(request, &repository).await {
             Ok(reaction) => assert!(reaction.steps.is_empty()),
+            _ => unreachable!("expected create reaction to not fail")
+        }
+    }
+
+    #[tokio::test]
+    async fn create_reaction_return_new_reaction_enabled() {
+        let request = CreateReactionRequest { trigger: String::from("!fire") };
+        let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+
+        match create_reaction(request, &repository).await {
+            Ok(reaction) => assert_eq!(reaction.is_disabled, false),
+            _ => unreachable!("expected create reaction to not fail")
+        }
+    }
+
+    #[tokio::test]
+    async fn create_reaction_return_new_reaction_with_zero_usages() {
+        let request = CreateReactionRequest { trigger: String::from("!fire") };
+        let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+
+        match create_reaction(request, &repository).await {
+            Ok(reaction) => assert_eq!(reaction.count, 0),
             _ => unreachable!("expected create reaction to not fail")
         }
     }

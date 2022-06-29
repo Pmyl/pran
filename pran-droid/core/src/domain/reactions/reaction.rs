@@ -47,21 +47,26 @@ pub enum ReactionStepText {
 #[derive(Clone, Debug)]
 pub struct Milliseconds(pub u16);
 
+pub struct ReactionContext {
+    pub stimulus: Stimulus,
+    pub count: u32
+}
+
 impl Reaction {
-    pub(crate) fn create(text_phonemiser: &Arc<dyn TextPhonemiser>, definition: &ReactionDefinition, stimulus: &Stimulus) -> Self {
+    pub(crate) fn create(text_phonemiser: &Arc<dyn TextPhonemiser>, definition: &ReactionDefinition, context: &ReactionContext) -> Self {
         Reaction {
-            steps: definition.steps.iter().map(|step| ReactionStep::create(text_phonemiser, step, stimulus)).collect()
+            steps: definition.steps.iter().map(|step| ReactionStep::create(text_phonemiser, step, context)).collect()
         }
     }
 }
 
 impl ReactionStep {
-    pub(crate) fn create(text_phonemiser: &Arc<dyn TextPhonemiser>, definition: &ReactionStepDefinition, stimulus: &Stimulus) -> Self {
-        match definition {
+    pub(crate) fn create(text_phonemiser: &Arc<dyn TextPhonemiser>, step_definition: &ReactionStepDefinition, context: &ReactionContext) -> Self {
+        match step_definition {
             ReactionStepDefinition::Moving(moving_step_definition) =>
                 ReactionStep::Moving(moving_step_definition.clone()),
             ReactionStepDefinition::Talking(talking_step_definition) =>
-                ReactionStep::Talking(TalkingReactionStep::create(text_phonemiser, talking_step_definition, stimulus)),
+                ReactionStep::Talking(TalkingReactionStep::create(text_phonemiser, talking_step_definition, context)),
             ReactionStepDefinition::CompositeTalking(_) =>
                 todo!("should never get here because not implemented")
         }
@@ -69,14 +74,14 @@ impl ReactionStep {
 }
 
 impl TalkingReactionStep {
-    fn create(text_phonemiser: &Arc<dyn TextPhonemiser>, definition: &TalkingReactionStepDefinition, stimulus: &Stimulus) -> Self {
-        let text = definition.text.contextualise_text_reaction(stimulus);
+    fn create(text_phonemiser: &Arc<dyn TextPhonemiser>, step_definition: &TalkingReactionStepDefinition, context: &ReactionContext) -> Self {
+        let text = step_definition.text.contextualise_text_reaction(context);
 
         TalkingReactionStep {
-            skip: definition.skip.clone(),
+            skip: step_definition.skip.clone(),
             phonemes: text_phonemiser.phonemise_text(&text.get_text()),
             text,
-            emotion_id: definition.emotion_id.clone(),
+            emotion_id: step_definition.emotion_id.clone(),
         }
     }
 }

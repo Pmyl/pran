@@ -22,6 +22,7 @@ use crate::images::get_all::api_get_all_images;
 use crate::images::create::api_create_image;
 use crate::images::get_from_storage::api_get_image_from_storage;
 use crate::infrastructure::config::Config;
+use crate::reactions::patch::api_patch_reaction;
 use crate::reactions::create::api_create_reaction;
 use crate::reactions::get::api_get_reaction;
 use crate::reactions::insert_step::api_insert_reaction_step;
@@ -69,6 +70,7 @@ async fn main() {
             api_get_image_from_storage,
             api_create_image,
             api_create_reaction,
+            api_patch_reaction,
             api_get_reaction,
             api_insert_reaction_step,
         ]).launch();

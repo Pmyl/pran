@@ -3,7 +3,7 @@ use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 use pran_droid_core::domain::emotions::emotion::EmotionId;
 use pran_droid_core::domain::reactions::reaction::Milliseconds;
-use pran_droid_core::domain::reactions::reaction_definition::{ChatCommandTrigger, MovingReactionStepDefinition, ReactionDefinition, ReactionDefinitionId, ReactionStepDefinition, ReactionStepSkipDefinition, ReactionStepTextDefinition, ReactionTrigger, TalkingReactionStepDefinition};
+use pran_droid_core::domain::reactions::reaction_definition::{ChatCommandTrigger, ChatKeywordTrigger, MovingReactionStepDefinition, ReactionDefinition, ReactionDefinitionId, ReactionStepDefinition, ReactionStepSkipDefinition, ReactionStepTextDefinition, ReactionTrigger, TalkingReactionStepDefinition};
 use crate::deta::{Base, Deta, Query, InsertError as DetaInsertError, PutError, QueryAll};
 use pran_droid_core::domain::reactions::reaction_definition_repository::{ReactionDefinitionRepository, ReactionInsertError, ReactionUpdateError};
 use crate::animations::animation::{AnimationStorage, into_animation_domain, into_animation_storage};
@@ -33,13 +33,17 @@ struct ReactionStorage {
     key: String,
     triggers: Vec<ReactionTriggerStorage>,
     steps: Vec<ReactionStepStorage>,
+    is_disabled: bool,
+    count: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 enum ReactionTriggerStorage {
     #[serde(rename = "chat_command")]
-    ChatCommand { command: String }
+    ChatCommand { command: String },
+    #[serde(rename = "chat_keyword")]
+    ChatKeyword { command: String },
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -74,6 +78,8 @@ impl From<&ReactionStorage> for ReactionDefinition {
             id: ReactionDefinitionId(storage.key.clone()),
             steps: storage.steps.iter().map(into_step_domain).collect(),
             triggers: storage.triggers.iter().map(into_trigger_domain).collect(),
+            is_disabled: storage.is_disabled,
+            count: storage.count
         }
     }
 }
@@ -83,20 +89,24 @@ impl From<&ReactionDefinition> for ReactionStorage {
         Self {
             key: reaction.id.0.clone(),
             triggers: reaction.triggers.iter().map(into_trigger_storage).collect(),
-            steps: reaction.steps.iter().map(into_step_storage).collect()
+            steps: reaction.steps.iter().map(into_step_storage).collect(),
+            is_disabled: reaction.is_disabled,
+            count: reaction.count,
         }
     }
 }
 
 fn into_trigger_storage(trigger: &ReactionTrigger) -> ReactionTriggerStorage {
     match trigger {
-        ReactionTrigger::ChatCommand(chat_command) => ReactionTriggerStorage::ChatCommand { command: chat_command.text.clone() }
+        ReactionTrigger::ChatCommand(chat_command) => ReactionTriggerStorage::ChatCommand { command: chat_command.text.clone() },
+        ReactionTrigger::ChatKeyword(chat_command) => ReactionTriggerStorage::ChatKeyword { command: chat_command.text.clone() },
     }
 }
 
 fn into_trigger_domain(trigger: &ReactionTriggerStorage) -> ReactionTrigger {
     match trigger {
-        ReactionTriggerStorage::ChatCommand { command } => ReactionTrigger::ChatCommand(ChatCommandTrigger { text: command.clone() })
+        ReactionTriggerStorage::ChatCommand { command } => ReactionTrigger::ChatCommand(ChatCommandTrigger { text: command.clone() }),
+        ReactionTriggerStorage::ChatKeyword { command } => ReactionTrigger::ChatKeyword(ChatKeywordTrigger { text: command.clone() }),
     }
 }
 

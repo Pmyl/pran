@@ -246,7 +246,9 @@ async fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefiniti
         }, &reaction_repository).await.expect("error creating reaction");
         update_reaction(UpdateReactionRequest {
             id: reaction.id.clone(),
-            triggers: vec![String::from("!hi"), String::from("!hello")]
+            count: None,
+            triggers: Some(vec![String::from("!hi"), String::from("!hello")]),
+            is_disabled: Some(false)
         }, &reaction_repository).await.expect("error updating reaction");
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
@@ -530,7 +532,9 @@ async fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefiniti
         }, &reaction_repository).await.expect("error creating reaction");
         update_reaction(UpdateReactionRequest {
             id: reaction.id.clone(),
-            triggers: vec![String::from("!mantra"), String::from("!bs")]
+            count: None,
+            triggers: Some(vec![String::from("!mantra"), String::from("!bs")]),
+            is_disabled: Some(false)
         }, &reaction_repository).await.expect("error updating reaction");
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),

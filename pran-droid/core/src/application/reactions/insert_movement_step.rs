@@ -58,14 +58,14 @@ mod tests {
     use crate::persistence::reactions::in_memory_reaction_repository::InMemoryReactionRepository;
     use crate::application::reactions::dtos::reaction_step_dto::{MovingReactionStepDto, ReactionStepSkipDto};
     use crate::domain::images::image_repository::tests::setup_dummy_images;
-    use crate::domain::reactions::reaction_definition_repository::tests::setup_dummy_chat_reaction_definition;
+    use crate::domain::reactions::reaction_definition_repository::tests::setup_dummy_chat_command_reaction_definition;
     use crate::persistence::images::in_memory_image_repository::InMemoryImageRepository;
 
     #[tokio::test]
     async fn insert_movement_step_to_reaction_wrong_id_return_error() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        setup_dummy_chat_reaction_definition(&repository).await;
+        setup_dummy_chat_command_reaction_definition(&repository).await;
 
         let result = insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
             reaction_id: String::from("new id"),
@@ -81,7 +81,7 @@ mod tests {
     async fn insert_movement_step_to_reaction_empty_animation_store_in_repository() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let reaction = setup_dummy_chat_reaction_definition(&repository).await;
+        let reaction = setup_dummy_chat_command_reaction_definition(&repository).await;
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
             reaction_id: reaction.id.0.clone(),
@@ -98,7 +98,7 @@ mod tests {
     async fn insert_movement_step_to_reaction_correctly_map_the_animation_of_movement_step() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let reaction = setup_dummy_chat_reaction_definition(&repository).await;
+        let reaction = setup_dummy_chat_command_reaction_definition(&repository).await;
         setup_dummy_images(vec!["id1", "id2"], &image_repo).await;
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
@@ -134,7 +134,7 @@ mod tests {
     async fn insert_movement_step_to_reaction_with_non_existing_image_id_errors() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let reaction = setup_dummy_chat_reaction_definition(&repository).await;
+        let reaction = setup_dummy_chat_command_reaction_definition(&repository).await;
 
         let result = insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
             reaction_id: reaction.id.0.clone(),
@@ -154,7 +154,7 @@ mod tests {
     async fn insert_movement_step_to_existing_index_with_non_existing_image_id_errors() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let reaction = setup_dummy_chat_reaction_definition(&repository).await;
+        let reaction = setup_dummy_chat_command_reaction_definition(&repository).await;
         setup_dummy_images(vec!["id1"], &image_repo).await;
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
@@ -185,7 +185,7 @@ mod tests {
     async fn insert_multiple_movement_steps_to_reaction_save_all_of_them_at_provided_index() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let reaction = setup_dummy_chat_reaction_definition(&repository).await;
+        let reaction = setup_dummy_chat_command_reaction_definition(&repository).await;
         setup_dummy_images(vec!["id1", "id2"], &image_repo).await;
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
@@ -230,7 +230,7 @@ mod tests {
     async fn insert_movement_step_to_reaction_save_skip_configuration() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let reaction = setup_dummy_chat_reaction_definition(&repository).await;
+        let reaction = setup_dummy_chat_command_reaction_definition(&repository).await;
         setup_dummy_images(vec!["id1", "id2"], &image_repo).await;
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
@@ -266,7 +266,7 @@ mod tests {
     async fn insert_movement_step_to_an_index_detached_from_existing_steps_errors() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let reaction = setup_dummy_chat_reaction_definition(&repository).await;
+        let reaction = setup_dummy_chat_command_reaction_definition(&repository).await;
         setup_dummy_images(vec!["id1", "id2", "id3"], &image_repo).await;
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
@@ -299,7 +299,7 @@ mod tests {
     async fn insert_movement_step_to_an_index_right_after_existing_steps_at_index() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let reaction = setup_dummy_chat_reaction_definition(&repository).await;
+        let reaction = setup_dummy_chat_command_reaction_definition(&repository).await;
         setup_dummy_images(vec!["id1", "id2"], &image_repo).await;
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {
@@ -336,7 +336,7 @@ mod tests {
     async fn insert_movement_step_to_an_index_with_existing_step_replace_existing_step() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let image_repo: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let reaction = setup_dummy_chat_reaction_definition(&repository).await;
+        let reaction = setup_dummy_chat_command_reaction_definition(&repository).await;
         setup_dummy_images(vec!["id1", "id2"], &image_repo).await;
 
         insert_movement_step_to_reaction(InsertMovementStepToReactionRequest {

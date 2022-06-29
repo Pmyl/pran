@@ -5,6 +5,7 @@ use pran_droid_core::application::reactions::dtos::reaction_step_dto::{Animation
 #[serde(tag = "type")]
 pub enum ReactionStepModel {
     Moving { animation: Vec<AnimationFrameModel>, skip: Option<ReactionStepSkipModel> },
+    #[serde(rename_all = "camelCase")]
     Talking { text: String, emotion_id: String, skip: Option<ReactionStepSkipModel> },
 }
 

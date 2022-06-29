@@ -23,6 +23,7 @@ struct Config {
     deta_project_key: String,
     deta_project_id: String,
     api_secret_key: String,
+    api_base_path: String,
 }
 
 impl Config {
@@ -43,6 +44,7 @@ impl Config {
             deta_project_key: env::var("DETA_PROJECT_KEY").expect("DETA_PROJECT_KEY missing in env variables"),
             deta_project_id: env::var("DETA_PROJECT_ID").expect("DETA_PROJECT_ID missing in env variables"),
             api_secret_key: env::var("API_SECRET_KEY").expect("API_SECRET_KEY missing in env variables"),
+            api_base_path: env::var("API_BASE_PATH").expect("API_BASE_PATH missing in env variables"),
         }
     }
 }
@@ -69,6 +71,8 @@ fn start_brain(config: &Config) -> impl Future<Output=()> {
     let twitch_channel = config.twitch_channel.clone();
     let twitch_user = config.twitch_user.clone();
     let websocket_port = config.websocket_port.clone();
+    let api_base_path = config.api_base_path.clone();
+    let api_secret_key = config.api_secret_key.clone();
 
     async move {
         start_droid_brain(PranDroidBrainConfig {
@@ -78,6 +82,8 @@ fn start_brain(config: &Config) -> impl Future<Output=()> {
             twitch_channel,
             twitch_user,
             websocket_port,
+            api_base_path,
+            api_secret_key,
         }, reaction_repo).await
     }
 }

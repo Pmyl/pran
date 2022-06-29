@@ -33,23 +33,31 @@ pub mod tests {
     use std::sync::Arc;
     use super::*;
 
-    pub async fn setup_dummy_chat_reaction_definition(repository: &Arc<dyn ReactionDefinitionRepository>) -> ReactionDefinition {
-        let definition = ReactionDefinition::new_empty(
-            ReactionDefinitionId(String::from("an id")),
-            ReactionTrigger::new_chat(String::from("a trigger")).unwrap()
-        );
-        repository.insert(&definition).await.unwrap();
-
-        definition
+    pub async fn setup_dummy_chat_command_reaction_definition(repository: &Arc<dyn ReactionDefinitionRepository>) -> ReactionDefinition {
+        setup_dummy_chat_command_reaction_definitions(vec!["a trigger"], repository).await.into_iter().next().unwrap()
     }
 
-    pub async fn setup_dummy_chat_reaction_definitions(chat_triggers: Vec<&str>, repository: &Arc<dyn ReactionDefinitionRepository>) -> Vec<ReactionDefinition> {
+    pub async fn setup_dummy_chat_command_reaction_definitions(chat_command_triggers: Vec<&str>, repository: &Arc<dyn ReactionDefinitionRepository>) -> Vec<ReactionDefinition> {
+        setup_dummy_reaction_definitions_with_triggers(
+            chat_command_triggers.iter().map(|trigger| ReactionTrigger::new_chat_command(trigger.to_string()).unwrap()).collect(),
+            repository
+        ).await
+    }
+
+    pub async fn setup_dummy_chat_keyword_reaction_definitions(chat_keyword_triggers: Vec<&str>, repository: &Arc<dyn ReactionDefinitionRepository>) -> Vec<ReactionDefinition> {
+        setup_dummy_reaction_definitions_with_triggers(
+            chat_keyword_triggers.iter().map(|trigger| ReactionTrigger::new_chat_keyword(trigger.to_string()).unwrap()).collect(),
+            repository
+        ).await
+    }
+
+    async fn setup_dummy_reaction_definitions_with_triggers(triggers: Vec<ReactionTrigger>, repository: &Arc<dyn ReactionDefinitionRepository>) -> Vec<ReactionDefinition> {
         let mut reactions = vec![];
 
-        for trigger in chat_triggers {
+        for trigger in triggers {
             let definition = ReactionDefinition::new_empty(
-                ReactionDefinitionId(format!("{}_id", trigger)),
-                ReactionTrigger::new_chat(trigger.to_string()).unwrap()
+                ReactionDefinitionId(format!("{:?}_id", trigger)),
+                trigger.clone()
             );
             repository.insert(&definition).await.unwrap();
 

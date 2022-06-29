@@ -58,14 +58,14 @@ mod tests {
     use crate::persistence::reactions::in_memory_reaction_repository::InMemoryReactionRepository;
     use crate::application::reactions::dtos::reaction_step_dto::{ReactionStepSkipDto, ReactionStepTextDto, TalkingReactionStepDto};
     use crate::domain::emotions::emotion_repository::tests::setup_dummy_emotions;
-    use crate::domain::reactions::reaction_definition_repository::tests::setup_dummy_chat_reaction_definition;
+    use crate::domain::reactions::reaction_definition_repository::tests::setup_dummy_chat_command_reaction_definition;
     use crate::persistence::emotions::in_memory_emotion_repository::InMemoryEmotionRepository;
 
     #[tokio::test]
     async fn insert_talking_step_to_reaction_wrong_id_return_error() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let emotion_repo: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
-        setup_dummy_chat_reaction_definition(&repository).await;
+        setup_dummy_chat_command_reaction_definition(&repository).await;
         setup_dummy_emotions(vec!["happy"], &emotion_repo).await;
 
         let result = insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
@@ -81,7 +81,7 @@ mod tests {
     async fn insert_talking_step_to_reaction_valid_input_store_in_repository() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let emotion_repo: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
-        let reaction = setup_dummy_chat_reaction_definition(&repository).await;
+        let reaction = setup_dummy_chat_command_reaction_definition(&repository).await;
         setup_dummy_emotions(vec!["happy"], &emotion_repo).await;
 
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
@@ -98,7 +98,7 @@ mod tests {
     async fn insert_talking_step_to_reaction_correctly_save_text_letter_by_letter() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let emotion_repo: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
-        let reaction = setup_dummy_chat_reaction_definition(&repository).await;
+        let reaction = setup_dummy_chat_command_reaction_definition(&repository).await;
         setup_dummy_emotions(vec!["happy"], &emotion_repo).await;
 
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
@@ -117,7 +117,7 @@ mod tests {
     async fn insert_talking_step_to_reaction_with_non_existing_emotion_id_errors() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let emotion_repo: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
-        let reaction = setup_dummy_chat_reaction_definition(&repository).await;
+        let reaction = setup_dummy_chat_command_reaction_definition(&repository).await;
         setup_dummy_emotions(vec!["happy"], &emotion_repo).await;
 
         let result = insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
@@ -133,7 +133,7 @@ mod tests {
     async fn insert_talking_step_to_reaction_save_skip_configuration() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let emotion_repo: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
-        let reaction = setup_dummy_chat_reaction_definition(&repository).await;
+        let reaction = setup_dummy_chat_command_reaction_definition(&repository).await;
         setup_dummy_emotions(vec!["happy", "sad"], &emotion_repo).await;
 
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {

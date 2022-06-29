@@ -1052,6 +1052,7 @@ dependencies = [
  "async-trait",
  "log",
  "rand 0.8.5",
+ "regex",
  "thiserror",
  "uuid",
 ]
