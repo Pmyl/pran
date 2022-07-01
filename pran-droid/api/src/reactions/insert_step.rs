@@ -11,7 +11,7 @@ use pran_droid_core::domain::emotions::emotion_repository::EmotionRepository;
 use pran_droid_core::domain::reactions::reaction_definition_repository::{ReactionDefinitionRepository};
 use pran_droid_core::domain::images::image_repository::ImageRepository;
 use crate::infrastructure::authenticated::Authenticated;
-use crate::reactions::models::reaction_step_model::{AnimationFrameModel, from_model_to_dto, ReactionStepModel, ReactionStepSkipModel, ReactionStepTextAlternativeModel, ReactionStepTextModel};
+use crate::reactions::models::reaction_step_model::{AnimationFrameModel, from_model_to_dto, ReactionStepModel, ReactionStepSkipModel, ReactionStepMessageAlternativeModel, ReactionStepMessageModel};
 
 #[put("/reactions/<reaction_id>/steps", format = "json", data = "<payload>")]
 pub async fn api_insert_reaction_step(_authenticated: Authenticated, reaction_id: String, payload: Json<InsertReactionStepApiRequest>, repo: &State<Arc<dyn ReactionDefinitionRepository>>, image_repo: &State<Arc<dyn ImageRepository>>, emotion_repo: &State<Arc<dyn EmotionRepository>>) -> Result<Json<ReactionStepModel>, Error> {
@@ -46,7 +46,7 @@ pub struct InsertReactionTalkingStepApiRequest {
     index: usize,
     skip: Option<ReactionStepSkipModel>,
     emotion_id: String,
-    text: Vec<ReactionStepTextAlternativeModel>
+    alternatives: Vec<ReactionStepMessageAlternativeModel>
 }
 
 impl InsertReactionMovingStepApiRequest {
@@ -67,12 +67,12 @@ impl InsertReactionTalkingStepApiRequest {
             step_index: self.index,
             skip: from_model_to_dto(self.skip),
             emotion_id: self.emotion_id,
-            text: self.text
+            alternatives: self.alternatives
                 .iter()
                 .map(|alternative| ReactionStepTextAlternativeDto {
-                    text: match &alternative.text {
-                        ReactionStepTextModel::Instant { text } => ReactionStepTextDto::Instant(text.clone()),
-                        ReactionStepTextModel::LetterByLetter { text } => ReactionStepTextDto::LetterByLetter(text.clone()),
+                    text: match &alternative.message {
+                        ReactionStepMessageModel::Instant { text } => ReactionStepTextDto::Instant(text.clone()),
+                        ReactionStepMessageModel::LetterByLetter { text } => ReactionStepTextDto::LetterByLetter(text.clone()),
                     },
                     probability: alternative.probability,
                 }).collect()
@@ -86,8 +86,6 @@ pub enum Error {
     AddMovementStepToReactionError(#[from] AddMovementStepToReactionError),
     #[error("{0:?}")]
     AddTalkingStepToReactionError(#[from] AddTalkingStepToReactionError),
-    #[error("Not matching request")]
-    NotMatchingRequest,
 }
 
 impl<'r, 'o: 'r> Responder<'r, 'o> for Error {

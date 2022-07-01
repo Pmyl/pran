@@ -6,7 +6,7 @@ use pran_droid_core::application::reactions::dtos::reaction_step_dto::{Animation
 pub enum ReactionStepModel {
     Moving { animation: Vec<AnimationFrameModel>, skip: Option<ReactionStepSkipModel> },
     #[serde(rename_all = "camelCase")]
-    Talking { text: Vec<ReactionStepTextAlternativeModel>, emotion_id: String, skip: Option<ReactionStepSkipModel> },
+    Talking { alternatives: Vec<ReactionStepMessageAlternativeModel>, emotion_id: String, skip: Option<ReactionStepSkipModel> },
 }
 
 impl From<ReactionStepDto> for ReactionStepModel {
@@ -20,12 +20,12 @@ impl From<ReactionStepDto> for ReactionStepModel {
             }
             ReactionStepDto::Talking(talking_step) => {
                 ReactionStepModel::Talking {
-                    text: talking_step.text
+                    alternatives: talking_step.text
                         .iter()
-                        .map(|alternative| ReactionStepTextAlternativeModel {
-                            text: match &alternative.text {
-                                ReactionStepTextDto::Instant(text) => ReactionStepTextModel::Instant { text: text.clone() },
-                                ReactionStepTextDto::LetterByLetter(text) => ReactionStepTextModel::LetterByLetter { text: text.clone() },
+                        .map(|alternative| ReactionStepMessageAlternativeModel {
+                            message: match &alternative.text {
+                                ReactionStepTextDto::Instant(text) => ReactionStepMessageModel::Instant { text: text.clone() },
+                                ReactionStepTextDto::LetterByLetter(text) => ReactionStepMessageModel::LetterByLetter { text: text.clone() },
                             },
                             probability: alternative.probability,
                         }).collect(),
@@ -38,14 +38,14 @@ impl From<ReactionStepDto> for ReactionStepModel {
 }
 
 #[derive(Deserialize, Serialize)]
-pub struct ReactionStepTextAlternativeModel {
-    pub text: ReactionStepTextModel,
+pub struct ReactionStepMessageAlternativeModel {
+    pub message: ReactionStepMessageModel,
     pub probability: f32,
 }
 
 #[derive(Deserialize, Serialize)]
-#[serde(tag = "type")]
-pub enum ReactionStepTextModel {
+#[serde(tag = "mode")]
+pub enum ReactionStepMessageModel {
     Instant { text: String },
     LetterByLetter { text: String },
 }
@@ -73,6 +73,13 @@ pub(crate) fn from_model_to_dto(model: Option<ReactionStepSkipModel>) -> Reactio
         Some(ReactionStepSkipModel::AfterMilliseconds { ms }) => ReactionStepSkipDto::AfterMilliseconds(ms),
         Some(ReactionStepSkipModel::AfterStep { extra_ms }) => ReactionStepSkipDto::AfterStepWithExtraMilliseconds(extra_ms),
     }
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(tag = "type")]
+pub(crate) enum ReactionTriggerModel {
+    ChatCommand { command: String },
+    ChatKeyword { keyword: String },
 }
 
 #[derive(Deserialize, Serialize)]

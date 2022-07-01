@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 use std::clone::Clone;
 use crate::domain::reactions::reaction::{Milliseconds};
-use crate::domain::reactions::reaction_definition::{MovingReactionStepDefinition, ReactionStepDefinition, ReactionStepSkipDefinition, ReactionStepTextAlternativesDefinition, ReactionStepTextDefinition, TalkingReactionStepDefinition};
+use crate::domain::reactions::reaction_definition::{MovingReactionStepDefinition, ReactionStepDefinition, ReactionStepSkipDefinition, ReactionStepMessageAlternativesDefinition, ReactionStepMessageDefinition, TalkingReactionStepDefinition};
 use crate::domain::animations::animation::{Animation, AnimationFrame, AnimationFrames, CreateAnimationError};
 use crate::domain::images::image::ImageId;
 
@@ -94,23 +94,23 @@ impl From<TalkingReactionStepDefinition> for ReactionStepDto {
         ReactionStepDto::Talking(TalkingReactionStepDto {
             skip: talking_step.skip.into(),
             emotion_id: talking_step.emotion_id.0,
-            text: from_text_alternatives_domain(talking_step.text)
+            text: from_text_alternatives_domain(talking_step.alternatives)
         })
     }
 }
 
-fn from_text_alternatives_domain(text_definition_alternatives: ReactionStepTextAlternativesDefinition) -> Vec<ReactionStepTextAlternativeDto> {
-    text_definition_alternatives.alternatives.iter().map(|alternative| ReactionStepTextAlternativeDto {
-        text: alternative.text.clone().into(),
+fn from_text_alternatives_domain(text_definition_alternatives: ReactionStepMessageAlternativesDefinition) -> Vec<ReactionStepTextAlternativeDto> {
+    text_definition_alternatives.0.iter().map(|alternative| ReactionStepTextAlternativeDto {
+        text: alternative.message.clone().into(),
         probability: alternative.probability
     }).collect()
 }
 
-impl From<ReactionStepTextDefinition> for ReactionStepTextDto {
-    fn from(text: ReactionStepTextDefinition) -> Self {
+impl From<ReactionStepMessageDefinition> for ReactionStepTextDto {
+    fn from(text: ReactionStepMessageDefinition) -> Self {
         match text {
-            ReactionStepTextDefinition::Instant(text) => ReactionStepTextDto::Instant(text),
-            ReactionStepTextDefinition::LetterByLetter(text) => ReactionStepTextDto::LetterByLetter(text),
+            ReactionStepMessageDefinition::Instant(text) => ReactionStepTextDto::Instant(text),
+            ReactionStepMessageDefinition::LetterByLetter(text) => ReactionStepTextDto::LetterByLetter(text),
         }
     }
 }

@@ -8,6 +8,7 @@ use pran_droid_core::application::reactions::create::{create_reaction, CreateRea
 use pran_droid_core::domain::reactions::reaction_definition_repository::{ReactionDefinitionRepository};
 use crate::infrastructure::authenticated::Authenticated;
 use crate::reactions::models::reaction_model::ReactionResponse;
+use crate::reactions::models::reaction_step_model::ReactionTriggerModel;
 
 #[post("/reactions", format = "json", data = "<payload>")]
 pub async fn api_create_reaction(_authenticated: Authenticated, payload: Json<CreateReactionApiRequest>, repo: &State<Arc<dyn ReactionDefinitionRepository>>) -> Result<Json<ReactionResponse>, Error> {
@@ -16,13 +17,13 @@ pub async fn api_create_reaction(_authenticated: Authenticated, payload: Json<Cr
 
 #[derive(Deserialize)]
 pub struct CreateReactionApiRequest {
-    trigger: String
+    trigger: ReactionTriggerModel
 }
 
 impl From<CreateReactionApiRequest> for CreateReactionRequest {
     fn from(request: CreateReactionApiRequest) -> CreateReactionRequest {
         CreateReactionRequest {
-            trigger: request.trigger
+            trigger: request.trigger.into()
         }
     }
 }

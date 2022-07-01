@@ -79,7 +79,7 @@ impl ReactionStep {
 
 impl TalkingReactionStep {
     fn try_create(text_phonemiser: &Arc<dyn TextPhonemiser>, step_definition: &TalkingReactionStepDefinition, context: &ReactionContext) -> Option<Self> {
-        let text = step_definition.text.get_random_text().try_contextualise_text_reaction(context)?;
+        let text = step_definition.alternatives.get_random_text().try_contextualise_text_reaction(context)?;
 
         Some(TalkingReactionStep {
             skip: step_definition.skip.clone(),

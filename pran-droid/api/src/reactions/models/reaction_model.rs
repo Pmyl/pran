@@ -1,6 +1,6 @@
 ﻿use rocket::serde::Serialize;
 use pran_droid_core::application::reactions::dtos::reaction_dto::{ReactionDto, ReactionTriggerDto};
-use crate::reactions::models::reaction_step_model::ReactionStepModel;
+use crate::reactions::models::reaction_step_model::{ReactionStepModel, ReactionTriggerModel};
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -9,14 +9,14 @@ pub struct ReactionResponse {
     steps: Vec<ReactionStepModel>,
     is_disabled: bool,
     count: u32,
-    trigger: String
+    triggers: Vec<ReactionTriggerModel>
 }
 
 impl From<ReactionDto> for ReactionResponse {
     fn from(dto: ReactionDto) -> ReactionResponse {
         ReactionResponse {
             id: dto.id,
-            trigger: trigger_to_string(dto.trigger),
+            triggers: dto.triggers.into_iter().map(Into::into).collect(),
             is_disabled: dto.is_disabled,
             count: dto.count,
             steps: dto.steps.into_iter().map(From::from).collect()
@@ -24,9 +24,20 @@ impl From<ReactionDto> for ReactionResponse {
     }
 }
 
-fn trigger_to_string(trigger: ReactionTriggerDto) -> String {
-    match trigger {
-        ReactionTriggerDto::ChatCommand(chat_trigger) => chat_trigger,
-        ReactionTriggerDto::ChatKeyword(chat_trigger) => chat_trigger,
+impl Into<ReactionTriggerModel> for ReactionTriggerDto {
+    fn into(self) -> ReactionTriggerModel {
+        match self {
+            ReactionTriggerDto::ChatCommand(chat_trigger) => ReactionTriggerModel::ChatCommand { command: chat_trigger },
+            ReactionTriggerDto::ChatKeyword(chat_trigger) => ReactionTriggerModel::ChatKeyword { keyword: chat_trigger },
+        }
+    }
+}
+
+impl Into<ReactionTriggerDto> for ReactionTriggerModel {
+    fn into(self) -> ReactionTriggerDto {
+        match self {
+            ReactionTriggerModel::ChatCommand { command: chat_trigger } => ReactionTriggerDto::ChatCommand(chat_trigger),
+            ReactionTriggerModel::ChatKeyword { keyword: chat_trigger } => ReactionTriggerDto::ChatKeyword(chat_trigger),
+        }
     }
 }

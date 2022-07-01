@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use std::sync::Arc;
 use std::fmt::Debug;
 use thiserror::Error;
-use crate::application::reactions::dtos::reaction_dto::{ReactionDto};
+use crate::application::reactions::dtos::reaction_dto::{ReactionDto, ReactionTriggerDto};
 use crate::domain::reactions::reaction_definition::{ReactionDefinitionId, ReactionTrigger};
 use crate::domain::reactions::reaction_definition_repository::{ReactionDefinitionRepository};
 
@@ -24,7 +24,7 @@ impl UpdateReactionError {
 #[derive(Default)]
 pub struct UpdateReactionRequest {
     pub id: String,
-    pub triggers: Option<Vec<String>>,
+    pub triggers: Option<Vec<ReactionTriggerDto>>,
     pub is_disabled: Option<bool>,
     pub count: Option<u32>
 }
@@ -36,7 +36,7 @@ pub async fn update_reaction(request: UpdateReactionRequest, repository: &Arc<dy
 
     if let Some(request_triggers) = request.triggers {
         assert_no_duplicate_triggers(&request_triggers)?;
-        let triggers = build_domain_triggers(&request_triggers)?;
+        let triggers = build_domain_triggers(request_triggers)?;
         assert_no_trigger_already_exists(&reaction_definition_id, &triggers, &repository).await?;
 
         definition.update_triggers(triggers).map_err(|_| UpdateReactionError::malformed_triggers())?;
@@ -55,10 +55,10 @@ pub async fn update_reaction(request: UpdateReactionRequest, repository: &Arc<dy
     Ok(definition.into())
 }
 
-fn build_domain_triggers(request_triggers: &Vec<String>) -> Result<Vec<ReactionTrigger>, UpdateReactionError> {
+fn build_domain_triggers(request_triggers: Vec<ReactionTriggerDto>) -> Result<Vec<ReactionTrigger>, UpdateReactionError> {
     let mut triggers = vec![];
     for trigger in request_triggers {
-        let command_trigger = ReactionTrigger::new_chat_command(trigger.clone())
+        let command_trigger = trigger.try_into()
             .map_err(|_| UpdateReactionError::BadRequest(String::from("Provided `trigger` is invalid")))?;
         triggers.push(command_trigger);
     }
@@ -66,9 +66,11 @@ fn build_domain_triggers(request_triggers: &Vec<String>) -> Result<Vec<ReactionT
     Ok(triggers)
 }
 
-fn assert_no_duplicate_triggers(triggers: &Vec<String>) -> Result<(), UpdateReactionError> {
+fn assert_no_duplicate_triggers(triggers: &Vec<ReactionTriggerDto>) -> Result<(), UpdateReactionError> {
     let mut uniq = HashSet::new();
-    if !triggers.iter().all(move |trigger| uniq.insert(trigger)) {
+    if !triggers.iter().all(move |trigger| {
+        if let ReactionTriggerDto::ChatCommand(command_trigger) = trigger { uniq.insert(command_trigger) } else { true }
+    }) {
         Err(UpdateReactionError::BadRequest(String::from("Multiple of same trigger provided, remove duplicates")))
     } else {
         Ok(())
@@ -95,11 +97,11 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn update_reaction_with_duplicate_triggers_error() {
+    async fn update_reaction_with_duplicate_command_triggers_error() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
-        let reaction = create_reaction(CreateReactionRequest { trigger: String::from("!some") }, &repository).await.unwrap();
+        let reaction = create_reaction(CreateReactionRequest { trigger: command_dto("!some") }, &repository).await.unwrap();
 
-        let triggers = vec![String::from("!fire"), String::from("!water"), String::from("!fire")];
+        let triggers = vec![command_dto("!fire"), command_dto("!water"), command_dto("!fire")];
         let request = create_request(&reaction, |req| req.triggers = Some(triggers));
 
         let result = update_reaction(request, &repository).await;
@@ -110,38 +112,38 @@ mod tests {
     #[tokio::test]
     async fn update_reaction_single_and_same_trigger_ok() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
-        let reaction = create_reaction(CreateReactionRequest { trigger: String::from("!fire") }, &repository).await.unwrap();
+        let reaction = create_reaction(CreateReactionRequest { trigger: command_dto("!fire") }, &repository).await.unwrap();
 
-        let request = create_request(&reaction, |req| req.triggers = Some(vec![String::from("!fire")]));
+        let request = create_request(&reaction, |req| req.triggers = Some(vec![command_dto("!fire")]));
         let result = update_reaction(request, &repository).await;
 
         let fetched_reaction = get_reaction(GetReactionRequest { id: reaction.id }, &repository).await.unwrap();
         assert!(matches!(result, Ok(_)));
-        assert!(matches!(result.unwrap().trigger, ReactionTriggerDto::ChatCommand(command) if command == "!fire"));
-        assert!(matches!(fetched_reaction.trigger, ReactionTriggerDto::ChatCommand(command) if command == "!fire"));
+        assert!(matches!(&result.unwrap().triggers[..], [ReactionTriggerDto::ChatCommand(command)] if command == "!fire"));
+        assert!(matches!(&fetched_reaction.triggers[..], [ReactionTriggerDto::ChatCommand(command)] if command == "!fire"));
     }
 
     #[tokio::test]
     async fn update_reaction_single_and_different_trigger_updates_trigger() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
-        let reaction = create_reaction(CreateReactionRequest { trigger: String::from("!fire") }, &repository).await.unwrap();
+        let reaction = create_reaction(CreateReactionRequest { trigger: command_dto("!fire") }, &repository).await.unwrap();
 
-        let request = create_request(&reaction, |req| req.triggers = Some(vec![String::from("!water")]));
+        let request = create_request(&reaction, |req| req.triggers = Some(vec![command_dto("!water")]));
         let result = update_reaction(request, &repository).await;
 
         let fetched_reaction = get_reaction(GetReactionRequest { id: reaction.id }, &repository).await.unwrap();
         assert!(matches!(result, Ok(_)));
-        assert!(matches!(result.unwrap().trigger, ReactionTriggerDto::ChatCommand(command) if command == "!water"));
-        assert!(matches!(fetched_reaction.trigger, ReactionTriggerDto::ChatCommand(command) if command == "!water"));
+        assert!(matches!(&result.unwrap().triggers[..], [ReactionTriggerDto::ChatCommand(command)] if command == "!water"));
+        assert!(matches!(&fetched_reaction.triggers[..], [ReactionTriggerDto::ChatCommand(command)] if command == "!water"));
     }
 
     #[tokio::test]
     async fn update_reaction_not_existing_id_error() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
-        let reaction = create_reaction(CreateReactionRequest { trigger: String::from("!fire") }, &repository).await.unwrap();
+        let reaction = create_reaction(CreateReactionRequest { trigger: command_dto("!fire") }, &repository).await.unwrap();
 
         let request = create_request(&reaction, |req| {
-            req.triggers = Some(vec![String::from("!water"), String::from("!grass")]);
+            req.triggers = Some(vec![command_dto("!water"), command_dto("!grass")]);
             req.id = String::from("different id");
         });
 
@@ -153,10 +155,10 @@ mod tests {
     #[tokio::test]
     async fn update_reaction_one_of_triggers_exists_conflict_error() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
-        let reaction = create_reaction(CreateReactionRequest { trigger: String::from("!fire") }, &repository).await.unwrap();
-        create_reaction(CreateReactionRequest { trigger: String::from("!grass") }, &repository).await.unwrap();
+        let reaction = create_reaction(CreateReactionRequest { trigger: command_dto("!fire") }, &repository).await.unwrap();
+        create_reaction(CreateReactionRequest { trigger: command_dto("!grass") }, &repository).await.unwrap();
 
-        let request = create_request(&reaction, |req| req.triggers = Some(vec![String::from("!water"), String::from("!grass")]));
+        let request = create_request(&reaction, |req| req.triggers = Some(vec![command_dto("!water"), command_dto("!grass")]));
         let result = update_reaction(request, &repository).await;
 
         assert!(matches!(result, Err(UpdateReactionError::Conflict(_))));
@@ -165,7 +167,7 @@ mod tests {
     #[tokio::test]
     async fn update_reaction_with_no_triggers_bad_request_error() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
-        let reaction = create_reaction(CreateReactionRequest { trigger: String::from("!fire") }, &repository).await.unwrap();
+        let reaction = create_reaction(CreateReactionRequest { trigger: command_dto("!fire") }, &repository).await.unwrap();
 
         let request = create_request(&reaction, |req| req.triggers = Some(vec![]));
         let result = update_reaction(request, &repository).await;
@@ -176,7 +178,7 @@ mod tests {
     #[tokio::test]
     async fn update_reaction_set_disable_updates_reaction() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
-        let reaction = create_reaction(CreateReactionRequest { trigger: String::from("!fire") }, &repository).await.unwrap();
+        let reaction = create_reaction(CreateReactionRequest { trigger: command_dto("!fire") }, &repository).await.unwrap();
 
         let request = create_request(&reaction, |req| req.is_disabled = Some(true));
         let result = update_reaction(request, &repository).await;
@@ -190,7 +192,7 @@ mod tests {
     #[tokio::test]
     async fn update_reaction_set_count_updates_reaction() {
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
-        let reaction = create_reaction(CreateReactionRequest { trigger: String::from("!fire") }, &repository).await.unwrap();
+        let reaction = create_reaction(CreateReactionRequest { trigger: command_dto("!fire") }, &repository).await.unwrap();
 
         let request = create_request(&reaction, |req| req.count = Some(14));
         let result = update_reaction(request, &repository).await;
@@ -201,5 +203,9 @@ mod tests {
         let mut req = UpdateReactionRequest { id: reaction.id.clone(), triggers: None, is_disabled: None, count: None };
         configure(&mut req);
         req
+    }
+
+    fn command_dto(text: &str) -> ReactionTriggerDto {
+        ReactionTriggerDto::ChatCommand(String::from(text))
     }
 }

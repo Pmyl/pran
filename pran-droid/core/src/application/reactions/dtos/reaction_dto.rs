@@ -7,8 +7,8 @@ pub struct ReactionDto {
     pub id: String,
     pub is_disabled: bool,
     pub count: u32,
-    pub trigger: ReactionTriggerDto,
-    pub steps: Vec<ReactionStepDto>
+    pub triggers: Vec<ReactionTriggerDto>,
+    pub steps: Vec<ReactionStepDto>,
 }
 
 impl From<ReactionDefinition> for ReactionDto {
@@ -17,13 +17,13 @@ impl From<ReactionDefinition> for ReactionDto {
             id: value.id.0,
             is_disabled: value.is_disabled,
             count: value.count,
-            trigger: value.triggers.into_iter().next().unwrap().into(),
-            steps: value.steps.into_iter().map(From::from).collect()
+            triggers: value.triggers.into_iter().map(From::from).collect(),
+            steps: value.steps.into_iter().map(From::from).collect(),
         }
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum ReactionTriggerDto {
     ChatCommand(String),
     ChatKeyword(String),
@@ -34,6 +34,16 @@ impl From<ReactionTrigger> for ReactionTriggerDto {
         match value {
             ReactionTrigger::ChatCommand(chat) => ReactionTriggerDto::ChatCommand(chat.text),
             ReactionTrigger::ChatKeyword(chat) => ReactionTriggerDto::ChatKeyword(chat.text),
+        }
+    }
+}
+
+impl TryInto<ReactionTrigger> for ReactionTriggerDto {
+    type Error = ();
+    fn try_into(self) -> Result<ReactionTrigger, Self::Error> {
+        match self {
+            ReactionTriggerDto::ChatCommand(text) => ReactionTrigger::new_chat_command(text),
+            ReactionTriggerDto::ChatKeyword(text) => ReactionTrigger::new_chat_keyword(text),
         }
     }
 }

@@ -4,7 +4,7 @@ use thiserror::Error;
 use crate::application::reactions::dtos::reaction_step_dto::{ReactionStepDto, ReactionStepSkipDto, ReactionStepTextAlternativeDto, ReactionStepTextDto};
 use crate::domain::emotions::emotion::EmotionId;
 use crate::domain::emotions::emotion_repository::EmotionRepository;
-use crate::domain::reactions::reaction_definition::{ReactionDefinition, ReactionDefinitionId, ReactionStepTextAlternativeDefinition, ReactionStepTextAlternativesDefinition, ReactionStepTextDefinition, TalkingReactionStepDefinition};
+use crate::domain::reactions::reaction_definition::{ReactionDefinition, ReactionDefinitionId, ReactionStepMessageAlternativeDefinition, ReactionStepMessageAlternativesDefinition, ReactionStepMessageDefinition, TalkingReactionStepDefinition};
 use crate::domain::reactions::reaction_domain_service::{add_talking_step_to_reaction, AddStepToReactionError, replace_talking_step_in_reaction};
 use crate::domain::reactions::reaction_definition_repository::ReactionDefinitionRepository;
 
@@ -21,7 +21,7 @@ pub struct InsertTalkingStepToReactionRequest {
     pub step_index: usize,
     pub emotion_id: String,
     pub skip: ReactionStepSkipDto,
-    pub text: Vec<ReactionStepTextAlternativeDto>,
+    pub alternatives: Vec<ReactionStepTextAlternativeDto>,
 }
 
 pub async fn insert_talking_step_to_reaction(request: InsertTalkingStepToReactionRequest, repository: &Arc<dyn ReactionDefinitionRepository>, emotion_repository: &Arc<dyn EmotionRepository>) -> Result<ReactionStepDto, AddTalkingStepToReactionError> {
@@ -31,10 +31,10 @@ pub async fn insert_talking_step_to_reaction(request: InsertTalkingStepToReactio
     let reaction_step = TalkingReactionStepDefinition {
         skip: request.skip.into(),
         emotion_id: EmotionId(request.emotion_id),
-        text: ReactionStepTextAlternativesDefinition::try_new(request.text.iter().map(|alternative| ReactionStepTextAlternativeDefinition {
-            text: match &alternative.text {
-                ReactionStepTextDto::Instant(text) => ReactionStepTextDefinition::Instant(text.clone()),
-                ReactionStepTextDto::LetterByLetter(text) => ReactionStepTextDefinition::LetterByLetter(text.clone()),
+        alternatives: ReactionStepMessageAlternativesDefinition::try_new(request.alternatives.iter().map(|alternative| ReactionStepMessageAlternativeDefinition {
+            message: match &alternative.text {
+                ReactionStepTextDto::Instant(text) => ReactionStepMessageDefinition::Instant(text.clone()),
+                ReactionStepTextDto::LetterByLetter(text) => ReactionStepMessageDefinition::LetterByLetter(text.clone()),
             },
             probability: alternative.probability
         }).collect()).map_err(|_| AddTalkingStepToReactionError::BadRequest(String::from("The request text does not have 100 probability total")))?
@@ -110,7 +110,7 @@ mod tests {
         let result_over = insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             reaction_id: reaction.id.0.clone(),
             emotion_id: String::from("happy"),
-            text: vec![
+            alternatives: vec![
                 ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("some text2")), probability: 75.0 },
                 ReactionStepTextAlternativeDto { text: ReactionStepTextDto::LetterByLetter(String::from("some text3")), probability: 26.0 },
             ],
@@ -120,7 +120,7 @@ mod tests {
         let result_under = insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             reaction_id: reaction.id.0.clone(),
             emotion_id: String::from("happy"),
-            text: vec![
+            alternatives: vec![
                 ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("some text2")), probability: 99.0 },
             ],
             ..base_request()
@@ -140,7 +140,7 @@ mod tests {
         let result = insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             reaction_id: reaction.id.0.clone(),
             emotion_id: String::from("happy"),
-            text: vec![],
+            alternatives: vec![],
             ..base_request()
         }, &repository, &emotion_repo).await;
 
@@ -157,14 +157,14 @@ mod tests {
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             reaction_id: reaction.id.0.clone(),
             emotion_id: String::from("happy"),
-            text: vec![ReactionStepTextAlternativeDto { text: ReactionStepTextDto::LetterByLetter(String::from("some text1")), probability: 100.0 }],
+            alternatives: vec![ReactionStepTextAlternativeDto { text: ReactionStepTextDto::LetterByLetter(String::from("some text1")), probability: 100.0 }],
             ..base_request()
         }, &repository, &emotion_repo).await.expect("Expected insert step not to fail");
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             step_index: 1,
             reaction_id: reaction.id.0.clone(),
             emotion_id: String::from("happy"),
-            text: vec![
+            alternatives: vec![
                 ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("some text2")), probability: 75.0 },
                 ReactionStepTextAlternativeDto { text: ReactionStepTextDto::LetterByLetter(String::from("some text3")), probability: 25.0 },
             ],
@@ -259,7 +259,7 @@ mod tests {
 
     fn base_request() -> InsertTalkingStepToReactionRequest {
         InsertTalkingStepToReactionRequest {
-            text: vec![ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("some text")), probability: 100.0 }],
+            alternatives: vec![ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("some text")), probability: 100.0 }],
             skip: ReactionStepSkipDto::ImmediatelyAfter,
             emotion_id: String::from("an emotion"),
             step_index: 0,

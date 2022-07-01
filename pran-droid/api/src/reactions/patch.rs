@@ -8,12 +8,14 @@ use pran_droid_core::application::reactions::update::{update_reaction, UpdateRea
 use pran_droid_core::domain::reactions::reaction_definition_repository::ReactionDefinitionRepository;
 use crate::infrastructure::authenticated::Authenticated;
 use crate::reactions::models::reaction_model::ReactionResponse;
+use crate::reactions::models::reaction_step_model::ReactionTriggerModel;
 
 #[patch("/reactions/<reaction_id>", format = "json", data = "<payload>")]
 pub async fn api_patch_reaction(_authenticated: Authenticated, reaction_id: String, payload: Json<PatchReactionRequest>, repo: &State<Arc<dyn ReactionDefinitionRepository>>) -> Result<Json<ReactionResponse>, Error> {
     Ok(Json(update_reaction(UpdateReactionRequest {
         id: reaction_id,
         count: payload.0.count,
+        triggers: payload.0.triggers.map(|triggers| triggers.into_iter().map(Into::into).collect()),
         ..Default::default()
     }, repo).await?.into()))
 }
@@ -21,6 +23,7 @@ pub async fn api_patch_reaction(_authenticated: Authenticated, reaction_id: Stri
 #[derive(Deserialize)]
 pub struct PatchReactionRequest {
     count: Option<u32>,
+    triggers: Option<Vec<ReactionTriggerModel>>,
 }
 
 #[derive(thiserror::Error, Debug)]

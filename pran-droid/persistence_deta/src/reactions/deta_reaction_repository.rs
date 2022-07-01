@@ -3,7 +3,7 @@ use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 use pran_droid_core::domain::emotions::emotion::EmotionId;
 use pran_droid_core::domain::reactions::reaction::Milliseconds;
-use pran_droid_core::domain::reactions::reaction_definition::{ChatCommandTrigger, MovingReactionStepDefinition, ReactionDefinition, ReactionDefinitionId, ReactionStepDefinition, ReactionStepSkipDefinition, ReactionStepTextAlternativeDefinition, ReactionStepTextAlternativesDefinition, ReactionStepTextDefinition, ReactionTrigger, TalkingReactionStepDefinition};
+use pran_droid_core::domain::reactions::reaction_definition::{ChatCommandTrigger, MovingReactionStepDefinition, ReactionDefinition, ReactionDefinitionId, ReactionStepDefinition, ReactionStepSkipDefinition, ReactionStepMessageAlternativeDefinition, ReactionStepMessageAlternativesDefinition, ReactionStepMessageDefinition, ReactionTrigger, TalkingReactionStepDefinition};
 use crate::deta::{Base, Deta, Query, InsertError as DetaInsertError, PutError, QueryAll};
 use pran_droid_core::domain::reactions::reaction_definition_repository::{ReactionDefinitionRepository, ReactionInsertError, ReactionUpdateError};
 use crate::animations::animation::{AnimationStorage, into_animation_domain, into_animation_storage};
@@ -49,18 +49,18 @@ enum ReactionTriggerStorage {
 #[derive(Debug, Serialize, Deserialize)]
 enum ReactionStepStorage {
     Moving { animation: AnimationStorage, skip: ReactionSkipStorage },
-    Talking { emotion_id: String, skip: ReactionSkipStorage, text: Vec<ReactionStepTextAlternativeStorage> },
+    Talking { emotion_id: String, skip: ReactionSkipStorage, alternatives: Vec<ReactionStepMessageAlternativeStorage> },
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct ReactionStepTextAlternativeStorage {
+struct ReactionStepMessageAlternativeStorage {
     probability: f32,
-    text: ReactionStepTextStorage
+    message: ReactionStepMessageStorage
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
-enum ReactionStepTextStorage {
+enum ReactionStepMessageStorage {
     #[serde(rename = "instant")]
     Instant { text: String },
     #[serde(rename = "letter_by_letter")]
@@ -122,10 +122,10 @@ fn into_step_domain(step: &ReactionStepStorage) -> ReactionStepDefinition {
             skip: into_skip_domain(skip),
             animation: into_animation_domain(animation)
         }),
-        ReactionStepStorage::Talking { skip, emotion_id, text } => ReactionStepDefinition::Talking(TalkingReactionStepDefinition {
+        ReactionStepStorage::Talking { skip, emotion_id, alternatives: text } => ReactionStepDefinition::Talking(TalkingReactionStepDefinition {
             skip: into_skip_domain(skip),
             emotion_id: EmotionId(emotion_id.clone()),
-            text: into_text_alternatives_domain(text)
+            alternatives: into_text_alternatives_domain(text)
         })
     }
 }
@@ -139,7 +139,7 @@ fn into_step_storage(step: &ReactionStepDefinition) -> ReactionStepStorage {
         ReactionStepDefinition::Talking(talking) => ReactionStepStorage::Talking {
             skip: into_skip_storage(&talking.skip),
             emotion_id: talking.emotion_id.0.clone(),
-            text: into_text_alternatives_storage(&talking.text)
+            alternatives: into_text_alternatives_storage(&talking.alternatives)
         },
         ReactionStepDefinition::CompositeTalking(_) => todo!("Implement when CompositeTalking is done")
     }
@@ -161,40 +161,39 @@ fn into_skip_domain(skip: &ReactionSkipStorage) -> ReactionStepSkipDefinition {
     }
 }
 
-fn into_text_alternatives_storage(alternatives: &ReactionStepTextAlternativesDefinition) -> Vec<ReactionStepTextAlternativeStorage> {
-    alternatives.alternatives
+fn into_text_alternatives_storage(alternatives: &ReactionStepMessageAlternativesDefinition) -> Vec<ReactionStepMessageAlternativeStorage> {
+    alternatives.0
         .iter()
-        .map(|alternative| ReactionStepTextAlternativeStorage {
-            text: into_text_storage(&alternative.text),
+        .map(|alternative| ReactionStepMessageAlternativeStorage {
+            message: into_text_storage(&alternative.message),
             probability: alternative.probability
         })
         .collect()
 }
 
-fn into_text_storage(text: &ReactionStepTextDefinition) -> ReactionStepTextStorage {
+fn into_text_storage(text: &ReactionStepMessageDefinition) -> ReactionStepMessageStorage {
     match text {
-        ReactionStepTextDefinition::Instant(text) => ReactionStepTextStorage::Instant { text: text.clone() },
-        ReactionStepTextDefinition::LetterByLetter(text) => ReactionStepTextStorage::LetterByLetter { text: text.clone() },
+        ReactionStepMessageDefinition::Instant(text) => ReactionStepMessageStorage::Instant { text: text.clone() },
+        ReactionStepMessageDefinition::LetterByLetter(text) => ReactionStepMessageStorage::LetterByLetter { text: text.clone() },
     }
 }
 
-fn into_text_domain(text: &ReactionStepTextStorage) -> ReactionStepTextDefinition {
+fn into_text_domain(text: &ReactionStepMessageStorage) -> ReactionStepMessageDefinition {
     match text {
-        ReactionStepTextStorage::Instant { text } => ReactionStepTextDefinition::Instant(text.clone()),
-        ReactionStepTextStorage::LetterByLetter { text } => ReactionStepTextDefinition::LetterByLetter(text.clone()),
+        ReactionStepMessageStorage::Instant { text } => ReactionStepMessageDefinition::Instant(text.clone()),
+        ReactionStepMessageStorage::LetterByLetter { text } => ReactionStepMessageDefinition::LetterByLetter(text.clone()),
     }
 }
 
-fn into_text_alternatives_domain(alternatives: &Vec<ReactionStepTextAlternativeStorage>) -> ReactionStepTextAlternativesDefinition {
-    ReactionStepTextAlternativesDefinition {
-        alternatives: alternatives
-            .iter()
-            .map(|alternative| ReactionStepTextAlternativeDefinition {
-                text: into_text_domain(&alternative.text),
-                probability: alternative.probability
-            })
-            .collect()
-    }
+fn into_text_alternatives_domain(alternatives: &Vec<ReactionStepMessageAlternativeStorage>) -> ReactionStepMessageAlternativesDefinition {
+    ReactionStepMessageAlternativesDefinition(alternatives
+        .iter()
+        .map(|alternative| ReactionStepMessageAlternativeDefinition {
+            message: into_text_domain(&alternative.message),
+            probability: alternative.probability
+        })
+        .collect()
+    )
 }
 
 #[async_trait]

@@ -130,47 +130,43 @@ pub type MovingReactionStepDefinition = MovingReactionStep;
 pub struct TalkingReactionStepDefinition {
     pub emotion_id: EmotionId,
     pub skip: ReactionStepSkipDefinition,
-    pub text: ReactionStepTextAlternativesDefinition,
+    pub alternatives: ReactionStepMessageAlternativesDefinition,
 }
 
 #[derive(Clone, Debug)]
-pub struct ReactionStepTextAlternativesDefinition {
-    pub alternatives: Vec<ReactionStepTextAlternativeDefinition>
-}
+pub struct ReactionStepMessageAlternativesDefinition(pub Vec<ReactionStepMessageAlternativeDefinition>);
 
 #[derive(Clone, Debug)]
-pub struct ReactionStepTextAlternativeDefinition {
-    pub text: ReactionStepTextDefinition,
+pub struct ReactionStepMessageAlternativeDefinition {
+    pub message: ReactionStepMessageDefinition,
     pub probability: f32,
 }
 
 pub type ReactionStepSkipDefinition = ReactionStepSkip;
-pub type ReactionStepTextDefinition = ReactionStepText;
+pub type ReactionStepMessageDefinition = ReactionStepText;
 
-impl ReactionStepTextAlternativesDefinition {
-    pub fn try_new(alternatives: Vec<ReactionStepTextAlternativeDefinition>) -> Result<ReactionStepTextAlternativesDefinition, ()> {
+impl ReactionStepMessageAlternativesDefinition {
+    pub fn try_new(alternatives: Vec<ReactionStepMessageAlternativeDefinition>) -> Result<ReactionStepMessageAlternativesDefinition, ()> {
         let total_probability: f32 = alternatives.iter().map(|alternative| alternative.probability).sum();
 
         if total_probability != 100.0 {
             Err(())
         } else {
-            Ok(Self { alternatives })
+            Ok(Self(alternatives))
         }
     }
 
-    pub fn new_single(text: ReactionStepTextDefinition) -> ReactionStepTextAlternativesDefinition {
-        Self {
-            alternatives: vec![ReactionStepTextAlternativeDefinition {
-                probability: 100.0,
-                text
-            }]
-        }
+    pub fn new_single(text: ReactionStepMessageDefinition) -> ReactionStepMessageAlternativesDefinition {
+        Self(vec![ReactionStepMessageAlternativeDefinition {
+            probability: 100.0,
+            message: text
+        }])
     }
 
-    pub(super) fn get_random_text_pure(alternatives: &Vec<ReactionStepTextAlternativeDefinition>, mut random_hit: f32) -> ReactionStepTextDefinition {
+    pub(super) fn get_random_text_pure(alternatives: &Vec<ReactionStepMessageAlternativeDefinition>, mut random_hit: f32) -> ReactionStepMessageDefinition {
         for alternative in alternatives {
             if alternative.probability > random_hit {
-                return alternative.text.clone()
+                return alternative.message.clone()
             } else {
                 random_hit -= alternative.probability;
             }
@@ -179,17 +175,17 @@ impl ReactionStepTextAlternativesDefinition {
         unreachable!();
     }
 
-    pub(super) fn get_random_text(&self) -> ReactionStepTextDefinition {
+    pub(super) fn get_random_text(&self) -> ReactionStepMessageDefinition {
         let random_hit = random::<f32>() * 100.0;
-        ReactionStepTextAlternativesDefinition::get_random_text_pure(&self.alternatives, random_hit)
+        ReactionStepMessageAlternativesDefinition::get_random_text_pure(&self.0, random_hit)
     }
 }
 
-impl ReactionStepTextDefinition {
+impl ReactionStepMessageDefinition {
     pub fn try_contextualise_text_reaction(&self, context: &ReactionContext) -> Option<ReactionStepText> {
         Some(match self {
-            ReactionStepTextDefinition::Instant(_) => ReactionStepText::Instant(self.try_apply_context(context)?),
-            ReactionStepTextDefinition::LetterByLetter(_) => ReactionStepText::LetterByLetter(self.try_apply_context(context)?),
+            ReactionStepMessageDefinition::Instant(_) => ReactionStepText::Instant(self.try_apply_context(context)?),
+            ReactionStepMessageDefinition::LetterByLetter(_) => ReactionStepText::LetterByLetter(self.try_apply_context(context)?),
         })
     }
 
@@ -281,9 +277,9 @@ mod tests {
     }
 
     fn get_random_text(alternatives: &[(&str, f32)], random_hit: f32) -> ReactionStepText {
-        ReactionStepTextAlternativesDefinition::get_random_text_pure(
-            &alternatives.iter().map(|alternative| ReactionStepTextAlternativeDefinition {
-                text: ReactionStepText::Instant(alternative.0.to_string()),
+        ReactionStepMessageAlternativesDefinition::get_random_text_pure(
+            &alternatives.iter().map(|alternative| ReactionStepMessageAlternativeDefinition {
+                message: ReactionStepText::Instant(alternative.0.to_string()),
                 probability: alternative.1
             }).collect(),
             random_hit

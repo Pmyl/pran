@@ -11,6 +11,10 @@ use pran_droid_core::domain::emotions::emotion_repository::EmotionRepository;
 use pran_droid_core::domain::images::image_repository::ImageRepository;
 use pran_droid_core::domain::images::image_storage::ImageStorage;
 use pran_droid_core::domain::reactions::reaction_definition_repository::ReactionDefinitionRepository;
+use pran_droid_core::persistence::emotions::in_memory_emotion_repository::InMemoryEmotionRepository;
+use pran_droid_core::persistence::images::in_memory_image_repository::InMemoryImageRepository;
+use pran_droid_core::persistence::images::in_memory_image_storage::InMemoryImageStorage;
+use pran_droid_core::persistence::reactions::in_memory_reaction_repository::InMemoryReactionRepository;
 use pran_droid_persistence_deta::emotions::deta_emotion_repository::DetaEmotionRepository;
 use pran_droid_persistence_deta::images::deta_image_repository::DetaImageRepository;
 use pran_droid_persistence_deta::images::deta_image_storage::DetaImageStorage;
@@ -21,7 +25,7 @@ use crate::emotions::get_all::api_get_all_emotions;
 use crate::images::get_all::api_get_all_images;
 use crate::images::create::api_create_image;
 use crate::images::get_from_storage::api_get_image_from_storage;
-use crate::infrastructure::config::Config;
+use crate::infrastructure::config::{Config, RuntimeMode};
 use crate::reactions::patch::api_patch_reaction;
 use crate::reactions::create::api_create_reaction;
 use crate::reactions::get::api_get_reaction;
@@ -41,10 +45,25 @@ async fn main() {
     let config = Config::new();
     debug!("{:?}", config);
 
-    let reaction_repo = Arc::new(DetaReactionRepository::new(config.deta_project_key.clone(), config.deta_project_id.clone()));
-    let emotion_repo = Arc::new(DetaEmotionRepository::new(config.deta_project_key.clone(), config.deta_project_id.clone()));
-    let images_repo = Arc::new(DetaImageRepository::new(config.deta_project_key.clone(), config.deta_project_id.clone()));
-    let images_storage = Arc::new(DetaImageStorage::new(config.deta_project_key.clone(), config.deta_project_id.clone()));
+    let reaction_repo: Arc<dyn ReactionDefinitionRepository>;
+    let emotion_repo: Arc<dyn EmotionRepository>;
+    let images_repo: Arc<dyn ImageRepository>;
+    let images_storage: Arc<dyn ImageStorage>;
+
+    match config.mode {
+        RuntimeMode::Development => {
+            reaction_repo = Arc::new(InMemoryReactionRepository::new());
+            emotion_repo = Arc::new(InMemoryEmotionRepository::new());
+            images_repo = Arc::new(InMemoryImageRepository::new());
+            images_storage = Arc::new(InMemoryImageStorage::new());
+        },
+        RuntimeMode::Production => {
+            reaction_repo = Arc::new(DetaReactionRepository::new(config.deta_project_key.clone(), config.deta_project_id.clone()));
+            emotion_repo = Arc::new(DetaEmotionRepository::new(config.deta_project_key.clone(), config.deta_project_id.clone()));
+            images_repo = Arc::new(DetaImageRepository::new(config.deta_project_key.clone(), config.deta_project_id.clone()));
+            images_storage = Arc::new(DetaImageStorage::new(config.deta_project_key.clone(), config.deta_project_id.clone()));
+        },
+    }
 
     // build_test_database(reaction_repo.clone(), emotion_repo.clone(), images_repo.clone(), images_storage.clone()).await;
 

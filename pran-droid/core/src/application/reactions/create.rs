@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::fmt::Debug;
 use thiserror::Error;
-use crate::application::reactions::dtos::reaction_dto::ReactionDto;
+use crate::application::reactions::dtos::reaction_dto::{ReactionDto, ReactionTriggerDto};
 use crate::domain::reactions::reaction_definition::{ReactionDefinition, ReactionTrigger};
 use crate::domain::reactions::reaction_definition_repository::{ReactionDefinitionRepository};
 
@@ -16,11 +16,11 @@ pub enum CreateReactionError {
 }
 
 pub struct CreateReactionRequest {
-    pub trigger: String
+    pub trigger: ReactionTriggerDto
 }
 
 pub async fn create_reaction(request: CreateReactionRequest, repository: &Arc<dyn ReactionDefinitionRepository>) -> Result<ReactionDto, CreateReactionError> {
-    let trigger = ReactionTrigger::new_chat_command(request.trigger)
+    let trigger = request.trigger.try_into()
         .map_err(|_| CreateReactionError::BadRequest(String::from("Provided `trigger` is invalid")))?;
 
     if !repository.exists_with_trigger(&trigger).await {
@@ -42,14 +42,29 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn create_reaction_return_new_reaction_from_chat() {
+    async fn create_reaction_return_new_reaction_from_chat_command() {
         let trigger = String::from("!fire");
-        let request = CreateReactionRequest { trigger: trigger.clone() };
+        let request = CreateReactionRequest { trigger: ReactionTriggerDto::ChatCommand(trigger.clone()) };
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
 
         match create_reaction(request, &repository).await {
-            Ok(reaction) => match reaction.trigger {
-                ReactionTriggerDto::ChatCommand(text) => assert_eq!(text, trigger),
+            Ok(reaction) => match &reaction.triggers[..] {
+                [ReactionTriggerDto::ChatCommand(text)] => assert_eq!(text, &trigger),
+                _ => unreachable!("expected reaction to trigger through chat")
+            },
+            _ => unreachable!("expected create reaction to not fail")
+        }
+    }
+
+    #[tokio::test]
+    async fn create_reaction_return_new_reaction_from_chat_keyword() {
+        let trigger = String::from("!fire");
+        let request = CreateReactionRequest { trigger: ReactionTriggerDto::ChatKeyword(trigger.clone()) };
+        let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+
+        match create_reaction(request, &repository).await {
+            Ok(reaction) => match &reaction.triggers[..] {
+                [ReactionTriggerDto::ChatKeyword(text)] => assert_eq!(text, &trigger),
                 _ => unreachable!("expected reaction to trigger through chat")
             },
             _ => unreachable!("expected create reaction to not fail")
@@ -58,7 +73,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_reaction_return_new_reaction_with_no_steps() {
-        let request = CreateReactionRequest { trigger: String::from("!fire") };
+        let request = CreateReactionRequest { trigger: ReactionTriggerDto::ChatCommand(String::from("!fire")) };
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
 
         match create_reaction(request, &repository).await {
@@ -69,7 +84,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_reaction_return_new_reaction_enabled() {
-        let request = CreateReactionRequest { trigger: String::from("!fire") };
+        let request = CreateReactionRequest { trigger: ReactionTriggerDto::ChatCommand(String::from("!fire")) };
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
 
         match create_reaction(request, &repository).await {
@@ -80,7 +95,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_reaction_return_new_reaction_with_zero_usages() {
-        let request = CreateReactionRequest { trigger: String::from("!fire") };
+        let request = CreateReactionRequest { trigger: ReactionTriggerDto::ChatCommand(String::from("!fire")) };
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
 
         match create_reaction(request, &repository).await {
@@ -91,7 +106,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_reaction_save_reaction_in_repository() {
-        let request = CreateReactionRequest { trigger: String::from("!fire") };
+        let request = CreateReactionRequest { trigger: ReactionTriggerDto::ChatCommand(String::from("!fire")) };
         let repository = Arc::new(InMemoryReactionRepository::new());
 
         match create_reaction(request, &(repository.clone() as Arc<dyn ReactionDefinitionRepository>)).await {
@@ -102,7 +117,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_reaction_empty_trigger_error() {
-        let request = CreateReactionRequest { trigger: String::from("") };
+        let request = CreateReactionRequest { trigger: ReactionTriggerDto::ChatCommand(String::from("")) };
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
 
         match create_reaction(request, &repository).await {
@@ -115,8 +130,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn create_reaction_twice_same_trigger_conflict_error() {
-        let trigger = String::from("trigger1");
+    async fn create_reaction_twice_same_command_trigger_conflict_error() {
+        let trigger = ReactionTriggerDto::ChatCommand(String::from("trigger1"));
         let request1 = CreateReactionRequest { trigger: trigger.clone() };
         let request2 = CreateReactionRequest { trigger: trigger.clone() };
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
@@ -132,9 +147,9 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn create_reaction_twice_different_trigger_not_fail() {
-        let request1 = CreateReactionRequest { trigger: String::from("trigger1") };
-        let request2 = CreateReactionRequest { trigger: String::from("trigger2") };
+    async fn create_reaction_twice_different_command_trigger_not_fail() {
+        let request1 = CreateReactionRequest { trigger: ReactionTriggerDto::ChatCommand(String::from("trigger1")) };
+        let request2 = CreateReactionRequest { trigger: ReactionTriggerDto::ChatCommand(String::from("trigger2")) };
         let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         create_reaction(request1, &repository.clone()).await.unwrap();
 
