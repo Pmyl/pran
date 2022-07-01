@@ -4,11 +4,9 @@ use rocket::response::{Responder, status};
 use rocket::serde::json::Json;
 use rocket::{Request, response, State};
 use rocket::http::Status;
-use pran_droid_core::application::reactions::get::{get_reaction, GetReactionRequest};
 use pran_droid_core::application::reactions::update::{update_reaction, UpdateReactionError, UpdateReactionRequest};
 use pran_droid_core::domain::reactions::reaction_definition_repository::ReactionDefinitionRepository;
 use crate::infrastructure::authenticated::Authenticated;
-use crate::reactions::create::CreateReactionApiRequest;
 use crate::reactions::models::reaction_model::ReactionResponse;
 
 #[patch("/reactions/<reaction_id>", format = "json", data = "<payload>")]

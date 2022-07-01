@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 use std::clone::Clone;
 use crate::domain::reactions::reaction::{Milliseconds};
-use crate::domain::reactions::reaction_definition::{MovingReactionStepDefinition, ReactionStepDefinition, ReactionStepSkipDefinition, ReactionStepTextDefinition, TalkingReactionStepDefinition};
+use crate::domain::reactions::reaction_definition::{MovingReactionStepDefinition, ReactionStepDefinition, ReactionStepSkipDefinition, ReactionStepTextAlternativesDefinition, ReactionStepTextDefinition, TalkingReactionStepDefinition};
 use crate::domain::animations::animation::{Animation, AnimationFrame, AnimationFrames, CreateAnimationError};
 use crate::domain::images::image::ImageId;
 
@@ -19,9 +19,15 @@ pub struct MovingReactionStepDto {
 
 #[derive(Clone, Debug)]
 pub struct TalkingReactionStepDto {
-    pub text: ReactionStepTextDto,
+    pub text: Vec<ReactionStepTextAlternativeDto>,
     pub emotion_id: String,
     pub skip: ReactionStepSkipDto
+}
+
+#[derive(Clone, Debug)]
+pub struct ReactionStepTextAlternativeDto {
+    pub probability: f32,
+    pub text: ReactionStepTextDto
 }
 
 #[derive(Clone, Debug)]
@@ -88,9 +94,16 @@ impl From<TalkingReactionStepDefinition> for ReactionStepDto {
         ReactionStepDto::Talking(TalkingReactionStepDto {
             skip: talking_step.skip.into(),
             emotion_id: talking_step.emotion_id.0,
-            text: talking_step.text.into()
+            text: from_text_alternatives_domain(talking_step.text)
         })
     }
+}
+
+fn from_text_alternatives_domain(text_definition_alternatives: ReactionStepTextAlternativesDefinition) -> Vec<ReactionStepTextAlternativeDto> {
+    text_definition_alternatives.alternatives.iter().map(|alternative| ReactionStepTextAlternativeDto {
+        text: alternative.text.clone().into(),
+        probability: alternative.probability
+    }).collect()
 }
 
 impl From<ReactionStepTextDefinition> for ReactionStepTextDto {

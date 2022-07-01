@@ -3,7 +3,7 @@ use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 use pran_droid_core::domain::emotions::emotion::EmotionId;
 use pran_droid_core::domain::reactions::reaction::Milliseconds;
-use pran_droid_core::domain::reactions::reaction_definition::{ChatCommandTrigger, ChatKeywordTrigger, MovingReactionStepDefinition, ReactionDefinition, ReactionDefinitionId, ReactionStepDefinition, ReactionStepSkipDefinition, ReactionStepTextDefinition, ReactionTrigger, TalkingReactionStepDefinition};
+use pran_droid_core::domain::reactions::reaction_definition::{ChatCommandTrigger, MovingReactionStepDefinition, ReactionDefinition, ReactionDefinitionId, ReactionStepDefinition, ReactionStepSkipDefinition, ReactionStepTextAlternativeDefinition, ReactionStepTextAlternativesDefinition, ReactionStepTextDefinition, ReactionTrigger, TalkingReactionStepDefinition};
 use crate::deta::{Base, Deta, Query, InsertError as DetaInsertError, PutError, QueryAll};
 use pran_droid_core::domain::reactions::reaction_definition_repository::{ReactionDefinitionRepository, ReactionInsertError, ReactionUpdateError};
 use crate::animations::animation::{AnimationStorage, into_animation_domain, into_animation_storage};
@@ -49,7 +49,13 @@ enum ReactionTriggerStorage {
 #[derive(Debug, Serialize, Deserialize)]
 enum ReactionStepStorage {
     Moving { animation: AnimationStorage, skip: ReactionSkipStorage },
-    Talking { emotion_id: String, skip: ReactionSkipStorage, text: ReactionStepTextStorage },
+    Talking { emotion_id: String, skip: ReactionSkipStorage, text: Vec<ReactionStepTextAlternativeStorage> },
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct ReactionStepTextAlternativeStorage {
+    probability: f32,
+    text: ReactionStepTextStorage
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -106,7 +112,7 @@ fn into_trigger_storage(trigger: &ReactionTrigger) -> ReactionTriggerStorage {
 fn into_trigger_domain(trigger: &ReactionTriggerStorage) -> ReactionTrigger {
     match trigger {
         ReactionTriggerStorage::ChatCommand { command } => ReactionTrigger::ChatCommand(ChatCommandTrigger { text: command.clone() }),
-        ReactionTriggerStorage::ChatKeyword { command } => ReactionTrigger::ChatKeyword(ChatKeywordTrigger { text: command.clone() }),
+        ReactionTriggerStorage::ChatKeyword { command } => ReactionTrigger::new_chat_keyword(command.clone()).unwrap(),
     }
 }
 
@@ -119,7 +125,7 @@ fn into_step_domain(step: &ReactionStepStorage) -> ReactionStepDefinition {
         ReactionStepStorage::Talking { skip, emotion_id, text } => ReactionStepDefinition::Talking(TalkingReactionStepDefinition {
             skip: into_skip_domain(skip),
             emotion_id: EmotionId(emotion_id.clone()),
-            text: into_text_domain(text)
+            text: into_text_alternatives_domain(text)
         })
     }
 }
@@ -133,7 +139,7 @@ fn into_step_storage(step: &ReactionStepDefinition) -> ReactionStepStorage {
         ReactionStepDefinition::Talking(talking) => ReactionStepStorage::Talking {
             skip: into_skip_storage(&talking.skip),
             emotion_id: talking.emotion_id.0.clone(),
-            text: into_text_storage(&talking.text)
+            text: into_text_alternatives_storage(&talking.text)
         },
         ReactionStepDefinition::CompositeTalking(_) => todo!("Implement when CompositeTalking is done")
     }
@@ -155,6 +161,16 @@ fn into_skip_domain(skip: &ReactionSkipStorage) -> ReactionStepSkipDefinition {
     }
 }
 
+fn into_text_alternatives_storage(alternatives: &ReactionStepTextAlternativesDefinition) -> Vec<ReactionStepTextAlternativeStorage> {
+    alternatives.alternatives
+        .iter()
+        .map(|alternative| ReactionStepTextAlternativeStorage {
+            text: into_text_storage(&alternative.text),
+            probability: alternative.probability
+        })
+        .collect()
+}
+
 fn into_text_storage(text: &ReactionStepTextDefinition) -> ReactionStepTextStorage {
     match text {
         ReactionStepTextDefinition::Instant(text) => ReactionStepTextStorage::Instant { text: text.clone() },
@@ -166,6 +182,18 @@ fn into_text_domain(text: &ReactionStepTextStorage) -> ReactionStepTextDefinitio
     match text {
         ReactionStepTextStorage::Instant { text } => ReactionStepTextDefinition::Instant(text.clone()),
         ReactionStepTextStorage::LetterByLetter { text } => ReactionStepTextDefinition::LetterByLetter(text.clone()),
+    }
+}
+
+fn into_text_alternatives_domain(alternatives: &Vec<ReactionStepTextAlternativeStorage>) -> ReactionStepTextAlternativesDefinition {
+    ReactionStepTextAlternativesDefinition {
+        alternatives: alternatives
+            .iter()
+            .map(|alternative| ReactionStepTextAlternativeDefinition {
+                text: into_text_domain(&alternative.text),
+                probability: alternative.probability
+            })
+            .collect()
     }
 }
 

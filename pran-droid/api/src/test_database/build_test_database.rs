@@ -7,7 +7,7 @@ use pran_droid_core::application::emotions::update_layer::{AddEmotionAnimationLa
 use pran_droid_core::application::emotions::update_mouth_mapping::{update_emotion_mouth_mapping, UpdateEmotionMouthMappingElementRequest, UpdateEmotionMouthMappingRequest};
 use pran_droid_core::application::images::create::{create_image, CreateImageRequest};
 use pran_droid_core::application::reactions::create::{create_reaction, CreateReactionRequest};
-use pran_droid_core::application::reactions::dtos::reaction_step_dto::{AnimationFrameDto, ReactionStepSkipDto};
+use pran_droid_core::application::reactions::dtos::reaction_step_dto::{AnimationFrameDto, ReactionStepSkipDto, ReactionStepTextAlternativeDto, ReactionStepTextDto};
 use pran_droid_core::application::reactions::insert_movement_step::{insert_movement_step_to_reaction, InsertMovementStepToReactionRequest};
 use pran_droid_core::application::reactions::insert_talking_step::{insert_talking_step_to_reaction, InsertTalkingStepToReactionRequest};
 use pran_droid_core::application::reactions::update::{update_reaction, UpdateReactionRequest};
@@ -187,7 +187,7 @@ async fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefiniti
 
     insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
         emotion_id: sad_emotion.id.clone(),
-        text: String::from("Hey everyone, a bit sad..."),
+        text: vec![ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("Hey everyone, a bit sad...")), probability: 100.0 }],
         skip: ReactionStepSkipDto::ImmediatelyAfter,
         step_index: 2,
         reaction_id: reaction1.id.clone(),
@@ -195,7 +195,7 @@ async fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefiniti
 
     insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
         emotion_id: sad_emotion.id.clone(),
-        text: String::from("...but prandroid here!"),
+        text: vec![ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("...but prandroid here!")), probability: 100.0 }],
         skip: ReactionStepSkipDto::AfterMilliseconds(2500),
         step_index: 3,
         reaction_id: reaction1.id.clone(),
@@ -233,7 +233,7 @@ async fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefiniti
 
     insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
         emotion_id: happy_emotion.id.clone(),
-        text: String::from("Hey everyone, prandroid here!"),
+        text: vec![ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("Hey everyone, prandroid here!")), probability: 100.0 }],
         skip: ReactionStepSkipDto::ImmediatelyAfter,
         step_index: 2,
         reaction_id: reaction2.id.clone(),
@@ -248,12 +248,12 @@ async fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefiniti
             id: reaction.id.clone(),
             count: None,
             triggers: Some(vec![String::from("!hi"), String::from("!hello")]),
-            is_disabled: Some(false)
+            is_disabled: None
         }, &reaction_repository).await.expect("error updating reaction");
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
             // Random, ask pranessa
-            text: String::from("Hi ${user}!!"),
+            text: vec![ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("Hi ${user}!!")), probability: 100.0 }],
             skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 10 seconds
             // Authorisation level Everyone
@@ -269,7 +269,13 @@ async fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefiniti
         }, &reaction_repository).await.expect("error creating reaction");
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
-            text: String::from("Beep boob boop"), // Random between "Beep boob boop" "Bo-beep" "Beeeeeeeee" "Boop boop" "Beep"
+            text: vec![
+                ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("Beep boob boop")), probability: 20.0 },
+                ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("Bo-beep")), probability: 20.0 },
+                ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("Beeeeeeeee")), probability: 20.0 },
+                ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("Boop boop")), probability: 20.0 },
+                ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("Beep")), probability: 20.0 },
+            ],
             skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
@@ -285,7 +291,7 @@ async fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefiniti
         }, &reaction_repository).await.expect("error creating reaction");
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
-            text: String::from("Enjoy the lurk ${user}"),
+            text: vec![ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("Enjoy the lurk ${user}")), probability: 100.0 }],
             skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
@@ -302,7 +308,7 @@ async fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefiniti
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
             // Random, ask pranessa
-            text: String::from("AI doesn’t have to be evil to destroy humanity – if AI has a goal and humanity just happens to come in the way, it will destroy humanity as a matter of course without even thinking about it, no hard feelings."),
+            text: vec![ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("AI doesn’t have to be evil to destroy humanity – if AI has a goal and humanity just happens to come in the way, it will destroy humanity as a matter of course without even thinking about it, no hard feelings.")), probability: 100.0 }],
             skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
@@ -319,7 +325,7 @@ async fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefiniti
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
             // Random, ask pranessa
-            text: String::from("Go grab a glass of water!"),
+            text: vec![ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("Go grab a glass of water!")), probability: 100.0 }],
             skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
@@ -335,7 +341,7 @@ async fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefiniti
         }, &reaction_repository).await.expect("error creating reaction");
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
-            text: String::from("EXTERMINATE!"),
+            text: vec![ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("EXTERMINATE!")), probability: 100.0 }],
             skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
@@ -351,7 +357,7 @@ async fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefiniti
         }, &reaction_repository).await.expect("error creating reaction");
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
-            text: String::from("I'm just a droid, I can't do much"),
+            text: vec![ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("I'm just a droid, I can't do much")), probability: 100.0 }],
             skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
@@ -367,7 +373,7 @@ async fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefiniti
         }, &reaction_repository).await.expect("error creating reaction");
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
-            text: String::from("Do you know Aria? She's a cutie"),
+            text: vec![ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("Do you know Aria? She's a cutie")), probability: 100.0 }],
             skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
@@ -383,8 +389,7 @@ async fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefiniti
         }, &reaction_repository).await.expect("error creating reaction");
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
-            // Implement count!
-            text: String::from("There are ${count} stars in the sky!"),
+            text: vec![ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("There are ${count} stars in the sky!")), probability: 100.0 }],
             skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
@@ -401,7 +406,7 @@ async fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefiniti
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
             // Random, ask pranessa
-            text: String::from("The sight of such a friendly town fills you with determination."),
+            text: vec![ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("The sight of such a friendly town fills you with determination.")), probability: 100.0 }],
             skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
@@ -418,7 +423,7 @@ async fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefiniti
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
             // Random, ask pranessa
-            text: String::from("[FIGHT]"),
+            text: vec![ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("[FIGHT]")), probability: 100.0 }],
             skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
@@ -435,7 +440,7 @@ async fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefiniti
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
             // Random, ask pranessa
-            text: String::from("Did you say ${target}?! I've heard amazing things about them! "),
+            text: vec![ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("Did you say ${target}?! I've heard amazing things about them!")), probability: 100.0 }],
             skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
@@ -451,7 +456,7 @@ async fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefiniti
         }, &reaction_repository).await.expect("error creating reaction");
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
-            text: String::from("My name, my real name. That is not the point."),
+            text: vec![ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("My name, my real name. That is not the point.")), probability: 100.0 }],
             skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
@@ -467,7 +472,7 @@ async fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefiniti
         }, &reaction_repository).await.expect("error creating reaction");
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
-            text: String::from("People tell me I'm a heavy patter ${target}"),
+            text: vec![ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("People tell me I'm a heavy patter ${target}")), probability: 100.0 }],
             skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
@@ -483,7 +488,7 @@ async fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefiniti
         }, &reaction_repository).await.expect("error creating reaction");
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
-            text: String::from("Time to break things I guess"),
+            text: vec![ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("Time to break things I guess")), probability: 100.0 }],
             skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
@@ -500,7 +505,7 @@ async fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefiniti
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
             // Random, ask pranessa
-            text: String::from("A freshly baked cookie for you!"),
+            text: vec![ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("A freshly baked cookie for you!")), probability: 100.0 }],
             skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
@@ -516,7 +521,7 @@ async fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefiniti
         }, &reaction_repository).await.expect("error creating reaction");
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
-            text: String::from("CONGRATULATIONS! You won a life-long subscription to our unlimited croissant stock!"),
+            text: vec![ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("CONGRATULATIONS! You won a life-long subscription to our unlimited croissant stock!")), probability: 100.0 }],
             skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone
@@ -534,11 +539,11 @@ async fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefiniti
             id: reaction.id.clone(),
             count: None,
             triggers: Some(vec![String::from("!mantra"), String::from("!bs")]),
-            is_disabled: Some(false)
+            is_disabled: None
         }, &reaction_repository).await.expect("error updating reaction");
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             emotion_id: happy_emotion.id.clone(),
-            text: String::from("${target} is an incredible artist. You do your best. Your best is enough. People do not hate you."),
+            text: vec![ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("${target} is an incredible artist. You do your best. Your best is enough. People do not hate you.")), probability: 100.0 }],
             skip: ReactionStepSkipDto::AfterStepWithExtraMilliseconds(3000),
             // Cooldown 5 seconds
             // Authorisation level Everyone

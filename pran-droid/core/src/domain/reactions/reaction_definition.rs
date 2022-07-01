@@ -1,6 +1,7 @@
 use std::fmt::Debug;
 use std::clone::Clone;
 use std::cmp::PartialEq;
+use rand::random;
 use crate::domain::brain::stimuli::Stimulus;
 use crate::domain::emotions::emotion::EmotionId;
 use crate::domain::reactions::reaction::{MovingReactionStep, ReactionContext, ReactionStepSkip, ReactionStepText};
@@ -50,6 +51,7 @@ impl ChatKeywordTrigger {
     pub fn new(text: String) -> Self {
         Self { match_regex: regex::Regex::new(format!("(^| ){}($| )", regex::escape(&text)).as_str()).unwrap(), text }
     }
+
     pub fn matches(&self, message_text: &str) -> bool {
         self.match_regex.is_match(message_text)
     }
@@ -98,7 +100,7 @@ impl ReactionDefinition {
 }
 
 impl ReactionTrigger {
-    pub(crate) fn new_chat_command(trigger: String) -> Result<Self, ()> {
+    pub fn new_chat_command(trigger: String) -> Result<Self, ()> {
         if trigger.is_empty() {
             return Err(());
         }
@@ -106,7 +108,7 @@ impl ReactionTrigger {
         Ok(ReactionTrigger::ChatCommand(ChatCommandTrigger { text: trigger }))
     }
 
-    pub(crate) fn new_chat_keyword(trigger: String) -> Result<Self, ()> {
+    pub fn new_chat_keyword(trigger: String) -> Result<Self, ()> {
         if trigger.is_empty() {
             return Err(());
         }
@@ -128,11 +130,60 @@ pub type MovingReactionStepDefinition = MovingReactionStep;
 pub struct TalkingReactionStepDefinition {
     pub emotion_id: EmotionId,
     pub skip: ReactionStepSkipDefinition,
+    pub text: ReactionStepTextAlternativesDefinition,
+}
+
+#[derive(Clone, Debug)]
+pub struct ReactionStepTextAlternativesDefinition {
+    pub alternatives: Vec<ReactionStepTextAlternativeDefinition>
+}
+
+#[derive(Clone, Debug)]
+pub struct ReactionStepTextAlternativeDefinition {
     pub text: ReactionStepTextDefinition,
+    pub probability: f32,
 }
 
 pub type ReactionStepSkipDefinition = ReactionStepSkip;
 pub type ReactionStepTextDefinition = ReactionStepText;
+
+impl ReactionStepTextAlternativesDefinition {
+    pub fn try_new(alternatives: Vec<ReactionStepTextAlternativeDefinition>) -> Result<ReactionStepTextAlternativesDefinition, ()> {
+        let total_probability: f32 = alternatives.iter().map(|alternative| alternative.probability).sum();
+
+        if total_probability != 100.0 {
+            Err(())
+        } else {
+            Ok(Self { alternatives })
+        }
+    }
+
+    pub fn new_single(text: ReactionStepTextDefinition) -> ReactionStepTextAlternativesDefinition {
+        Self {
+            alternatives: vec![ReactionStepTextAlternativeDefinition {
+                probability: 100.0,
+                text
+            }]
+        }
+    }
+
+    pub(super) fn get_random_text_pure(alternatives: &Vec<ReactionStepTextAlternativeDefinition>, mut random_hit: f32) -> ReactionStepTextDefinition {
+        for alternative in alternatives {
+            if alternative.probability > random_hit {
+                return alternative.text.clone()
+            } else {
+                random_hit -= alternative.probability;
+            }
+        }
+
+        unreachable!();
+    }
+
+    pub(super) fn get_random_text(&self) -> ReactionStepTextDefinition {
+        let random_hit = random::<f32>() * 100.0;
+        ReactionStepTextAlternativesDefinition::get_random_text_pure(&self.alternatives, random_hit)
+    }
+}
 
 impl ReactionStepTextDefinition {
     pub fn try_contextualise_text_reaction(&self, context: &ReactionContext) -> Option<ReactionStepText> {
@@ -176,5 +227,66 @@ impl ReactionStepTextDefinition {
         }
 
         Some(output_message.join(""))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn reaction_text_alternatives_get_random_text_max_random_hit_get_last() {
+        let max_random_hit: f32 = 99.9999;
+        assert!(matches!(
+            get_random_text(&[("some text", 100.0)], max_random_hit),
+            ReactionStepText::Instant(text) if text == "some text"
+        ));
+        assert!(matches!(
+            get_random_text(&[("some text1", 20.0), ("some text2", 20.0), ("some text3", 20.0), ("some text4", 20.0), ("some text5", 20.0)], max_random_hit),
+            ReactionStepText::Instant(text) if text == "some text5"
+        ));
+        assert!(matches!(
+            get_random_text(&[("some text1", 99.9), ("some text2", 0.1)], max_random_hit),
+            ReactionStepText::Instant(text) if text == "some text2"
+        ));
+    }
+
+    #[test]
+    fn reaction_text_alternatives_get_random_text_zero_random_hit_get_first() {
+        let max_random_hit: f32 = 0.0;
+        assert!(matches!(
+            get_random_text(&[("some text", 100.0)], max_random_hit),
+            ReactionStepText::Instant(text) if text == "some text"
+        ));
+        assert!(matches!(
+            get_random_text(&[("some text1", 20.0), ("some text2", 20.0), ("some text3", 20.0), ("some text4", 20.0), ("some text5", 20.0)], max_random_hit),
+            ReactionStepText::Instant(text) if text == "some text1"
+        ));
+        assert!(matches!(
+            get_random_text(&[("some text1", 0.1), ("some text2", 99.9)], max_random_hit),
+            ReactionStepText::Instant(text) if text == "some text1"
+        ));
+    }
+
+    #[test]
+    fn reaction_text_alternatives_get_random_text_alternative_with_zero_probability_never_hits() {
+        assert!(matches!(
+            get_random_text(&[("some text1", 0.0), ("some text2", 100.0)], 0.0),
+            ReactionStepText::Instant(text) if text == "some text2"
+        ));
+        assert!(matches!(
+            get_random_text(&[("some text1", 100.0), ("some text2", 0.0)], 99.9999),
+            ReactionStepText::Instant(text) if text == "some text1"
+        ));
+    }
+
+    fn get_random_text(alternatives: &[(&str, f32)], random_hit: f32) -> ReactionStepText {
+        ReactionStepTextAlternativesDefinition::get_random_text_pure(
+            &alternatives.iter().map(|alternative| ReactionStepTextAlternativeDefinition {
+                text: ReactionStepText::Instant(alternative.0.to_string()),
+                probability: alternative.1
+            }).collect(),
+            random_hit
+        )
     }
 }

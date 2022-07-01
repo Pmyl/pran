@@ -25,6 +25,7 @@ use crate::infrastructure::config::Config;
 use crate::reactions::patch::api_patch_reaction;
 use crate::reactions::create::api_create_reaction;
 use crate::reactions::get::api_get_reaction;
+use crate::reactions::get_all::api_get_all_reactions;
 use crate::reactions::insert_step::api_insert_reaction_step;
 
 mod infrastructure;
@@ -72,6 +73,7 @@ async fn main() {
             api_create_reaction,
             api_patch_reaction,
             api_get_reaction,
+            api_get_all_reactions,
             api_insert_reaction_step,
         ]).launch();
 

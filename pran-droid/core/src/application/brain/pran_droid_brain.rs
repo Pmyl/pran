@@ -31,7 +31,7 @@ mod tests {
     use crate::domain::emotions::emotion::EmotionId;
     use crate::domain::images::image::ImageId;
     use crate::domain::reactions::reaction::{Milliseconds, TalkingReactionStep, Reaction, ReactionStepSkip, ReactionStep, ReactionStepText};
-    use crate::domain::reactions::reaction_definition::{MovingReactionStepDefinition, ReactionDefinition, ReactionDefinitionId, ReactionStepDefinition, TalkingReactionStepDefinition};
+    use crate::domain::reactions::reaction_definition::{MovingReactionStepDefinition, ReactionDefinition, ReactionDefinitionId, ReactionStepDefinition, ReactionStepTextAlternativeDefinition, ReactionStepTextAlternativesDefinition, TalkingReactionStepDefinition};
     use crate::domain::reactions::reaction_definition_repository::tests::{setup_dummy_chat_command_reaction_definitions, setup_dummy_chat_keyword_reaction_definitions};
     use crate::persistence::reactions::in_memory_reaction_repository::InMemoryReactionRepository;
     use super::*;
@@ -172,12 +172,12 @@ mod tests {
         );
         reaction_definition.steps.push(ReactionStepDefinition::Talking(TalkingReactionStepDefinition {
             skip: ReactionStepSkip::ImmediatelyAfter,
-            text: ReactionStepText::LetterByLetter(String::from("some text")),
+            text: ReactionStepTextAlternativesDefinition::new_single(ReactionStepText::LetterByLetter(String::from("some text"))),
             emotion_id: EmotionId(String::from("an emotion id"))
         }));
         reaction_definition.steps.push(ReactionStepDefinition::Talking(TalkingReactionStepDefinition {
             skip: ReactionStepSkip::AfterMilliseconds(Milliseconds(15)),
-            text: ReactionStepText::Instant(String::from("some text2")),
+            text: ReactionStepTextAlternativesDefinition::new_single(ReactionStepText::Instant(String::from("some text2"))),
             emotion_id: EmotionId(String::from("an emotion id2"))
         }));
         reaction_repository.insert(&reaction_definition).await.unwrap();
@@ -214,7 +214,7 @@ mod tests {
         );
         reaction_definition.steps.push(ReactionStepDefinition::Talking(TalkingReactionStepDefinition {
             skip: ReactionStepSkip::ImmediatelyAfter,
-            text: ReactionStepText::LetterByLetter(String::from("some text")),
+            text: ReactionStepTextAlternativesDefinition::new_single(ReactionStepText::LetterByLetter(String::from("some text"))),
             emotion_id: EmotionId(String::from("an emotion id"))
         }));
         reaction_repository.insert(&reaction_definition).await.unwrap();
@@ -244,7 +244,7 @@ mod tests {
         );
         reaction_definition.steps.push(ReactionStepDefinition::Talking(TalkingReactionStepDefinition {
             skip: ReactionStepSkip::ImmediatelyAfter,
-            text: ReactionStepText::LetterByLetter(String::from("Hello I am ${user}")),
+            text: ReactionStepTextAlternativesDefinition::new_single(ReactionStepText::LetterByLetter(String::from("Hello I am ${user}"))),
             emotion_id: EmotionId(String::from("an emotion id"))
         }));
         reaction_repository.insert(&reaction_definition).await.unwrap();
@@ -276,7 +276,7 @@ mod tests {
         );
         reaction_definition.steps.push(ReactionStepDefinition::Talking(TalkingReactionStepDefinition {
             skip: ReactionStepSkip::ImmediatelyAfter,
-            text: ReactionStepText::LetterByLetter(String::from("Hello ${target}!")),
+            text: ReactionStepTextAlternativesDefinition::new_single(ReactionStepText::LetterByLetter(String::from("Hello ${target}!"))),
             emotion_id: EmotionId(String::from("an emotion id"))
         }));
         reaction_repository.insert(&reaction_definition).await.unwrap();
@@ -306,7 +306,7 @@ mod tests {
         reaction_definition.count = 3;
         reaction_definition.steps.push(ReactionStepDefinition::Talking(TalkingReactionStepDefinition {
             skip: ReactionStepSkip::ImmediatelyAfter,
-            text: ReactionStepText::LetterByLetter(String::from("${count}")),
+            text: ReactionStepTextAlternativesDefinition::new_single(ReactionStepText::LetterByLetter(String::from("${count}"))),
             emotion_id: EmotionId(String::from("an emotion id"))
         }));
         reaction_repository.insert(&reaction_definition).await.unwrap();
@@ -346,7 +346,7 @@ mod tests {
         );
         reaction_definition.steps.push(ReactionStepDefinition::Talking(TalkingReactionStepDefinition {
             skip: ReactionStepSkip::ImmediatelyAfter,
-            text: ReactionStepText::LetterByLetter(String::from("Hello ${touser}!")),
+            text: ReactionStepTextAlternativesDefinition::new_single(ReactionStepText::LetterByLetter(String::from("Hello ${touser}!"))),
             emotion_id: EmotionId(String::from("an emotion id"))
         }));
         reaction_repository.insert(&reaction_definition).await.unwrap();
@@ -378,7 +378,7 @@ mod tests {
         );
         reaction_definition.steps.push(ReactionStepDefinition::Talking(TalkingReactionStepDefinition {
             skip: ReactionStepSkip::ImmediatelyAfter,
-            text: ReactionStepText::LetterByLetter(String::from("Hello ${touser}!")),
+            text: ReactionStepTextAlternativesDefinition::new_single(ReactionStepText::LetterByLetter(String::from("Hello ${touser}!"))),
             emotion_id: EmotionId(String::from("an emotion id"))
         }));
         reaction_repository.insert(&reaction_definition).await.unwrap();
@@ -410,7 +410,7 @@ mod tests {
         );
         reaction_definition.steps.push(ReactionStepDefinition::Talking(TalkingReactionStepDefinition {
             skip: ReactionStepSkip::ImmediatelyAfter,
-            text: ReactionStepText::LetterByLetter(String::from("Hello ${user}!")),
+            text: ReactionStepTextAlternativesDefinition::new_single(ReactionStepText::LetterByLetter(String::from("Hello ${user}!"))),
             emotion_id: EmotionId(String::from("an emotion id"))
         }));
         reaction_repository.insert(&reaction_definition).await.unwrap();
@@ -445,7 +445,7 @@ mod tests {
         );
         reaction_definition.steps.push(ReactionStepDefinition::Talking(TalkingReactionStepDefinition {
             skip: ReactionStepSkip::ImmediatelyAfter,
-            text: ReactionStepText::LetterByLetter(String::from("Hello ${target}!")),
+            text: ReactionStepTextAlternativesDefinition::new_single(ReactionStepText::LetterByLetter(String::from("Hello ${target}!"))),
             emotion_id: EmotionId(String::from("an emotion id"))
         }));
         reaction_repository.insert(&reaction_definition).await.unwrap();
@@ -468,7 +468,7 @@ mod tests {
         reaction_definition.count = 2;
         reaction_definition.steps.push(ReactionStepDefinition::Talking(TalkingReactionStepDefinition {
             skip: ReactionStepSkip::ImmediatelyAfter,
-            text: ReactionStepText::LetterByLetter(String::from("a text")),
+            text: ReactionStepTextAlternativesDefinition::new_single(ReactionStepText::LetterByLetter(String::from("a text"))),
             emotion_id: EmotionId(String::from("an emotion id"))
         }));
         reaction_repository.insert(&reaction_definition).await.unwrap();
@@ -551,6 +551,41 @@ mod tests {
         assert!(matches!(reaction, Some(reaction) if reaction.source_definition_id == keyword_reaction_definition.id));
     }
 
+    #[tokio::test]
+    async fn create_droid_brain_reaction_multiple_alternatives_use_one_with_100() {
+        let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
+
+        let mut reaction_definition = create_command_reaction_definition("!hello");
+        reaction_definition.steps.push(
+            ReactionStepDefinition::Talking(TalkingReactionStepDefinition {
+                skip: ReactionStepSkip::ImmediatelyAfter,
+                text: ReactionStepTextAlternativesDefinition::try_new(vec![
+                    ReactionStepTextAlternativeDefinition {
+                        text: ReactionStepText::LetterByLetter("first message".to_string()),
+                        probability: 0.0
+                    },
+                    ReactionStepTextAlternativeDefinition {
+                        text: ReactionStepText::LetterByLetter("second message".to_string()),
+                        probability: 100.0
+                    },
+                ]).unwrap(),
+                emotion_id: EmotionId(String::from("an emotion id"))
+            })
+        );
+        reaction_repository.insert(&reaction_definition).await.unwrap();
+
+        let mut brain = create_droid_brain(&reaction_repository, &text_phonemiser, &create_dummy_notifier()).await;
+
+        let reaction = stimulate_with_chat_message(&mut brain, |stimulus| stimulus.text = String::from("!hello"));
+        let reaction = reaction.expect("should get a reaction");
+        if let ReactionStep::Talking(TalkingReactionStep { text, .. }) = reaction.steps.get(0).unwrap() {
+            assert_eq!(text.get_text(), "second message");
+        } else {
+            unreachable!();
+        }
+    }
+
     fn stimulate_with_chat_message<F>(brain: &mut PranDroidBrain, func: F) -> Option<Reaction> where F: Fn(&mut ChatMessageStimulus) -> () {
         brain.stimulate(create_chat_stimulus(func))
     }
@@ -590,7 +625,9 @@ mod tests {
     fn create_talking_step_definition(text: Option<&str>) -> ReactionStepDefinition {
         ReactionStepDefinition::Talking(TalkingReactionStepDefinition {
             skip: ReactionStepSkip::ImmediatelyAfter,
-            text: ReactionStepText::LetterByLetter(text.map(|text| String::from(text)).unwrap_or_else(|| String::from("Hello!"))),
+            text: ReactionStepTextAlternativesDefinition::new_single(
+                ReactionStepText::LetterByLetter(text.map(|text| String::from(text)).unwrap_or_else(|| String::from("Hello!")))
+            ),
             emotion_id: EmotionId(String::from("an emotion id"))
         })
     }

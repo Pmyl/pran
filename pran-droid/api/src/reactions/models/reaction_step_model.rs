@@ -6,7 +6,7 @@ use pran_droid_core::application::reactions::dtos::reaction_step_dto::{Animation
 pub enum ReactionStepModel {
     Moving { animation: Vec<AnimationFrameModel>, skip: Option<ReactionStepSkipModel> },
     #[serde(rename_all = "camelCase")]
-    Talking { text: String, emotion_id: String, skip: Option<ReactionStepSkipModel> },
+    Talking { text: Vec<ReactionStepTextAlternativeModel>, emotion_id: String, skip: Option<ReactionStepSkipModel> },
 }
 
 impl From<ReactionStepDto> for ReactionStepModel {
@@ -15,21 +15,39 @@ impl From<ReactionStepDto> for ReactionStepModel {
             ReactionStepDto::Moving(movement_step) => {
                 ReactionStepModel::Moving {
                     animation: movement_step.animation.into_iter().map(From::from).collect(),
-                    skip: from_dto_to_model(movement_step.skip)
+                    skip: from_dto_to_model(movement_step.skip),
                 }
             }
             ReactionStepDto::Talking(talking_step) => {
                 ReactionStepModel::Talking {
-                    text: match talking_step.text {
-                        ReactionStepTextDto::Instant(text) => text,
-                        ReactionStepTextDto::LetterByLetter(text) => text,
-                    },
+                    text: talking_step.text
+                        .iter()
+                        .map(|alternative| ReactionStepTextAlternativeModel {
+                            text: match &alternative.text {
+                                ReactionStepTextDto::Instant(text) => ReactionStepTextModel::Instant { text: text.clone() },
+                                ReactionStepTextDto::LetterByLetter(text) => ReactionStepTextModel::LetterByLetter { text: text.clone() },
+                            },
+                            probability: alternative.probability,
+                        }).collect(),
                     emotion_id: talking_step.emotion_id,
-                    skip: from_dto_to_model(talking_step.skip)
+                    skip: from_dto_to_model(talking_step.skip),
                 }
             }
         }
     }
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct ReactionStepTextAlternativeModel {
+    pub text: ReactionStepTextModel,
+    pub probability: f32,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(tag = "type")]
+pub enum ReactionStepTextModel {
+    Instant { text: String },
+    LetterByLetter { text: String },
 }
 
 #[derive(Deserialize, Serialize)]
@@ -38,7 +56,7 @@ pub enum ReactionStepSkipModel {
     #[serde(rename = "AfterTime", rename_all = "camelCase")]
     AfterMilliseconds { ms: u16 },
     #[serde(rename = "AfterStep", rename_all = "camelCase")]
-    AfterStep { extra_ms: u16 }
+    AfterStep { extra_ms: u16 },
 }
 
 pub(crate) fn from_dto_to_model(dto: ReactionStepSkipDto) -> Option<ReactionStepSkipModel> {
@@ -62,7 +80,7 @@ pub(crate) fn from_model_to_dto(model: Option<ReactionStepSkipModel>) -> Reactio
 pub struct AnimationFrameModel {
     pub frame_start: u16,
     pub frame_end: u16,
-    pub image_id: String
+    pub image_id: String,
 }
 
 impl From<AnimationFrameDto> for AnimationFrameModel {
@@ -70,7 +88,7 @@ impl From<AnimationFrameDto> for AnimationFrameModel {
         AnimationFrameModel {
             frame_start: dto.frame_start,
             frame_end: dto.frame_end,
-            image_id: dto.image_id
+            image_id: dto.image_id,
         }
     }
 }
@@ -80,7 +98,7 @@ impl Into<AnimationFrameDto> for AnimationFrameModel {
         AnimationFrameDto {
             frame_start: self.frame_start,
             frame_end: self.frame_end,
-            image_id: self.image_id
+            image_id: self.image_id,
         }
     }
 }
