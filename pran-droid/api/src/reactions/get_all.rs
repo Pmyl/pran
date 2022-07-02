@@ -20,6 +20,6 @@ impl From<Vec<ReactionDto>> for GetAllReactionsResponse {
 }
 
 #[get("/reactions")]
-pub async fn api_get_all_reactions(_authenticated: AuthenticatedReadOnly, repo: &State<Arc<dyn ReactionDefinitionRepository>>) -> Json<GetAllReactionsResponse> {
+pub async fn api_get_all_reactions(repo: &State<Arc<dyn ReactionDefinitionRepository>>) -> Json<GetAllReactionsResponse> {
     Json(get_all_reactions(repo).await.into())
 }

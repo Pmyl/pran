@@ -2,9 +2,9 @@
 
 use dotenv::dotenv;
 use log::LevelFilter;
-use rocket::{figment::{Figment, providers::Env}, Config as RocketConfig };
+use rocket::{figment::{Figment, providers::Env}, Config as RocketConfig, State};
 use rocket::data::{Limits, ToByteUnit};
-use rocket::fs::FileServer;
+use rocket::fs::{FileServer, NamedFile};
 use simplelog::SimpleLogger;
 use std::sync::Arc;
 use pran_droid_core::domain::emotions::emotion_repository::EmotionRepository;
@@ -37,6 +37,11 @@ mod emotions;
 mod images;
 mod reactions;
 mod test_database;
+
+#[get("/<_..>", rank = 2)]
+async fn index_handler(config: &State<Config>) -> Option<NamedFile> {
+    NamedFile::open(format!("{}/index.html", config.static_path.clone())).await.ok()
+}
 
 #[rocket::main]
 async fn main() {
@@ -82,7 +87,8 @@ async fn main() {
         .manage::<Arc<dyn ImageRepository>>(images_repo)
         .manage::<Arc<dyn ImageStorage>>(images_storage)
         .manage::<Arc<dyn ReactionDefinitionRepository>>(reaction_repo)
-        .mount("/", FileServer::from(static_path))
+        .mount("/", FileServer::from(static_path).rank(1))
+        .mount("/", routes![index_handler])
         .mount("/api", routes![
             api_get_all_emotions,
             api_create_emotions,

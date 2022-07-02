@@ -1,0 +1,117 @@
+.public-view {
+    width: 100%;
+}
+
+.public-view_container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.public-view_title {
+    font-family: sans-serif;
+    text-align: center;
+}
+
+.public-view_tooltip {
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+    border-bottom: 1px dotted black;
+}
+
+.public-view_tooltip .public-view_tooltip-content {
+    visibility: hidden;
+    position: absolute;
+    background-color: #ccc;
+    color: white;
+    z-index: 1;
+    padding: 5px;
+    border-radius: 5px;
+    left: calc(100% + 10px);
+    min-width: 100px;
+    text-align: center;
+}
+
+.public-view_tooltip:hover .public-view_tooltip-content {
+    visibility: visible;
+}
+
+.public-view_tooltip .public-view_tooltip-content::after {
+    content: " ";
+    position: absolute;
+    top: calc(50% - 5px);
+    right: 100%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent #ccc transparent transparent;
+}
+
+.public-view_command,
+.public-view_keyword {
+    border-radius: 5px;
+    padding: 2px 4px;
+}
+
+.public-view_command {
+    background-color: darkslategray;
+    color: white;
+}
+
+.public-view_command:before {
+    content: '👉🏻';
+}
+
+.public-view_keyword {
+    background-color: rebeccapurple;
+    color: white;
+}
+
+.public-view_keyword:before {
+    content: '💬';
+}
+
+.public-view_step-message {
+    display: inline-block;
+    padding: 0;
+    margin: 0;
+}
+
+.public-view table {
+    border-collapse: collapse;
+    margin: 25px 0;
+    font-size: 0.9em;
+    font-family: sans-serif;
+    min-width: 400px;
+    width: 98%;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+.public-view table thead tr {
+    background-color: #009879;
+    color: #ffffff;
+    text-align: left;
+}
+
+.public-view table th,
+.public-view table td {
+    padding: 8px 11px;
+}
+
+.public-view table tbody tr {
+    border-bottom: 1px solid #dddddd;
+}
+
+.public-view table tbody tr:nth-of-type(even) {
+    background-color: #f3f3f3;
+}
+
+.public-view table tbody tr:last-of-type {
+    border-bottom: 2px solid #009879;
+}
+
+.public-view_count-cell {
+    text-align: right;
+}
