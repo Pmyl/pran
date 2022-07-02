@@ -17,18 +17,18 @@ pub struct EmotionName(pub String);
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum MouthPositionName {
+    Ah,
+    B,
+    Ee,
     FV,
-    UR,
-    STCh,
-    MBSilent,
+    K,
+    L,
+    Oh,
     P1,
     P2,
-    E,
-    AAh,
-    O,
-    LD,
-    Pause,
-    Smile
+    S,
+    Ur,
+    Idle
 }
 
 #[derive(Clone, Debug)]
@@ -89,18 +89,18 @@ impl EmotionName {
 impl Into<String> for &MouthPositionName {
     fn into(self) -> String {
         match self {
+            MouthPositionName::Ah => String::from("ah"),
+            MouthPositionName::B => String::from("b"),
+            MouthPositionName::Ee => String::from("ee"),
             MouthPositionName::FV => String::from("fv"),
-            MouthPositionName::UR => String::from("ur"),
-            MouthPositionName::STCh => String::from("stch"),
-            MouthPositionName::MBSilent => String::from("mbsilent"),
+            MouthPositionName::K => String::from("k"),
+            MouthPositionName::L => String::from("l"),
+            MouthPositionName::Oh => String::from("oh"),
             MouthPositionName::P1 => String::from("p1"),
             MouthPositionName::P2 => String::from("p2"),
-            MouthPositionName::E => String::from("e"),
-            MouthPositionName::AAh => String::from("aah"),
-            MouthPositionName::O => String::from("o"),
-            MouthPositionName::LD => String::from("ld"),
-            MouthPositionName::Pause => String::from("pause"),
-            MouthPositionName::Smile => String::from("smile"),
+            MouthPositionName::S => String::from("s"),
+            MouthPositionName::Ur => String::from("ur"),
+            MouthPositionName::Idle => String::from("idle"),
         }
     }
 }
@@ -114,18 +114,18 @@ impl TryFrom<&String> for MouthPositionName {
 
     fn try_from(position_name: &String) -> Result<Self, Self::Error> {
         match position_name.as_ref() {
+            "ah" => Ok(MouthPositionName::Ah),
+            "b" => Ok(MouthPositionName::B),
+            "ee" => Ok(MouthPositionName::Ee),
             "fv" => Ok(MouthPositionName::FV),
-            "ur" => Ok(MouthPositionName::UR),
-            "stch" => Ok(MouthPositionName::STCh),
-            "mbsilent" => Ok(MouthPositionName::MBSilent),
+            "k" => Ok(MouthPositionName::K),
+            "l" => Ok(MouthPositionName::L),
+            "oh" => Ok(MouthPositionName::Oh),
             "p1" => Ok(MouthPositionName::P1),
             "p2" => Ok(MouthPositionName::P2),
-            "e" => Ok(MouthPositionName::E),
-            "aah" => Ok(MouthPositionName::AAh),
-            "o" => Ok(MouthPositionName::O),
-            "ld" => Ok(MouthPositionName::LD),
-            "pause" => Ok(MouthPositionName::Pause),
-            "smile" => Ok(MouthPositionName::Smile),
+            "s" => Ok(MouthPositionName::S),
+            "ur" => Ok(MouthPositionName::Ur),
+            "idle" => Ok(MouthPositionName::Idle),
             _ => Err(())
         }
     }

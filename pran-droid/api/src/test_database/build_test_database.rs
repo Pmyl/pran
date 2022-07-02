@@ -21,51 +21,31 @@ use pran_droid_core::domain::reactions::reaction_definition_repository::Reaction
 pub async fn build_test_database(reaction_repository: Arc<dyn ReactionDefinitionRepository>, emotion_repository: Arc<dyn EmotionRepository>, image_repository: Arc<dyn ImageRepository>, image_storage: Arc<dyn ImageStorage>) {
     build_images_database(&image_repository, &image_storage).await;
     build_emotions_database(&emotion_repository, &image_repository).await;
-    build_reactions_database(&reaction_repository, &image_repository, &emotion_repository).await;
+    build_reactions_database(&reaction_repository, &emotion_repository).await;
 }
 
 async fn build_emotions_database(emotion_repository: &Arc<dyn EmotionRepository>, image_repository: &Arc<dyn ImageRepository>) {
     let happy_emotion = create_emotion(CreateEmotionRequest { name: String::from("happy") }, emotion_repository).await.expect("error creating emotion");
-    let sad_emotion = create_emotion(CreateEmotionRequest { name: String::from("sad") }, emotion_repository).await.expect("error creating emotion");
 
     // Mouth mapping
     update_emotion_mouth_mapping(UpdateEmotionMouthMappingRequest {
         emotion_id: happy_emotion.id.clone(),
         mapping: vec! {
-            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::AAh.into(), image_id: String::from("happyAAh") },
-            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::O.into(), image_id: String::from("happyO") },
-            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::E.into(), image_id: String::from("happyE") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::Ah.into(), image_id: String::from("happyAh") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::B.into(), image_id: String::from("happyB") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::Ee.into(), image_id: String::from("happyEe") },
             UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::FV.into(), image_id: String::from("happyFV") },
-            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::LD.into(), image_id: String::from("happyLD") },
-            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::MBSilent.into(), image_id: String::from("happyMBSilent") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::K.into(), image_id: String::from("happyK") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::L.into(), image_id: String::from("happyL") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::Oh.into(), image_id: String::from("happyOh") },
             UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::P1.into(), image_id: String::from("happyP1") },
             UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::P2.into(), image_id: String::from("happyP2") },
-            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::Pause.into(), image_id: String::from("pause") },
-            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::Smile.into(), image_id: String::from("smile") },
-            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::STCh.into(), image_id: String::from("happySTCh") },
-            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::UR.into(), image_id: String::from("happyUR") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::S.into(), image_id: String::from("happyS") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::Ur.into(), image_id: String::from("happyUr") },
+            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::Idle.into(), image_id: String::from("happyIdle") },
         },
     }, emotion_repository, image_repository).await.expect("error updating mouth mapping");
 
-    update_emotion_mouth_mapping(UpdateEmotionMouthMappingRequest {
-        emotion_id: sad_emotion.id.clone(),
-        mapping: vec! {
-            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::AAh.into(), image_id: String::from("sadAAh") },
-            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::O.into(), image_id: String::from("sadO") },
-            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::E.into(), image_id: String::from("sadE") },
-            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::FV.into(), image_id: String::from("sadFV") },
-            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::LD.into(), image_id: String::from("sadLD") },
-            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::MBSilent.into(), image_id: String::from("sadMBSilent") },
-            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::P1.into(), image_id: String::from("sadP1") },
-            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::P2.into(), image_id: String::from("sadP2") },
-            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::Pause.into(), image_id: String::from("pause") },
-            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::Smile.into(), image_id: String::from("smile") },
-            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::STCh.into(), image_id: String::from("sadSTCh") },
-            UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::UR.into(), image_id: String::from("sadUR") },
-        },
-    }, emotion_repository, image_repository).await.expect("error updating mouth mapping");
-
-    // Animation layer for Happy
     update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
         emotion_id: happy_emotion.id.clone(),
         animation: vec![
@@ -84,56 +64,22 @@ async fn build_emotions_database(emotion_repository: &Arc<dyn EmotionRepository>
         ],
         index: 2,
     }, emotion_repository, image_repository).await.expect("error updating animation layer");
-
-    // Animation layer for Sad
-    update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
-        emotion_id: sad_emotion.id.clone(),
-        animation: vec![
-            AnimationFrameDto { frame_start: 0, frame_end: 25, image_id: String::from("eyes0") },
-            AnimationFrameDto { frame_start: 26, frame_end: 29, image_id: String::from("eyes1") },
-            AnimationFrameDto { frame_start: 30, frame_end: 33, image_id: String::from("eyes2") },
-            AnimationFrameDto { frame_start: 34, frame_end: 37, image_id: String::from("eyes1") },
-        ],
-        index: 1,
-    }, emotion_repository, image_repository).await.expect("error updating animation layer");
-
-    update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
-        emotion_id: sad_emotion.id.clone(),
-        animation: vec![
-            AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("idle") },
-        ],
-        index: 2,
-    }, emotion_repository, image_repository).await.expect("error updating animation layer");
 }
 
 async fn build_images_database(image_repository: &Arc<dyn ImageRepository>, image_storage: &Arc<dyn ImageStorage>) {
-    // Base mouth
-    create_image(CreateImageRequest { image: fetch_image("mouth/pause.png"), id: String::from("pause") }, &image_repository, &image_storage).await.expect("error creating image");
-    create_image(CreateImageRequest { image: fetch_image("mouth/smile.png"), id: String::from("smile") }, &image_repository, &image_storage).await.expect("error creating image");
-
     // Happy mouth
-    create_image(CreateImageRequest { image: fetch_image("mouth/a,ah.png"), id: String::from("happyAAh") }, &image_repository, &image_storage).await.expect("error creating image");
-    create_image(CreateImageRequest { image: fetch_image("mouth/e.png"), id: String::from("happyE") }, &image_repository, &image_storage).await.expect("error creating image");
-    create_image(CreateImageRequest { image: fetch_image("mouth/f,v.png"), id: String::from("happyFV") }, &image_repository, &image_storage).await.expect("error creating image");
-    create_image(CreateImageRequest { image: fetch_image("mouth/l,d.png"), id: String::from("happyLD") }, &image_repository, &image_storage).await.expect("error creating image");
-    create_image(CreateImageRequest { image: fetch_image("mouth/m,b,silent.png"), id: String::from("happyMBSilent") }, &image_repository, &image_storage).await.expect("error creating image");
-    create_image(CreateImageRequest { image: fetch_image("mouth/ooh.png"), id: String::from("happyO") }, &image_repository, &image_storage).await.expect("error creating image");
-    create_image(CreateImageRequest { image: fetch_image("mouth/p-1.png"), id: String::from("happyP1") }, &image_repository, &image_storage).await.expect("error creating image");
-    create_image(CreateImageRequest { image: fetch_image("mouth/p-2.png"), id: String::from("happyP2") }, &image_repository, &image_storage).await.expect("error creating image");
-    create_image(CreateImageRequest { image: fetch_image("mouth/s,t,ch.png"), id: String::from("happySTCh") }, &image_repository, &image_storage).await.expect("error creating image");
-    create_image(CreateImageRequest { image: fetch_image("mouth/u,r.png"), id: String::from("happyUR") }, &image_repository, &image_storage).await.expect("error creating image");
-
-    // Sad mouth
-    create_image(CreateImageRequest { image: fetch_image("mouth/a,ah.png"), id: String::from("sadAAh") }, &image_repository, &image_storage).await.expect("error creating image");
-    create_image(CreateImageRequest { image: fetch_image("mouth/e.png"), id: String::from("sadE") }, &image_repository, &image_storage).await.expect("error creating image");
-    create_image(CreateImageRequest { image: fetch_image("mouth/f,v.png"), id: String::from("sadFV") }, &image_repository, &image_storage).await.expect("error creating image");
-    create_image(CreateImageRequest { image: fetch_image("mouth/l,d.png"), id: String::from("sadLD") }, &image_repository, &image_storage).await.expect("error creating image");
-    create_image(CreateImageRequest { image: fetch_image("mouth/m,b,silent.png"), id: String::from("sadMBSilent") }, &image_repository, &image_storage).await.expect("error creating image");
-    create_image(CreateImageRequest { image: fetch_image("mouth/ooh.png"), id: String::from("sadO") }, &image_repository, &image_storage).await.expect("error creating image");
-    create_image(CreateImageRequest { image: fetch_image("mouth/p-1.png"), id: String::from("sadP1") }, &image_repository, &image_storage).await.expect("error creating image");
-    create_image(CreateImageRequest { image: fetch_image("mouth/p-2.png"), id: String::from("sadP2") }, &image_repository, &image_storage).await.expect("error creating image");
-    create_image(CreateImageRequest { image: fetch_image("mouth/s,t,ch.png"), id: String::from("sadSTCh") }, &image_repository, &image_storage).await.expect("error creating image");
-    create_image(CreateImageRequest { image: fetch_image("mouth/u,r.png"), id: String::from("sadUR") }, &image_repository, &image_storage).await.expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/ah.png"), id: String::from("happyAh") }, &image_repository, &image_storage).await.expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/b.png"), id: String::from("happyB") }, &image_repository, &image_storage).await.expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/ee.png"), id: String::from("happyEe") }, &image_repository, &image_storage).await.expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/fv.png"), id: String::from("happyFV") }, &image_repository, &image_storage).await.expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/k.png"), id: String::from("happyK") }, &image_repository, &image_storage).await.expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/l.png"), id: String::from("happyL") }, &image_repository, &image_storage).await.expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/oh.png"), id: String::from("happyOh") }, &image_repository, &image_storage).await.expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/p1.png"), id: String::from("happyP1") }, &image_repository, &image_storage).await.expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/p2.png"), id: String::from("happyP2") }, &image_repository, &image_storage).await.expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/s.png"), id: String::from("happyS") }, &image_repository, &image_storage).await.expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/ur.png"), id: String::from("happyUr") }, &image_repository, &image_storage).await.expect("error creating image");
+    create_image(CreateImageRequest { image: fetch_image("mouth/smile.png"), id: String::from("happyIdle") }, &image_repository, &image_storage).await.expect("error creating image");
 
     create_image(CreateImageRequest { image: fetch_image("idle_0000.png"), id: String::from("idle") }, &image_repository, &image_storage).await.expect("error creating image");
 
@@ -150,8 +96,7 @@ async fn build_images_database(image_repository: &Arc<dyn ImageRepository>, imag
     create_image(CreateImageRequest { image: fetch_image("eyes/eyesFire_0006.png"), id: String::from("eyesFire6") }, &image_repository, &image_storage).await.expect("error creating image");
 }
 
-async fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefinitionRepository>, image_repository: &Arc<dyn ImageRepository>, emotion_repository: &Arc<dyn EmotionRepository>) {
-    let sad_emotion = get_emotion_by_name(GetEmotionByNameRequest { name: String::from("sad") }, &emotion_repository).await.expect("error getting sad emotion");
+async fn build_reactions_database(reaction_repository: &Arc<dyn ReactionDefinitionRepository>, emotion_repository: &Arc<dyn EmotionRepository>) {
     let happy_emotion = get_emotion_by_name(GetEmotionByNameRequest { name: String::from("happy") }, &emotion_repository).await.expect("error getting happy emotion");
 
     // !hi

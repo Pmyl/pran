@@ -205,7 +205,7 @@ function getIdleAnimation(): AnimationRun {
         fps: fps,
         layers: [
           [
-            drawId('smile')
+            drawId('happyIdle')
           ],
           [
             drawId('eyes_open'),

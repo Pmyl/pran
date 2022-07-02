@@ -107,7 +107,6 @@ impl<'r, 'o: 'r> Responder<'r, 'o> for Error {
                     AddTalkingStepToReactionError::BadRequest(msg) => status::BadRequest(Some(msg)).respond_to(req),
                 }
             },
-            _ => Status::NotFound.respond_to(req)
         }
     }
 }

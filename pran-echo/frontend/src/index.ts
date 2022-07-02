@@ -18,8 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       ['eyes_open', './resources/eyes/eyes_0000.png'],
       ['eyes_semi_open', './resources/eyes/eyes_0001.png'],
       ['eyes_closed', './resources/eyes/eyes_0002.png'],
-      ['pause', './resources/mouth/pause.png'],
-      ['smile', './resources/mouth/smile.png']
+      ['idle', './resources/mouth/smile.png']
     ])
   }));
 

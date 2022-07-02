@@ -23,7 +23,6 @@ async function setupPranDroidAnimation(pranCanvas: Container): Promise<PranDroid
   const animatorManager: AnimatorManager = await AnimatorManager.create(
     CanvasControllerFactory.createFrom((pranCanvas.componentElement as HTMLCanvasElement).getContext('2d')),
     images.map(data => [data.id, data.url]).concat([
-      ['smile', './resources/mouth/smile.png'],
       ['head_idle', './resources/idle_0000.png'],
       ['eyes_open', './resources/eyes/eyes_0000.png'],
       ['eyes_semi_open', './resources/eyes/eyes_0001.png'],
