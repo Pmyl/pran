@@ -66,7 +66,7 @@ mod tests {
         let request = UpdateEmotionMouthMappingRequest {
             emotion_id: String::from("not existing id"),
             mapping: vec![UpdateEmotionMouthMappingElementRequest {
-                name: element_name_aah(),
+                name: element_name_ah(),
                 image_id: String::from("id1")
             }]
         };
@@ -89,15 +89,13 @@ mod tests {
         let request = UpdateEmotionMouthMappingRequest {
             emotion_id: emotion.id.0,
             mapping: vec![UpdateEmotionMouthMappingElementRequest {
-                name: element_name_aah(),
+                name: element_name_ah(),
                 image_id: String::from("id1")
             }]
         };
 
-        match update_emotion_mouth_mapping(request, &repository, &image_repository).await {
-            Ok(_) => {},
-            Err(_) => unreachable!("expected update emotion mouth mapping not to fail")
-        }
+        update_emotion_mouth_mapping(request, &repository, &image_repository).await
+            .expect("expected update emotion mouth mapping not to fail");
     }
 
     #[tokio::test]
@@ -110,10 +108,10 @@ mod tests {
         let request = UpdateEmotionMouthMappingRequest {
             emotion_id: emotion.id.0.clone(),
             mapping: vec![UpdateEmotionMouthMappingElementRequest {
-                name: element_name_aah(),
+                name: element_name_ah(),
                 image_id: String::from("id1")
             }, UpdateEmotionMouthMappingElementRequest {
-                name: element_name_o(),
+                name: element_name_oh(),
                 image_id: String::from("id2")
             }]
         };
@@ -123,11 +121,11 @@ mod tests {
                 match get_emotion(GetEmotionRequest { id: emotion.id.0 }, &repository).await {
                     Some(emotion) => {
                         let mouth_mapping = get_mouth_mapping(emotion);
-                        assert!(mouth_mapping.contains_key(&element_name_aah()));
-                        assert_eq!(mouth_mapping.get(&element_name_aah()).unwrap(), "id1");
+                        assert!(mouth_mapping.contains_key(&element_name_ah()));
+                        assert_eq!(mouth_mapping.get(&element_name_ah()).unwrap(), "id1");
 
-                        assert!(mouth_mapping.contains_key(&element_name_o()));
-                        assert_eq!(mouth_mapping.get(&element_name_o()).unwrap(), "id2");
+                        assert!(mouth_mapping.contains_key(&element_name_oh()));
+                        assert_eq!(mouth_mapping.get(&element_name_oh()).unwrap(), "id2");
                     },
                     None => unreachable!("emotion should have existed")
                 }
@@ -169,7 +167,7 @@ mod tests {
         let request = UpdateEmotionMouthMappingRequest {
             emotion_id: emotion.id.0.clone(),
             mapping: vec![UpdateEmotionMouthMappingElementRequest {
-                name: element_name_aah(),
+                name: element_name_ah(),
                 image_id: String::from("id3")
             }]
         };
@@ -192,10 +190,10 @@ mod tests {
         update_emotion_mouth_mapping(UpdateEmotionMouthMappingRequest {
             emotion_id: emotion.id.0.clone(),
             mapping: vec![UpdateEmotionMouthMappingElementRequest {
-                name: element_name_aah(),
+                name: element_name_ah(),
                 image_id: String::from("id1")
             }, UpdateEmotionMouthMappingElementRequest {
-                name: element_name_o(),
+                name: element_name_oh(),
                 image_id: String::from("id2")
             }]
         }, &repository, &image_repository).await.unwrap();
@@ -203,7 +201,7 @@ mod tests {
         let request = UpdateEmotionMouthMappingRequest {
             emotion_id: emotion.id.0.clone(),
             mapping: vec![UpdateEmotionMouthMappingElementRequest {
-                name: element_name_o(),
+                name: element_name_oh(),
                 image_id: String::from("id4")
             }]
         };
@@ -214,11 +212,11 @@ mod tests {
                     Some(emotion) => {
                         let mouth_mapping = get_mouth_mapping(emotion);
                         assert_eq!(mouth_mapping.len(), 2);
-                        assert!(mouth_mapping.contains_key(&element_name_aah()));
-                        assert_eq!(mouth_mapping.get(&element_name_aah()).unwrap(), "id1");
+                        assert!(mouth_mapping.contains_key(&element_name_ah()));
+                        assert_eq!(mouth_mapping.get(&element_name_ah()).unwrap(), "id1");
 
-                        assert!(mouth_mapping.contains_key(&element_name_o()));
-                        assert_eq!(mouth_mapping.get(&element_name_o()).unwrap(), "id4");
+                        assert!(mouth_mapping.contains_key(&element_name_oh()));
+                        assert_eq!(mouth_mapping.get(&element_name_oh()).unwrap(), "id4");
                     },
                     None => unreachable!("emotion should have existed")
                 }
@@ -227,12 +225,12 @@ mod tests {
         }
     }
 
-    fn element_name_aah() -> String {
-        String::from("aah")
+    fn element_name_ah() -> String {
+        MouthPositionName::Ah.into()
     }
 
-    fn element_name_o() -> String {
-        String::from("o")
+    fn element_name_oh() -> String {
+        MouthPositionName::Oh.into()
     }
 
     fn get_mouth_mapping(emotion: EmotionDto) -> HashMap<String, String> {
