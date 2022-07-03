@@ -9,7 +9,6 @@ use pran_droid_core::application::images::create::{create_image, CreateImageRequ
 use pran_droid_core::application::reactions::create::{create_reaction, CreateReactionRequest};
 use pran_droid_core::application::reactions::dtos::reaction_dto::ReactionTriggerDto;
 use pran_droid_core::application::reactions::dtos::reaction_step_dto::{AnimationFrameDto, ReactionStepSkipDto, ReactionStepTextAlternativeDto, ReactionStepTextDto};
-use pran_droid_core::application::reactions::insert_movement_step::{insert_movement_step_to_reaction, InsertMovementStepToReactionRequest};
 use pran_droid_core::application::reactions::insert_talking_step::{insert_talking_step_to_reaction, InsertTalkingStepToReactionRequest};
 use pran_droid_core::application::reactions::update::{update_reaction, UpdateReactionRequest};
 use pran_droid_core::domain::emotions::emotion::{MouthPositionName};

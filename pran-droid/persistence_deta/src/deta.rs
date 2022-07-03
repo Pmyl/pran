@@ -55,8 +55,6 @@ impl Deta {
     }
 
     pub fn post_json_on(&self, service: DetaService, url: &str, body: String) -> impl Future<Output = Result<Response, Error>> {
-        println!("POST: {} with {}", url, body);
-
         self.post_on(service, url)
             .header("Content-Type", "application/json")
             .body(body)
@@ -186,7 +184,7 @@ pub struct QueryResponse<I> {
 
 #[derive(Debug, Deserialize)]
 pub struct ListResult {
-    pub paging: Paging,
+    pub paging: Option<Paging>,
     pub names: Vec<String>
 }
 
@@ -383,8 +381,8 @@ impl Drive {
         ]);
 
         let response = self.deta.get_json_on(
-            DetaService::Database,
-            format!("/files?{}", query_string).as_str()
+            DetaService::Drive,
+            format!("{}/files?{}", self.drive_name, query_string).as_str()
         ).await.map_err(|error| ListError::Unexpected(format!("{}", error)))?;
 
         match response.status().as_u16() {
@@ -405,7 +403,7 @@ impl Drive {
                 names.push(name);
             }
 
-            last = list_result.paging.last;
+            last = list_result.paging.and_then(|paging| paging.last);
 
             if last.is_none() { break; }
         }

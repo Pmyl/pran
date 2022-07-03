@@ -1,4 +1,4 @@
-mod deta;
+pub mod deta;
 pub mod images;
 pub mod reactions;
 pub mod emotions;

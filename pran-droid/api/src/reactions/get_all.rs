@@ -5,7 +5,6 @@ use rocket::State;
 use pran_droid_core::application::reactions::dtos::reaction_dto::ReactionDto;
 use pran_droid_core::application::reactions::get_all::get_all_reactions;
 use pran_droid_core::domain::reactions::reaction_definition_repository::{ReactionDefinitionRepository};
-use crate::infrastructure::authenticated::AuthenticatedReadOnly;
 use crate::reactions::models::reaction_model::ReactionResponse;
 
 #[derive(Serialize)]

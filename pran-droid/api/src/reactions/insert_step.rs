@@ -3,7 +3,6 @@ use rocket::response::{Responder, status};
 use rocket::serde::json::Json;
 use rocket::serde::Deserialize;
 use rocket::{Request, response, State};
-use rocket::http::Status;
 use pran_droid_core::application::reactions::dtos::reaction_step_dto::{ReactionStepTextAlternativeDto, ReactionStepTextDto};
 use pran_droid_core::application::reactions::insert_movement_step::{AddMovementStepToReactionError, insert_movement_step_to_reaction, InsertMovementStepToReactionRequest};
 use pran_droid_core::application::reactions::insert_talking_step::{AddTalkingStepToReactionError, insert_talking_step_to_reaction, InsertTalkingStepToReactionRequest};
