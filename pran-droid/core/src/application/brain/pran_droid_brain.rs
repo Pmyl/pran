@@ -527,6 +527,21 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn create_droid_brain_talking_reaction_contains_not_existing_interpolation_tags_not_replaced() {
+        let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
+
+        let mut command_reaction_definition = create_keyword_reaction_definition("keyword");
+        command_reaction_definition.steps.push(create_talking_step_definition(Some("${not} keyword ${existing} $")));
+        reaction_repository.insert(&command_reaction_definition).await.unwrap();
+
+        let mut brain = create_droid_brain(&reaction_repository, &text_phonemiser, &create_dummy_notifier()).await;
+
+        let reaction = stimulate_with_chat_message(&mut brain, |stimulus| stimulus.text = String::from("keyword")).expect("reaction expected");
+        assert!(matches!(reaction.steps.get(0).unwrap(), ReactionStep::Talking(talking) if talking.text.get_text() == "${not} keyword ${existing} $"));
+    }
+
+    #[tokio::test]
     async fn create_droid_brain_multiple_reactions_triggering_command_is_prioritised() {
         let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});

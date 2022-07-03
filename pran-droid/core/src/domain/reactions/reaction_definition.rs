@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::fmt::{Debug, Write};
 use std::clone::Clone;
 use std::cmp::PartialEq;
 use rand::random;
@@ -192,37 +192,41 @@ impl ReactionStepMessageDefinition {
     fn try_apply_context(&self, context: &ReactionContext) -> Option<String> {
         let text = self.get_text();
         let template_chunks = text.split("$");
-        let mut output_message = vec![];
+        let mut output_message = String::new();
 
         for template_chunk in template_chunks {
             if template_chunk.starts_with("{user}") {
-                output_message.push(template_chunk.replace("{user}", &context.stimulus.get_source_name()));
+                write!(output_message, "{}", template_chunk.replace("{user}", &context.stimulus.get_source_name()).as_str()).unwrap();
                 continue;
             }
 
             if template_chunk.starts_with("{count}") {
-                output_message.push(template_chunk.replace("{count}", &context.count.to_string()));
+                write!(output_message, "{}", template_chunk.replace("{count}", &context.count.to_string())).unwrap();
                 continue;
             }
 
             match &context.stimulus {
                 Stimulus::ChatMessage(message) => {
                     if template_chunk.starts_with("{target}") {
-                        output_message.push(template_chunk.replace("{target}", &message.get_target()?));
+                        write!(output_message, "{}", template_chunk.replace("{target}", &message.get_target()?)).unwrap();
                         continue;
                     }
 
                     if template_chunk.starts_with("{touser}") {
-                        output_message.push(template_chunk.replace("{touser}", &message.get_target().unwrap_or_else(|| context.stimulus.get_source_name())));
+                        write!(output_message, "{}",
+                               template_chunk.replace("{touser}", &message
+                                   .get_target()
+                                   .unwrap_or_else(|| context.stimulus.get_source_name())
+                               )).unwrap();
                         continue;
                     }
                 }
             }
 
-            output_message.push(template_chunk.to_string());
+            write!(output_message, "${}", template_chunk.to_string()).unwrap();
         }
 
-        Some(output_message.join(""))
+        Some(output_message[1..].to_string())
     }
 }
 
