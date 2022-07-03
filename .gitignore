@@ -3,4 +3,5 @@
 .env
 *.http
 node_modules
+__pycache__
 local-assets
