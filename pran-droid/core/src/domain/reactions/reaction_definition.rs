@@ -196,28 +196,29 @@ impl ReactionStepMessageDefinition {
 
         for template_chunk in template_chunks {
             if template_chunk.starts_with("{user}") {
-                write!(output_message, "{}", template_chunk.replace("{user}", &context.stimulus.get_source_name()).as_str()).unwrap();
+                write!(output_message, "{}", template_chunk.replacen("{user}", &context.stimulus.get_source_name(), 1).as_str()).unwrap();
                 continue;
             }
 
             if template_chunk.starts_with("{count}") {
-                write!(output_message, "{}", template_chunk.replace("{count}", &context.count.to_string())).unwrap();
+                write!(output_message, "{}", template_chunk.replacen("{count}", &context.count.to_string(), 1)).unwrap();
                 continue;
             }
 
             match &context.stimulus {
                 Stimulus::ChatMessage(message) => {
                     if template_chunk.starts_with("{target}") {
-                        write!(output_message, "{}", template_chunk.replace("{target}", &message.get_target()?)).unwrap();
+                        write!(output_message, "{}", template_chunk.replacen("{target}", &message.get_target()?, 1)).unwrap();
                         continue;
                     }
 
                     if template_chunk.starts_with("{touser}") {
-                        write!(output_message, "{}",
-                               template_chunk.replace("{touser}", &message
+                        write!(output_message,
+                               "{}",
+                               template_chunk.replacen("{touser}", &message
                                    .get_target()
-                                   .unwrap_or_else(|| context.stimulus.get_source_name())
-                               )).unwrap();
+                                   .unwrap_or_else(|| context.stimulus.get_source_name()),
+                               1)).unwrap();
                         continue;
                     }
                 }
