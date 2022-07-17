@@ -1,11 +1,10 @@
 import './echo-recording-modal.css';
 import {
-  ModalContentInputs,
   PlayerController,
   PlayerState
 } from 'pran-animation-editor-frontend';
 import { Animator, AnimatorManager, CanvasControllerFactory } from 'pran-animation-frontend';
-import { Container, inlineComponent, onClick } from 'pran-gular-frontend';
+import { BaseRendering, Container, inlineComponent, ModalContentInputs, onClick } from 'pran-gular-frontend';
 import { webmToMp4 } from './webm-to-mp4';
 
 type EchoRecordingModalInputs = { animatorManager: AnimatorManager, animator: Animator } & ModalContentInputs<void>;
@@ -40,7 +39,7 @@ export const createEchoRecordingModal = inlineComponent<EchoRecordingModalInputs
     `<button type="button" class="echo-recording-modal_record-button g-button">Record</button>`
   ], e => (
     onClick(e, '.echo-recording-modal_record-button', () => startRecording(canvas, playerController, animator, 60))
-  )];
+  )] as ReturnType<BaseRendering<EchoRecordingModalInputs>>;
 });
 
 async function startRecording(canvas: HTMLCanvasElement, playerController: PlayerController, animator: Animator, fps: number) {

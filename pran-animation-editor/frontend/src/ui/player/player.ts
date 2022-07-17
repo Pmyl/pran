@@ -19,7 +19,7 @@ export class Player extends Component<{ playerController: PlayerController, show
     (this.canvas.componentElement as HTMLCanvasElement).height = 500;
   }
 
-  protected _render(): (string | Component)[] {
+  protected _render = (): (string | Component)[] => {
     mandatoryInput(this, 'playerController');
 
     const elements = [this.canvas];
@@ -33,10 +33,10 @@ export class Player extends Component<{ playerController: PlayerController, show
       createPlayButton({ playerController: this._inputs.playerController }).appendTo(playerControlsContainer);
       createLoopToggle({ playerController: this._inputs.playerController }).appendTo(playerControlsContainer);
       createPlaybackRateToggle({ playerController: this._inputs.playerController }).appendTo(playerControlsContainer);
-      
+
       elements.push(playerControlsContainer);
     }
 
     return elements;
-  }
+  };
 }

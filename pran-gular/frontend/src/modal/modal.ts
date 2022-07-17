@@ -13,7 +13,7 @@ export class Modal {
 
   public static open<TResult>(modalContent: Component<ModalContentInputs<TResult>>): Promise<TResult> {
     if (!Modal.modalContainer) throw new Error('Modal has to be initialized before opening');
-    
+
     return new Promise(r => {
       const modal = createModalTemplate({
         component: modalContent,
@@ -22,7 +22,7 @@ export class Modal {
           r(resultValue);
         }
       });
-      
+
       this.modalContainer.append(modal);
     });
   }

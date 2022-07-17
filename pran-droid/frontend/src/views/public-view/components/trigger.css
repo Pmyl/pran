@@ -1,0 +1,58 @@
+.reactions-table-triggers_tooltip {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  border-bottom: 1px dotted black;
+}
+
+.reactions-table-triggers_tooltip .reactions-table-triggers_tooltip-content {
+  visibility: hidden;
+  position: absolute;
+  background-color: #ccc;
+  color: white;
+  z-index: 1;
+  padding: 5px;
+  border-radius: 5px;
+  left: calc(100% + 10px);
+  min-width: 100px;
+  text-align: center;
+}
+
+.reactions-table-triggers_tooltip:hover .reactions-table-triggers_tooltip-content {
+  visibility: visible;
+}
+
+.reactions-table-triggers_tooltip .reactions-table-triggers_tooltip-content::after {
+  content: " ";
+  position: absolute;
+  top: calc(50% - 5px);
+  right: 100%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent #ccc transparent transparent;
+}
+
+.reactions-table-trigger_command,
+.reactions-table-trigger_keyword {
+  border-radius: 5px;
+  padding: 2px 4px;
+}
+
+.reactions-table-trigger_command {
+  background-color: darkslategray;
+  color: white;
+}
+
+.reactions-table-trigger_command:before {
+  content: '👉🏻';
+}
+
+.reactions-table-trigger_keyword {
+  background-color: rebeccapurple;
+  color: white;
+}
+
+.reactions-table-trigger_keyword:before {
+  content: '💬';
+}

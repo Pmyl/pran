@@ -11,3 +11,6 @@ export * from './events/on-keydown';
 export * from './events/on-mouseup';
 export * from './events/on-mousedown';
 export * from './modifiers/set-property';
+export * from './modal/modal';
+export * from './modal/modal-content-inputs';
+export * from './modal/modal-template/modal-template';

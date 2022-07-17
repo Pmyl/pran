@@ -19,5 +19,12 @@ export const publicView = inlineComponent(controls => {
   return (_, r) =>
     !reactions
       ? r.el('p').text('Loading...').endEl()
-      : r.cmp(reactionsTable, { reactions });
+      : (() => {
+        r.el('div', 'public-view_container');
+          r.el('h1', 'public-view_title').text('Prandroid Reactions').endEl();
+          r.el('div', 'public-view_table-container');
+            r.cmp(reactionsTable, { reactions });
+          r.endEl();
+        r.endEl();
+      })();
 });

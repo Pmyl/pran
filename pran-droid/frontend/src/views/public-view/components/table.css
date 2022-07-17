@@ -1,0 +1,52 @@
+.reactions-table {
+  width: 100%
+}
+
+.reactions-table table {
+  border-collapse: collapse;
+  font-size: 0.9em;
+  font-family: sans-serif;
+  min-width: 400px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+  width: 100%
+}
+
+.reactions-table table thead tr {
+  background-color: #009879;
+  color: #ffffff;
+  text-align: left;
+}
+
+.reactions-table table th,
+.reactions-table table td:not(.reactions-table_actions-cell):not(.reactions-table_enabled-cell) {
+  padding: 8px 11px;
+}
+
+.reactions-table table tbody tr {
+  border-bottom: 1px solid #dddddd;
+}
+
+.reactions-table table tbody tr:nth-of-type(even) {
+  background-color: #f3f3f3;
+}
+
+.reactions-table table tbody tr:last-of-type {
+  border-bottom: 2px solid #009879;
+}
+
+.reactions-table_count-cell {
+  text-align: center;
+}
+
+.reactions-table .toggle-disabled:not([isDisabled]) {
+  color: green;
+}
+
+.reactions-table_enabled-cell {
+  text-align: center;
+}
+
+.reactions-table button.edit-button,
+.reactions-table_enabled-cell .toggle-disabled:not([isDisabled]) {
+  font-size: 1.5em;
+}

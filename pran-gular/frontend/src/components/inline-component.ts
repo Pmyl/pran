@@ -22,11 +22,11 @@ export interface ComponentControls<TInputs extends object, TSideInputs extends o
   onDestroy?: () => void;
 }
 
-type PostRenderingHandler = (component: HTMLElement) => void;
-type BaseRendering<TInputs> = (inputs: TInputs) => RenderResult | [RenderResult, PostRenderingHandler];
-type ComplexRendering<TInputs> = (inputs: TInputs, complexRenderer: ComplexRenderer) => void | ComplexRenderer | PostRenderingHandler;
+export type PostRenderingHandler = (component: HTMLElement) => void;
+export type BaseRendering<TInputs> = (inputs: TInputs) => [RenderResult, PostRenderingHandler] | RenderResult;
+export type ComplexRendering<TInputs> = (inputs: TInputs, complexRenderer: ComplexRenderer) => void | ComplexRenderer | PostRenderingHandler;
 
-function inlineComponentConstructor<TInputs extends object = EmptyObject, TSideInputs extends object = null>(
+function inlineComponentConstructor<TInputs extends object = EmptyObject, TSideInputs extends object = {}>(
   componentFunction: (controls: ComponentControls<TInputs, TSideInputs>) => BaseRendering<TInputs> | ComplexRendering<TInputs>
 ): NewableComponent<TInputs> {
   return class InlinedComponent extends Component<TInputs> {

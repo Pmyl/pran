@@ -1,5 +1,5 @@
 import './modal-template.css';
-import { Component, Container, inlineComponent, Keys, onClick, onKeydown } from 'pran-gular-frontend';
+import { BaseRendering, Component, Container, inlineComponent, Keys, onClick, onKeydown } from 'pran-gular-frontend';
 import { ModalContentInputs } from '../modal-content-inputs';
 
 type ModalInputs<TResult, T extends ModalContentInputs<TResult> = ModalContentInputs<TResult>> = { component: Component<T>, close: (returnValue?: TResult) => void };
@@ -22,7 +22,7 @@ export const createModalTemplate = inlineComponent<ModalInputs<unknown>>(control
     Container.CreateEmptyElement('div', 'modal-template_backdrop'),
     Container.CreateEmptyElement('div', 'modal-template_container')
       .append(inputs.component)
-  ], e => (
+  ], (e: HTMLElement) => (
     onClick(e, '.modal-template_backdrop', () => inputs.close())
-  )];
+  )] as ReturnType<BaseRendering<ModalInputs<unknown>>>;
 });

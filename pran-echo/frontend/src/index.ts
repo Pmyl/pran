@@ -1,6 +1,6 @@
 import './index.css';
-import { createAnimationEditor, Modal } from 'pran-animation-editor-frontend';
-import { Container } from 'pran-gular-frontend';
+import { createAnimationEditor } from 'pran-animation-editor-frontend';
+import { Container, Modal } from 'pran-gular-frontend';
 import { createEchoPanel } from './components/echo-panel/echo-panel';
 import { MouthMapping } from './mapping/mouth-mapping';
 

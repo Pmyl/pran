@@ -25,7 +25,6 @@ export class ComplexRenderer {
   private _instructions: Array<Instruction> = [];
   private _newInstructions: Array<Instruction> = [];
   private _currentInstructionIndex: number = 0;
-  private _currentElement: HTMLElement;
   private _currentChildIndex: number = 0;
   private _openElements: Set<HTMLElement> = new Set();
   private _components: Set<Component> = new Set();
@@ -49,21 +48,24 @@ export class ComplexRenderer {
     const instruction: `el_${string}` = `el_${selector}`;
     let element: HTMLElement;
 
-    const currentInstruction = this._instructions[this._currentInstructionIndex];
+    let currentInstruction = this._instructions[this._currentInstructionIndex];
+
+    if (!!currentInstruction && !this._isElementRelated(currentInstruction)) {
+      this._undoInstructionsUntilElementRelated();
+      currentInstruction = this._instructions[this._currentInstructionIndex];
+    }
 
     if (!!currentInstruction && currentInstruction[0] === instruction) {
       element = currentInstruction[1];
-      this._elementQueue.unshift(element);
       this._currentInstructionIndex++;
     } else {
       element = this._createElement(selector);
       element.setAttribute('data-pa-pos', this._currentChildIndex.toString());
       this._elementQueue[0].append(element)
-      this._elementQueue.unshift(element);
     }
 
     element.className = classes ? classes : '';
-    this._currentElement = element;
+    this._elementQueue.unshift(element);
     this._openElements.add(element);
     this._newInstructions.push([instruction, element]);
     this._currentChildIndex = 0;
@@ -80,7 +82,7 @@ export class ComplexRenderer {
   public endEl(): this {
     const newInstruction = `endel`;
     let currentInstruction = this._instructions[this._currentInstructionIndex];
-    let closedElement: HTMLElement = this._currentElement;
+    let closedElement: HTMLElement = this._elementQueue[0];
 
     const isDifferentInstruction = !!currentInstruction && (currentInstruction[0] !== newInstruction || currentInstruction[1] !== closedElement);
     if (isDifferentInstruction) {
@@ -92,7 +94,6 @@ export class ComplexRenderer {
     this._elementQueue.shift();
     this._openElements.delete(closedElement);
     this._newInstructions.push([newInstruction, closedElement]);
-    this._currentElement = closedElement.parentElement;
     this._currentChildIndex = +closedElement.getAttribute('data-pa-pos') + 1;
 
     if (this._elementQueue.length === 0) {
@@ -176,6 +177,7 @@ export class ComplexRenderer {
 
   // Component
   public cmp<TInputs extends object>(cmp: { component: NewableComponent<TInputs> }, inputs?: TInputs): this {
+    // TODO: A component counts as an element that opens and close so it should behave the same as el + endEl, no more no less
     const instruction = 'cmp';
     const currentInstruction = this._instructions[this._currentInstructionIndex];
     let instance: Component;
@@ -286,10 +288,11 @@ export class ComplexRenderer {
   private _setElementAttr(element: HTMLElement, name: string, value: string | null): void {
     if (value === null) {
       console.log(`--- Attr: ${element.tagName} ${name}`);
+      element.removeAttribute(name);
     } else {
       console.log(`+++ Attr: ${element.tagName} ${name} -> ${value}`);
+      element.setAttribute(name, value);
     }
-    element.setAttribute(name, value);
   }
 
   private _setElementHtml(element: HTMLElement, html: string): void {
@@ -311,17 +314,44 @@ export class ComplexRenderer {
   }
 
   private _undoInstructionsOnEndEl(endedElement: HTMLElement): void {
-    const endedElementParent = endedElement.parentElement;
+    let currentInstruction = this._instructions[this._currentInstructionIndex];
+    let currentRemovedElement = null;
+
+    if (this._openElements.has(endedElement)) {
+      while (!!currentInstruction && (currentInstruction[0] !== 'endel' || currentInstruction[1] !== endedElement)) {
+        if (this._isCreateElementInstruction(currentInstruction)) {
+          currentRemovedElement = currentInstruction[1];
+          this._removeElement(currentRemovedElement);
+        } else if (currentInstruction[0] === 'text' && currentInstruction[1] !== currentRemovedElement) {
+          this._setElementText(currentInstruction[1], '');
+        } else if (currentInstruction[0] === 'attr' && currentInstruction[1] !== currentRemovedElement) {
+          this._setElementAttr(currentInstruction[1], currentInstruction[2], null);
+        }
+        currentInstruction = this._instructions[++this._currentInstructionIndex];
+      }
+    } else {
+      const endedElementParent = endedElement.parentElement;
+      while (!!currentInstruction && (currentInstruction[0] !== 'endel' || currentInstruction[1] !== endedElementParent)) {
+        if (this._isCreateElementInstruction(currentInstruction)) {
+          currentRemovedElement = currentInstruction[1];
+          this._removeElement(currentRemovedElement);
+        } else if (currentInstruction[0] === 'text' && currentInstruction[1] !== currentRemovedElement) {
+          this._setElementText(currentInstruction[1], '');
+        } else if (currentInstruction[0] === 'attr' && currentInstruction[1] !== currentRemovedElement) {
+          this._setElementAttr(currentInstruction[1], currentInstruction[2], null);
+        }
+        currentInstruction = this._instructions[++this._currentInstructionIndex];
+      }
+    }
+  }
+
+  private _undoInstructionsUntilElementRelated(): void {
     let currentInstruction = this._instructions[this._currentInstructionIndex];
 
-    let currentRemovedElement = null;
-    while (!!currentInstruction && (currentInstruction[0] !== 'endel' || currentInstruction[1] !== endedElementParent)) {
-      if (this._isCreateElementInstruction(currentInstruction)) {
-        currentRemovedElement = currentInstruction[1];
-        this._removeElement(currentRemovedElement);
-      } else if (currentInstruction[0] === 'text' && currentInstruction[1] !== currentRemovedElement) {
+    while (!!currentInstruction && !this._isElementRelated(currentInstruction)) {
+      if (currentInstruction[0] === 'text') {
         this._setElementText(currentInstruction[1], '');
-      } else if (currentInstruction[0] === 'attr' && currentInstruction[1] !== currentRemovedElement) {
+      } else if (currentInstruction[0] === 'attr') {
         this._setElementAttr(currentInstruction[1], currentInstruction[2], null);
       }
       currentInstruction = this._instructions[++this._currentInstructionIndex];
@@ -341,6 +371,22 @@ export class ComplexRenderer {
           return instruction[1].parentElement;
         }
         throw new Error(`Cannot find parent element of instruction, missing implementation for ${instruction[0]}`);
+    }
+  }
+
+  private _isElementRelated(instruction: Instruction): boolean {
+    switch (instruction[0]) {
+      case 'endel':
+      case 'cmp':
+        return true;
+      case 'text':
+      case 'attr':
+        return false;
+      default:
+        if (this._isCreateElementInstruction(instruction)) {
+          return true;
+        }
+        throw new Error(`Cannot know if instruction is element related, missing implementation for ${instruction[0]}`);
     }
   }
 }

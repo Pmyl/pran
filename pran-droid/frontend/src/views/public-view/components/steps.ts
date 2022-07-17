@@ -1,8 +1,9 @@
 import { inlineComponent } from 'pran-gular-frontend';
 import { ReactionStep, ReactionTalkingStepAlternative} from '../models';
+import './steps.css';
 
 export const steps = inlineComponent<{ steps: Array<ReactionStep> }>(controls => {
-  controls.setup("steps", "steps");
+  controls.setup("reactions-table-steps", "reactions-table-steps");
   controls.setComplexRendering();
 
   function getReactionToShow(steps: Array<ReactionStep>): ReactionStep {
@@ -31,11 +32,11 @@ export const steps = inlineComponent<{ steps: Array<ReactionStep> }>(controls =>
       r.text('Animation');
     } else {
       const mostProbableMessage = getMostProbableAlternative(stepToShow);
-      r.el('p', 'public-view_step-message').text(mostProbableMessage.message.text).endEl();
+      r.el('p', 'reactions-table-steps_message').text(mostProbableMessage.message.text).endEl();
       mostProbableMessage.probability !== 100
-        && r.el('span', 'public-view_step-random').attr('title', 'Random response').html('&nbsp;🔀&nbsp;').endEl();
+        && r.el('span', 'reactions-table-steps_random').attr('title', 'Random response').html('&nbsp;🔀&nbsp;').endEl();
       inputs.steps.length > 1
-        && r.scel('br').el('span', 'public-view_step-more').text(`and ${inputs.steps.length - 1} more steps`).endEl();
+        && r.scel('br').el('span', 'reactions-table-steps_more').text(`and ${inputs.steps.length - 1} more steps`).endEl();
     }
   };
 });
