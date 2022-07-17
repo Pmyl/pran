@@ -403,8 +403,6 @@ export abstract class Component<T extends object | null = EmptyObject> {
   private _holdRender: boolean;
   private _hasRenderedAtLeastOnce: boolean;
   private _hasRerendered: boolean;
-  private _isRendering: boolean;
-  private _reRender: boolean;
 
   protected static _updatingInputsComponent: Component<object | null>;
   protected static _wantToRenderDuringUpdatingInputs: boolean = false;

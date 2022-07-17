@@ -1,5 +1,6 @@
 import './modal.css';
-import { Component, Container } from 'pran-gular-frontend';
+import { Component } from '../components/component';
+import { Container } from '../components/container';
 import { ModalContentInputs } from './modal-content-inputs';
 import { createModalTemplate } from './modal-template/modal-template';
 

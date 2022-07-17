@@ -1,5 +1,4 @@
-import { Modal } from 'pran-animation-editor-frontend';
-import { inlineComponent } from 'pran-gular-frontend';
+import { inlineComponent, Modal } from 'pran-gular-frontend';
 import { authorize } from '../../helpers/is-authorized';
 import { retryFetch } from '../../helpers/retry-fetch';
 import { reactionsTable } from '../public-view/components/table';

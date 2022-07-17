@@ -1,7 +1,7 @@
 import './block-editor.css';
 
 import { ActionType, Animator, AnimatorManager, Timeline } from 'pran-animation-frontend';
-import { inlineComponent, onClick } from 'pran-gular-frontend';
+import { inlineComponentOld, Modal, onClick } from 'pran-gular-frontend';
 import { Block, BlocksFilter, BlockType, ImageBlock } from '../../../core/block/block';
 import { addTimeline } from '../../../core/editor-queue/actions/add-timeline';
 import { clearBlock } from '../../../core/editor-queue/actions/clear-block';
@@ -13,12 +13,11 @@ import { updateImage } from '../../../core/editor-queue/actions/update-image';
 import { EditorAction, EditorDoActionEvent } from '../../../core/editor-queue/editor-queue';
 import { Mediator } from '../../../core/mediator/mediator';
 import { TimelineBar } from '../../../core/timeline/timeline-bar';
-import { Modal } from '../../modal/modal';
 import { BlockSelected, BlockUnselected } from '../../timeline/timeline-bar/timeline-bar';
 import { TimelinePositionChanged } from '../../timeline/timeline-board/timeline-board';
 import { createSelectImageModal } from './select-image-modal/select-image-modal';
 
-export const createBlockEditor = inlineComponent<{ animatorManager: AnimatorManager, animator: Animator }>(controls => {
+export const createBlockEditor = inlineComponentOld<{ animatorManager: AnimatorManager, animator: Animator }>(controls => {
   let block: Block,
     timeline: Timeline,
     timelineBar: TimelineBar,
@@ -43,7 +42,7 @@ export const createBlockEditor = inlineComponent<{ animatorManager: AnimatorMana
   Mediator.onEvent<TimelinePositionChanged>('timelinePositionChanged', newPosition => {
     timelinePosition = newPosition;
   });
-  
+
   return inputs => !block ? [`
 <div class="block-editor_unselected-container">
   <div class="block-editor_unselected-buttons-container">

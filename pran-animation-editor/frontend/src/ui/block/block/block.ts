@@ -1,5 +1,5 @@
 import { Animator, Timeline } from 'pran-animation-frontend';
-import { inlineComponent, onClick } from 'pran-gular-frontend';
+import { inlineComponentOld, onClick } from 'pran-gular-frontend';
 import { Block, BlockType } from '../../../core/block/block';
 import { Mediator } from '../../../core/mediator/mediator';
 import './block.css';
@@ -15,7 +15,7 @@ interface BlockInputs {
   isHighlighted: boolean
 }
 
-export const createBlock = inlineComponent<BlockInputs>(controls => {
+export const createBlock = inlineComponentOld<BlockInputs>(controls => {
   controls.setup('block', 'block');
 
   const handles = createTimelineBlockHandles();

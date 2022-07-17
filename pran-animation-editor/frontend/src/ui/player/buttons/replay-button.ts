@@ -1,7 +1,7 @@
-import { inlineComponent, onClick } from 'pran-gular-frontend';
+import { inlineComponentOld, onClick } from 'pran-gular-frontend';
 import { PlayerController } from '../../../core/player/player-controller';
 
-export const createReplayButton = inlineComponent<{ playerController: PlayerController }>(controls => {
+export const createReplayButton = inlineComponentOld<{ playerController: PlayerController }>(controls => {
   controls.setup('replay-button', 'replay-button');
 
   return inputs =>

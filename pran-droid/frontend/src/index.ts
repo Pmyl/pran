@@ -1,4 +1,4 @@
-import { Container } from 'pran-gular-frontend';
+import { Container, Modal } from 'pran-gular-frontend';
 import { droidView } from './views/droid-view/droid-view';
 import { managementView } from './views/management-view/management-view';
 import { publicView } from './views/public-view/public-view';
@@ -6,20 +6,20 @@ import './index.css';
 
 document.addEventListener('DOMContentLoaded', () => {
   const route = window.location.pathname;
+  const body = Container.CreateBody();
+  Modal.init(body);
 
   switch (route) {
     case '/':
-      renderPrangular(publicView);
+      body.append(publicView()).render();
       break;
     case '/droid':
-      renderPrangular(droidView);
+      body.append(droidView()).render();
       break;
     case '/management':
-      renderPrangular(managementView);
+      body.append(managementView()).render();
       break;
     default:
       window.location.href = '/';
   }
 });
-
-const renderPrangular = cmp => Container.CreateBody().append(cmp()).render();

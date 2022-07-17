@@ -1,13 +1,12 @@
 import './custom-mapping.css';
-import { ModalContentInputs } from 'pran-animation-editor-frontend';
-import { inlineComponent, onChange, onClick } from 'pran-gular-frontend';
+import { inlineComponentOld, ModalContentInputs, onChange, onClick } from 'pran-gular-frontend';
 import { MouthMapping } from '../../mapping/mouth-mapping';
 
 type CustomMappingModalInputs = ModalContentInputs<void> & {
   mouthMapping: MouthMapping;
 };
 
-export const createCustomMapping = inlineComponent<CustomMappingModalInputs>(controls => {
+export const createCustomMapping = inlineComponentOld<CustomMappingModalInputs>(controls => {
   controls.setup('custom-mapping');
 
   let mappingFile: File,
@@ -96,7 +95,7 @@ function readFilePromise(file: File): Promise<string> {
     reader.onload = (evt) => {
       r(evt.target.result as string);
     };
-    reader.onerror = (evt) => {
+    reader.onerror = _ => {
       rj();
     };
     reader.readAsText(file, 'UTF-8');
@@ -109,7 +108,7 @@ function readImagePromise(imageFile): Promise<string> {
     reader.onload = (evt) => {
       r(evt.target.result as string);
     };
-    reader.onerror = (evt) => {
+    reader.onerror = _ => {
       rj();
     };
     reader.readAsDataURL(imageFile);

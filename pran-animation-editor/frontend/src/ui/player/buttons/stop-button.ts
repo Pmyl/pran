@@ -1,7 +1,7 @@
-import { inlineComponent, onClick } from 'pran-gular-frontend';
+import { inlineComponentOld, onClick } from 'pran-gular-frontend';
 import { PlayerController } from '../../../core/player/player-controller';
 
-export const createStopButton = inlineComponent<{ playerController: PlayerController }>(controls => {
+export const createStopButton = inlineComponentOld<{ playerController: PlayerController }>(controls => {
   controls.setup('stop-button', 'stop-button');
 
   return inputs =>

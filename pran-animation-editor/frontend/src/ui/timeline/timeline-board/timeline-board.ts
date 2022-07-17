@@ -1,5 +1,5 @@
 import { Animator, Timeline, TimelineChange, TimelineChangeType } from 'pran-animation-frontend';
-import { Component, inlineComponent, onClick, staticElement } from 'pran-gular-frontend';
+import { Component, inlineComponentOld, onClick, staticElement } from 'pran-gular-frontend';
 import { IEvent, Mediator } from '../../../core/mediator/mediator';
 import { PlayerController } from '../../../core/player/player-controller';
 import { TimelineBar } from '../../../core/timeline/timeline-bar';
@@ -9,7 +9,7 @@ import './timeline-board.css';
 
 export type TimelinePositionChanged = IEvent<'timelinePositionChanged', number>;
 
-export const createTimelineBoard = inlineComponent<{ animator: Animator, playerController: PlayerController, frameWidth: number }, { totalFrames: number }>(controls => {
+export const createTimelineBoard = inlineComponentOld<{ animator: Animator, playerController: PlayerController, frameWidth: number }, { totalFrames: number }>(controls => {
   let bars: ReturnType<typeof createTimelineBar>[],
     currentFrame: number = 0,
     pickArea: Component,
@@ -86,7 +86,7 @@ function createFramesLines(frames: number, frameWidth: number): string {
 ${isHighlight ? `<span class="timeline-board_frame-pick-frame">${i}</span>` : ''}
 </div>`
   }
-  
+
   return result;
 }
 

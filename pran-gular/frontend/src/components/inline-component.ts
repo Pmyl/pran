@@ -146,3 +146,9 @@ export function inlineComponent<TInputs extends object = EmptyObject, TSideInput
 
   return result;
 }
+
+export function inlineComponentOld<TInputs extends object = EmptyObject, TSideInputs extends object = null>(
+  componentFunction: (controls: ComponentControls<TInputs, TSideInputs>) => BaseRendering<TInputs>
+): { (inputs?: TInputs): Component<TInputs>; component: NewableComponent<TInputs> } {
+  return inlineComponent(componentFunction)
+}

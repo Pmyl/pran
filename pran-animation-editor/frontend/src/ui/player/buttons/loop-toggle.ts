@@ -1,7 +1,7 @@
-import { inlineComponent, onClick } from 'pran-gular-frontend';
+import { inlineComponentOld, onClick } from 'pran-gular-frontend';
 import { PlayerController } from '../../../core/player/player-controller';
 
-export const createLoopToggle = inlineComponent<{ playerController: PlayerController }>(controls => {
+export const createLoopToggle = inlineComponentOld<{ playerController: PlayerController }>(controls => {
   let checked: boolean = false;
 
   controls.setup('loop-toggle', 'loop-toggle');

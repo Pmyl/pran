@@ -1,6 +1,6 @@
 import './block-handles.css';
 import { Animator, Timeline } from 'pran-animation-frontend';
-import { inlineComponent, onClick, onDrag } from 'pran-gular-frontend';
+import { inlineComponentOld, onClick, onDrag } from 'pran-gular-frontend';
 import { Block } from '../../../core/block/block';
 import { expandBlock } from '../../../core/editor-queue/actions/expand-block';
 import { expandBlockLeft } from '../../../core/editor-queue/actions/expand-block-left';
@@ -12,7 +12,7 @@ import { TimelineBar } from '../../../core/timeline/timeline-bar';
 
 type HandlesInputs = { isSelected: boolean, frameWidth: number, animator: Animator, timeline: Timeline, block: Block, timelineBar: TimelineBar };
 
-export const createTimelineBlockHandles = inlineComponent<HandlesInputs>(controls => {
+export const createTimelineBlockHandles = inlineComponentOld<HandlesInputs>(controls => {
   controls.setup('block-handles', 'block-handles');
   let moveAmount: number = 0;
 

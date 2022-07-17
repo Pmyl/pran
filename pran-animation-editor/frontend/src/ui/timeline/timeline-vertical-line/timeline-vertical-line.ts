@@ -1,5 +1,5 @@
 import { PlayerController, PlayerState } from '../../../core/player/player-controller';
-import { Immutable, inlineComponent, setProperty, setPropertyElement, staticElement } from 'pran-gular-frontend';
+import { Immutable, inlineComponent, setPropertyElement, staticElement } from 'pran-gular-frontend';
 import './timeline-vertical-line.css';
 
 export type TimelineVerticalLineInputs = { playerController: Immutable<PlayerController>, currentFrame: number, frameWidth: number };

@@ -1,7 +1,7 @@
-import { inlineComponent, onClick } from 'pran-gular-frontend';
+import { inlineComponentOld, onClick } from 'pran-gular-frontend';
 import { PlayerController } from '../../../core/player/player-controller';
 
-export const createPlaybackRateToggle = inlineComponent<{ playerController: PlayerController }>(controls => {
+export const createPlaybackRateToggle = inlineComponentOld<{ playerController: PlayerController }>(controls => {
   let playbackRates: number[] = [1, 0.5, 0.25],
     currentRate: number = 0;
 

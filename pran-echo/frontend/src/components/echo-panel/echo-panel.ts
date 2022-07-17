@@ -3,7 +3,7 @@ import {
   PranEditorControls
 } from 'pran-animation-editor-frontend';
 import { ActionType, drawId, FRAMES_TO_SECONDS, ManagerTimelineAction, SECONDS_TO_FRAMES, wait } from 'pran-animation-frontend';
-import { ComponentControls, inlineComponent, Modal, onChange, onClick } from 'pran-gular-frontend';
+import { ComponentControls, inlineComponentOld, Modal, onChange, onClick } from 'pran-gular-frontend';
 import { phonemesMapper } from 'pran-phonemes-frontend';
 import './echo-panel.css';
 import { MouthMapping } from '../../mapping/mouth-mapping';
@@ -40,7 +40,7 @@ interface AudioData {
 
 type Audio = AudioData & { controls: HTMLAudioElement; };
 
-export const createEchoPanel = inlineComponent<EchoPanelInputs, EchoPanelSideInputs>(controls => {
+export const createEchoPanel = inlineComponentOld<EchoPanelInputs, EchoPanelSideInputs>(controls => {
   controls.setup('echo-panel', 'echo-panel');
   let audio: Audio,
     audioFile: File,

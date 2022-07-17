@@ -1,19 +1,18 @@
 import './select-image-modal.css';
 import { AnimatorManager } from 'pran-animation-frontend';
-import { Component, inlineComponent, onClick, onDoubleClick } from 'pran-gular-frontend';
-import { ModalContentInputs } from '../../../modal/modal-content-inputs';
+import { Component, inlineComponentOld, ModalContentInputs, onClick, onDoubleClick } from 'pran-gular-frontend';
 import { createImageToSelect } from './image-to-select/image-to-select';
 
 type SelectImageModalInputs = ModalContentInputs<[string, HTMLImageElement]> & {
   animatorManager: AnimatorManager;
 };
 
-export const createSelectImageModal = inlineComponent<SelectImageModalInputs>(controls => {
+export const createSelectImageModal = inlineComponentOld<SelectImageModalInputs>(controls => {
   controls.setup('select-image-modal', 'select-image-modal');
   let images: Map<string, Component<{ id: string, imageSrc: string, isSelected: boolean }>>
     = new Map<string, Component<{ id: string, imageSrc: string, isSelected: boolean }>>(),
     currentlySelectedImage: Component<{ id: string, imageSrc: string, isSelected: boolean }> = null;
-  
+
   controls.onInputChange = {
     animatorManager: am => {
       Array.from(am.imagesMap).map(([id, image]) => {

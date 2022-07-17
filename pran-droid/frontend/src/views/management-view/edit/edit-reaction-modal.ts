@@ -1,5 +1,4 @@
-import { ModalContentInputs } from 'pran-animation-editor-frontend';
-import { inlineComponent } from 'pran-gular-frontend';
+import { inlineComponent, ModalContentInputs } from 'pran-gular-frontend';
 import { authorize } from '../../../helpers/is-authorized';
 import { PranDroidReactionDefinition } from '../../public-view/models';
 import { editReaction } from './edit-reaction';
