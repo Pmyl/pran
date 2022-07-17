@@ -16,12 +16,15 @@ pub async fn api_patch_reaction(_authenticated: Authenticated, reaction_id: Stri
         id: reaction_id,
         count: payload.0.count,
         triggers: payload.0.triggers.map(|triggers| triggers.into_iter().map(Into::into).collect()),
+        is_disabled: payload.0.is_disabled,
         ..Default::default()
     }, repo).await?.into()))
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PatchReactionRequest {
+    is_disabled: Option<bool>,
     count: Option<u32>,
     triggers: Option<Vec<ReactionTriggerModel>>,
 }

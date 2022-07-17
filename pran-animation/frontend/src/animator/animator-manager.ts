@@ -28,7 +28,7 @@ export class AnimatorManager {
     this._canvasController = canvasController;
     this._imagesMap = imagesMap;
   }
-  
+
   public static async create(canvasController: MainCanvasController, imagesToLoad: [id: string, url: string][]): Promise<AnimatorManager> {
     const imagesMap: Map<string, HTMLImageElement> = await this._loadAllImages(imagesToLoad);
     return new AnimatorManager(canvasController, imagesMap);
@@ -71,7 +71,7 @@ export class AnimatorManager {
     for (let i = 0; i < animations.length; i++) {
       this._addTimeline(animator, animations[i]);
     }
-    
+
     return animator;
   }
 
@@ -84,7 +84,7 @@ export class AnimatorManager {
   }
 
   private static async _loadAllImages(imagesPath: [id: string, url: string][]): Promise<Map<string, HTMLImageElement>> {
-    let imagesWithPath = await Promise.all<[string, HTMLImageElement]>(imagesPath.map(imagePath => new Promise((r, rj) => {
+    let imagesWithPath = await Promise.all<[string, HTMLImageElement]>(imagesPath.map(imagePath => new Promise<[string, HTMLImageElement]>(r => {
       const image = new Image();
       image.src = imagePath[1];
       image.onload = () => r([imagePath[0], image]);

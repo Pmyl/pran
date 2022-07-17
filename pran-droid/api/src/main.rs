@@ -61,6 +61,7 @@ async fn main() {
             emotion_repo = Arc::new(InMemoryEmotionRepository::new());
             images_repo = Arc::new(InMemoryImageRepository::new());
             images_storage = Arc::new(InMemoryImageStorage::new());
+            build_test_database(reaction_repo.clone(), emotion_repo.clone(), images_repo.clone(), images_storage.clone()).await;
         },
         RuntimeMode::Production => {
             reaction_repo = Arc::new(DetaReactionRepository::new(config.deta_project_key.clone(), config.deta_project_id.clone()));
@@ -69,8 +70,6 @@ async fn main() {
             images_storage = Arc::new(DetaImageStorage::new(config.deta_project_key.clone(), config.deta_project_id.clone()));
         },
     }
-
-    // build_test_database(reaction_repo.clone(), emotion_repo.clone(), images_repo.clone(), images_storage.clone()).await;
 
     let static_path = config.static_path.clone();
     let limits = Limits::default()

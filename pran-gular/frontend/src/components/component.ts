@@ -10,6 +10,343 @@ export type EmptyObject = {
   [K in any] : never
 }
 
+type CreateElementInstruction = [`el_${string}`, HTMLElement];
+type Instruction =
+  ['endel', HTMLElement]
+  | ['attr', HTMLElement, string, string]
+  | ['text', HTMLElement]
+  | ['html', HTMLElement]
+  | CreateElementInstruction
+  | ['cmpi', Component]
+  | ['cmp', NewableComponent<object>, Component];
+
+export class ComplexRenderer {
+  private readonly _elementQueue: Array<HTMLElement> = [];
+  private _instructions: Array<Instruction> = [];
+  private _newInstructions: Array<Instruction> = [];
+  private _currentInstructionIndex: number = 0;
+  private _currentElement: HTMLElement;
+  private _currentChildIndex: number = 0;
+  private _openElements: Set<HTMLElement> = new Set();
+  private _components: Set<Component> = new Set();
+  private _newComponents: Set<Component> = new Set();
+  private _newableComponents: Map<NewableComponent<object>, Set<Component>> = new Map();
+  private _newNewableComponents: Map<NewableComponent<object>, Set<Component>> = new Map();
+
+  constructor(hostElement: HTMLElement) {
+    this._elementQueue.unshift(hostElement);
+  }
+
+  public startRender() {
+    this._newInstructions = [];
+    this._currentChildIndex = 0;
+    this._currentInstructionIndex = 0;
+    this._openElements = new Set();
+  }
+
+  // Element
+  public el(selector: string, classes?: string): this {
+    const instruction: `el_${string}` = `el_${selector}`;
+    let element: HTMLElement;
+
+    const currentInstruction = this._instructions[this._currentInstructionIndex];
+
+    if (!!currentInstruction && currentInstruction[0] === instruction) {
+      element = currentInstruction[1];
+      this._elementQueue.unshift(element);
+      this._currentInstructionIndex++;
+    } else {
+      element = this._createElement(selector);
+      element.setAttribute('data-pa-pos', this._currentChildIndex.toString());
+      this._elementQueue[0].append(element)
+      this._elementQueue.unshift(element);
+    }
+
+    element.className = classes ? classes : '';
+    this._currentElement = element;
+    this._openElements.add(element);
+    this._newInstructions.push([instruction, element]);
+    this._currentChildIndex = 0;
+
+    return this;
+  }
+
+  // Self closing Element
+  public scel(selfClosingElement: string): this {
+    return this.el(selfClosingElement).endEl();
+  }
+
+  // End Element
+  public endEl(): this {
+    const newInstruction = `endel`;
+    let currentInstruction = this._instructions[this._currentInstructionIndex];
+    let closedElement: HTMLElement = this._currentElement;
+
+    const isDifferentInstruction = !!currentInstruction && (currentInstruction[0] !== newInstruction || currentInstruction[1] !== closedElement);
+    if (isDifferentInstruction) {
+      this._undoInstructionsOnEndEl(closedElement);
+    } else {
+      this._currentInstructionIndex++;
+    }
+
+    this._elementQueue.shift();
+    this._openElements.delete(closedElement);
+    this._newInstructions.push([newInstruction, closedElement]);
+    this._currentElement = closedElement.parentElement;
+    this._currentChildIndex = +closedElement.getAttribute('data-pa-pos') + 1;
+
+    if (this._elementQueue.length === 0) {
+      throw new Error('Too many endEl');
+    }
+
+    return this;
+  }
+
+  // Add attribute to current element
+  public attr(name: string, value: string): this {
+    const instruction = 'attr';
+    const currentInstruction = this._instructions[this._currentInstructionIndex];
+
+    if (!!currentInstruction
+      && currentInstruction[0] === instruction
+      && currentInstruction[1] === this._elementQueue[0]
+      && currentInstruction[2] === name) {
+      this._currentInstructionIndex++;
+      currentInstruction[3] !== value && this._setElementAttr(this._elementQueue[0], name, value);
+    } else {
+      this._setElementAttr(this._elementQueue[0], name, value);
+    }
+
+    this._newInstructions.push([instruction, this._elementQueue[0], name, value]);
+    return this;
+  }
+
+  // Text
+  public text(text: string): this {
+    const instruction = `text`;
+
+    const currentInstruction = this._instructions[this._currentInstructionIndex];
+    if (!!currentInstruction && currentInstruction[0] === instruction) {
+      this._currentInstructionIndex++;
+    }
+
+    this._setElementText(this._elementQueue[0], text);
+    this._newInstructions.push([instruction, this._elementQueue[0]]);
+
+    return this;
+  }
+
+  // Html
+  public html(content: string): this {
+    const instruction = `html`;
+
+    const currentInstruction = this._instructions[this._currentInstructionIndex];
+    if (!!currentInstruction && currentInstruction[0] === instruction) {
+      this._currentInstructionIndex++;
+    }
+
+    this._setElementHtml(this._elementQueue[0], content);
+    this._newInstructions.push([instruction, this._elementQueue[0]]);
+
+    return this;
+  }
+
+  // Component instance
+  public cmpi(component: Component): this {
+    const instruction = 'cmpi';
+
+    const currentInstruction = this._instructions[this._currentInstructionIndex];
+
+    if (!!currentInstruction && currentInstruction[0] === instruction && currentInstruction[1] === component) {
+      this._currentInstructionIndex++;
+    } else {
+      if (!this._components.has(component)) {
+        component.render();
+        console.log(`+++ Component: ${component.selector}`);
+      }
+      this._elementQueue[0].append(component.componentElement)
+    }
+
+    this._newInstructions.push([instruction, component]);
+    this._currentChildIndex++;
+    this._newComponents.add(component);
+
+    return this;
+  }
+
+  // Component
+  public cmp<TInputs extends object>(cmp: { component: NewableComponent<TInputs> }, inputs?: TInputs): this {
+    const instruction = 'cmp';
+    const currentInstruction = this._instructions[this._currentInstructionIndex];
+    let instance: Component;
+
+    if (!!currentInstruction && currentInstruction[0] === instruction && currentInstruction[1] === cmp.component) {
+      instance = currentInstruction[2];
+      if (this._getOrCreateNewableComponents(this._newableComponents, cmp.component).has(instance)) {
+        // Component exists in same place, update inputs if needed
+        if (!this._areInputsEqual(instance.inputs, inputs)) {
+          instance.setInputs(inputs);
+          instance.render();
+        }
+      } else {
+        instance = this._insertComponentAtCurrentIndex(cmp, inputs);
+      }
+      this._currentInstructionIndex++;
+    } else {
+      !!currentInstruction && this._undoInstructionsOnEndEl(this._getParentElement(currentInstruction));
+      instance = this._insertComponentAtCurrentIndex(cmp, inputs);
+    }
+
+    this._getOrCreateNewableComponents(this._newableComponents, cmp.component).delete(instance);
+    this._getOrCreateNewableComponents(this._newNewableComponents, cmp.component).add(instance);
+    this._newInstructions.push([instruction, cmp.component, instance]);
+    this._currentChildIndex++;
+
+    return this;
+  }
+
+  private _insertComponentAtCurrentIndex<TInputs extends object>(cmp: { component: NewableComponent<TInputs> }, inputs: TInputs) {
+    let instances: Set<Component> = this._getOrCreateNewableComponents(this._newableComponents, cmp.component);
+    let instance: Component;
+
+    if (instances.size > 0) {
+      // Reuse existing instance from somewhere, it will be moved move into a new place
+      const values = instances.values();
+      const first = values.next();
+      instance = first.value;
+      instances.delete(instance);
+
+      if (!this._areInputsEqual(instance.inputs, inputs)) {
+        instance.setInputs(inputs);
+      }
+    } else {
+      // Create brand new component instance
+      instance = new cmp.component() as Component;
+      !!inputs && instance.setInputs(inputs);
+      instance.render();
+      console.log(`+++ Component: ${instance.selector}`);
+    }
+
+    if (this._elementQueue[0].children.length === this._currentChildIndex) {
+      this._elementQueue[0].append(instance.componentElement)
+    } else {
+      this._elementQueue[0].insertBefore(instance.componentElement, this._elementQueue[0].children[this._currentChildIndex])
+    }
+
+    return instance;
+  }
+
+  private _getOrCreateNewableComponents(newableComponents: Map<NewableComponent<object>, Set<Component>>, component: NewableComponent<object>) {
+    if (!newableComponents.has(component)) {
+      newableComponents.set(component, new Set());
+    }
+
+    return newableComponents.get(component);
+  }
+
+  public endRender() {
+    if (this._elementQueue.length !== 1) {
+      throw new Error('Complex rendering error, missing closing tags')
+    }
+
+    this._instructions = this._newInstructions;
+
+    this._newComponents.forEach(cmp => !this._components.has(cmp) && cmp.destroy());
+    this._components = this._newComponents;
+    this._newComponents = new Set<Component>();
+    this._newNewableComponents.forEach((instances, newableCmp) => {
+      this._getOrCreateNewableComponents(this._newableComponents, newableCmp).forEach(instance => {
+        !instances.has(instance) && instance.destroy();
+      });
+    });
+    this._newableComponents = this._newNewableComponents;
+    this._newNewableComponents = new Map<NewableComponent<object>, Set<Component>>();
+  }
+
+  private _createElement(selector: string): HTMLElement {
+    const element = document.createElement(selector);
+    console.log(`+++ Element: ${element.tagName}`);
+    return element;
+  }
+
+  private _removeElement(element: HTMLElement): void {
+    console.log(`--- Element: ${element.tagName}`);
+    element.remove();
+  }
+
+  private _setElementText(element: HTMLElement, text: string): void {
+    if (!text) {
+      console.log(`--- Text: ${element.tagName}`);
+    } else {
+      console.log(`+++ Text: ${element.tagName} -> ${text}`);
+    }
+    element.innerText = text;
+  }
+
+  private _setElementAttr(element: HTMLElement, name: string, value: string | null): void {
+    if (value === null) {
+      console.log(`--- Attr: ${element.tagName} ${name}`);
+    } else {
+      console.log(`+++ Attr: ${element.tagName} ${name} -> ${value}`);
+    }
+    element.setAttribute(name, value);
+  }
+
+  private _setElementHtml(element: HTMLElement, html: string): void {
+    if (!html) {
+      console.log(`--- Html: ${element.tagName}`);
+    } else {
+      console.log(`+++ Html: ${element.tagName} -> ${html}`);
+    }
+    element.innerHTML = html;
+  }
+
+  private _isCreateElementInstruction(instruction: Instruction): instruction is CreateElementInstruction {
+    return instruction[0].startsWith('el_');
+  }
+
+  private _areInputsEqual(inputs1: object, inputs2: object): boolean {
+    return Object.keys(inputs1).every(key => inputs1[key] === inputs2[key])
+      && Object.keys(inputs1).length === Object.keys(inputs2).length;
+  }
+
+  private _undoInstructionsOnEndEl(endedElement: HTMLElement): void {
+    const endedElementParent = endedElement.parentElement;
+    let currentInstruction = this._instructions[this._currentInstructionIndex];
+
+    let currentRemovedElement = null;
+    while (!!currentInstruction && (currentInstruction[0] !== 'endel' || currentInstruction[1] !== endedElementParent)) {
+      if (this._isCreateElementInstruction(currentInstruction)) {
+        currentRemovedElement = currentInstruction[1];
+        this._removeElement(currentRemovedElement);
+      } else if (currentInstruction[0] === 'text' && currentInstruction[1] !== currentRemovedElement) {
+        this._setElementText(currentInstruction[1], '');
+      } else if (currentInstruction[0] === 'attr' && currentInstruction[1] !== currentRemovedElement) {
+        this._setElementAttr(currentInstruction[1], currentInstruction[2], null);
+      }
+      currentInstruction = this._instructions[++this._currentInstructionIndex];
+    }
+  }
+
+  private _getParentElement(instruction: Instruction): HTMLElement {
+    switch (instruction[0]) {
+      case 'endel':
+      case 'text':
+      case 'attr':
+        return instruction[1].parentElement;
+      case 'cmp':
+        return instruction[2].componentElement.parentElement;
+      default:
+        if (this._isCreateElementInstruction(instruction)) {
+          return instruction[1].parentElement;
+        }
+        throw new Error(`Cannot find parent element of instruction, missing implementation for ${instruction[0]}`);
+    }
+  }
+}
+
+export type NewableComponent<TInputs extends object> = new () => Component<TInputs>;
+
 export abstract class Component<T extends object | null = EmptyObject> {
   public readonly selector: string;
   public componentElement: HTMLElement;
@@ -20,11 +357,17 @@ export abstract class Component<T extends object | null = EmptyObject> {
   private _holdRender: boolean;
   private _hasRenderedAtLeastOnce: boolean;
   private _hasRerendered: boolean;
+  private _isRendering: boolean;
+  private _reRender: boolean;
 
   protected static _updatingInputsComponent: Component<object | null>;
   protected static _wantToRenderDuringUpdatingInputs: boolean = false;
   protected _isTemplate: boolean = false;
   protected _inputs: T = {} as T;
+  protected _isComplex: boolean = false;
+  protected _cr: ComplexRenderer;
+  protected _complexRender?: () => void = null;
+  protected _render?: () => RenderResult = null;
 
   constructor(selector: string, initialClass?: string) {
     this.selector = selector;
@@ -35,6 +378,60 @@ export abstract class Component<T extends object | null = EmptyObject> {
   }
 
   public render(): this | null {
+    if (this._isComplex) {
+      return this._doComplexRender();
+    } else {
+      return this._doRender();
+    }
+  }
+
+  public setInput<K extends keyof T>(name: K, input: T[K]): this {
+    return this.setInputs({ [name]: input } as unknown as Partial<T>);
+  }
+
+  public setInputs(inputs: Partial<T>): this {
+    Object.assign(this._inputs, inputs);
+
+    this._holdRender = true;
+    if (!Component._updatingInputsComponent) {
+      Component._updatingInputsComponent = this;
+    }
+    this._onInputsChange?.();
+    Object.keys(inputs).forEach(key => {
+      this._onInputChange(key);
+    });
+
+    this._holdRender = false;
+    if (Component._wantToRenderDuringUpdatingInputs && Component._updatingInputsComponent._hasRenderedAtLeastOnce) {
+      Component._updatingInputsComponent.render();
+    }
+
+    if (Component._updatingInputsComponent === this) {
+      Component._updatingInputsComponent = null;
+    }
+
+    return this;
+  }
+
+  public destroy(): void {
+    this._onDestroy();
+  }
+
+  public appendTo(parent: Container): this {
+    parent.append(this);
+    return this;
+  }
+
+  public setData(id: string, value: string): this {
+    this.componentElement.setAttribute(id, value);
+    return this;
+  }
+
+  private _doRender(): this | null {
+    if (!this._render) {
+      throw new Error('Complex component should override _render method to render.');
+    }
+
     if (this._holdRender) {
       Component._wantToRenderDuringUpdatingInputs = true;
       return this;
@@ -45,7 +442,7 @@ export abstract class Component<T extends object | null = EmptyObject> {
     const isFirstRender = !this._hasRenderedAtLeastOnce;
     this._hasRenderedAtLeastOnce = true;
     let toRender = this._render();
-    
+
     if (!toRender) {
       return;
     }
@@ -102,53 +499,31 @@ export abstract class Component<T extends object | null = EmptyObject> {
 
     this._lastRenderedItems = toRender.slice();
     this._postRender(this.componentElement);
-    
+
     if (isFirstRender) {
       this._afterFirstRender();
     }
-    
-    return this;
-  }
-  
-  public setInput<K extends keyof T>(name: K, input: T[K]): this {
-    return this.setInputs({ [name]: input } as unknown as Partial<T>);
-  }
-  
-  public setInputs(inputs: Partial<T>): this {
-    Object.assign(this._inputs, inputs);
-
-    this._holdRender = true;
-    if (!Component._updatingInputsComponent) {
-      Component._updatingInputsComponent = this;
-    }
-    this._onInputsChange?.();
-    Object.keys(inputs).forEach(key => {
-      this._onInputChange(key);
-    });
-
-    this._holdRender = false;
-    if (Component._wantToRenderDuringUpdatingInputs && Component._updatingInputsComponent._hasRenderedAtLeastOnce) {
-      Component._updatingInputsComponent.render();
-    }
-    
-    if (Component._updatingInputsComponent === this) {
-      Component._updatingInputsComponent = null;
-    }
 
     return this;
   }
-  
-  public destroy(): void {
-    this._onDestroy();
-  }
 
-  public appendTo(parent: Container): this {
-    parent.append(this);
-    return this;
-  }
-  
-  public setData(id: string, value: string): this {
-    this.componentElement.setAttribute(id, value);
+  private _doComplexRender(): this | null {
+    if (!this._complexRender) {
+      throw new Error('Complex component should override _complexRender method to render.');
+    }
+
+    const isFirstRender = !this._hasRenderedAtLeastOnce;
+    this._hasRenderedAtLeastOnce = true;
+    this._cr.startRender();
+    this._complexRender();
+    this._cr.endRender();
+
+    this._postRender(this.componentElement);
+
+    if (isFirstRender) {
+      this._afterFirstRender();
+    }
+
     return this;
   }
 
@@ -162,6 +537,11 @@ export abstract class Component<T extends object | null = EmptyObject> {
     return element instanceof Component;
   }
 
+  protected _setComplexRendering(): void {
+    this._cr = new ComplexRenderer(this.componentElement);
+    this._isComplex = true;
+  }
+
   protected _afterFirstRender(): void {}
 
   protected _onInputChange(name: string): void {}
@@ -170,7 +550,5 @@ export abstract class Component<T extends object | null = EmptyObject> {
 
   protected _onDestroy(): void {}
 
-  protected abstract _render(): RenderResult;
-  
   protected _postRender(componentToRender: HTMLElement): void {};
 }

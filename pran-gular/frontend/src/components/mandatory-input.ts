@@ -1,9 +1,9 @@
 import { Component } from './component';
 
-export function mandatoryInput<T extends object>(component: Component<T>, inputName: keyof T) {
+export function mandatoryInput<T extends object>(component: Component<T>, inputName: keyof Component['inputs']) {
   if (!component.inputs[inputName]) {
-    throw new Error(`${inputName} input is mandatory in component ${component.selector} before rendering`);
+    throw new Error(`${String(inputName)} input is mandatory in component ${component.selector} before rendering`);
   }
-  
+
   return true;
 }

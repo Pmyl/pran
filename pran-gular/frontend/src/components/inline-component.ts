@@ -1,4 +1,4 @@
-import { Component, EmptyObject, Immutable, RenderResult } from './component';
+import { ComplexRenderer, Component, EmptyObject, Immutable, NewableComponent, RenderResult } from './component';
 import { mandatoryInput } from './mandatory-input';
 
 type InputChangeHooks<TInputs> = {
@@ -12,6 +12,7 @@ type SideInputChangeHooks<TInputs, TSideInputs> = {
 export interface ComponentControls<TInputs extends object, TSideInputs extends object = {}> {
   setup: (selector: string, initialClass?: string) => void;
   mandatoryInput: (inputName: keyof TInputs) => boolean;
+  setComplexRendering: () => void;
   changed(): void;
   onInputsChange?: (inputs: TInputs) => void;
   onInputChange?: Partial<InputChangeHooks<TInputs>>;
@@ -21,82 +22,118 @@ export interface ComponentControls<TInputs extends object, TSideInputs extends o
   onDestroy?: () => void;
 }
 
-export function inlineComponent<TInputs extends object = EmptyObject, TSideInputs extends object = null>(
-  componentFunction: (controls: ComponentControls<TInputs, TSideInputs>) => (inputs: TInputs) => RenderResult | [RenderResult, (component: HTMLElement) => void]
-): (inputs?: TInputs) => Component<TInputs> {
-  return (inputs?: TInputs) => {
-    let _selector, _initialClass, component: Component<TInputs>, sideInputs: Partial<TSideInputs> = {};
+type PostRenderingHandler = (component: HTMLElement) => void;
+type BaseRendering<TInputs> = (inputs: TInputs) => RenderResult | [RenderResult, PostRenderingHandler];
+type ComplexRendering<TInputs> = (inputs: TInputs, complexRenderer: ComplexRenderer) => void | ComplexRenderer | PostRenderingHandler;
 
-    const componentControls: ComponentControls<TInputs, TSideInputs> = {
-      setup(selector: string, initialClass?: string) {
-        _selector = selector;
-        _initialClass = initialClass
-      },
-      mandatoryInput: (inputName: keyof TInputs) => mandatoryInput(component, inputName),
-      changed: () => component.render(),
-      setSideInput: <TK extends keyof TSideInputs>(inputName: TK, input: TSideInputs[TK]) => {
-        sideInputs[inputName] = input;
-        componentControls.onSideInputChange[inputName](input, sideInputs, component.inputs);
+function inlineComponentConstructor<TInputs extends object = EmptyObject, TSideInputs extends object = null>(
+  componentFunction: (controls: ComponentControls<TInputs, TSideInputs>) => BaseRendering<TInputs> | ComplexRendering<TInputs>
+): NewableComponent<TInputs> {
+  return class InlinedComponent extends Component<TInputs> {
+    private _postRenderFn: null | ((componentToRender: HTMLElement) => void);
+    private _renderFn: BaseRendering<TInputs> | ComplexRendering<TInputs>;
+    private _componentControls: ComponentControls<TInputs, TSideInputs>;
+
+    protected _render = (): RenderResult => {
+      const rendered = (this._renderFn as BaseRendering<TInputs>)(this._inputs);
+
+      if (this._isRenderResult(rendered)) {
+        this._postRenderFn = null;
+        return rendered;
+      } else {
+        this._postRenderFn = rendered[1];
+        return rendered[0];
       }
     };
 
-    const renderFn = componentFunction(componentControls)
+    protected _complexRender = (): void => {
+      const rendered = (this._renderFn as ComplexRendering<TInputs>)(this._inputs, this._cr);
 
-    component = new (class InlinedComponent extends Component<TInputs> {
-      private _postRenderFn: null | ((componentToRender: HTMLElement) => void);
+      if (this._hasComplexPostRender(rendered)) {
+        this._postRenderFn = rendered;
+      } else {
+        this._postRenderFn = null;
+      }
+    };
 
-      constructor() {
-        if (!_selector) {
-          throw new Error('inline components needs to be set up with a selector. Use controls.setup');
+    constructor() {
+      let _selector, _initialClass, _isComplexRendering = false, sideInputs: Partial<TSideInputs> = {};
+
+      const componentControls: ComponentControls<TInputs, TSideInputs> = {
+        setup(selector: string, initialClass?: string) {
+          _selector = selector;
+          _initialClass = initialClass
+        },
+        mandatoryInput: (inputName: keyof TInputs) => mandatoryInput(this, inputName),
+        changed: () => this.render(),
+        setSideInput: <TK extends keyof TSideInputs>(inputName: TK, input: TSideInputs[TK]) => {
+          sideInputs[inputName] = input;
+          componentControls.onSideInputChange[inputName](input, sideInputs, this.inputs);
+        },
+        setComplexRendering: () => {
+          _isComplexRendering = true;
         }
-        super(_selector, _initialClass);
-      }
-      
-      public setInput<K extends keyof TInputs>(name: K, input: TInputs[K]) {
-        return this.setInputs({ [name]: input } as unknown as Partial<TInputs>);
+      };
+
+      const renderFn = componentFunction(componentControls)
+      if (!_selector) {
+        throw new Error('inline components needs to be set up with a selector. Use controls.setup');
       }
 
-      public setInputs(inputs: Partial<TInputs>): this {
-        super.setInputs(inputs);
-        return this;
-      }
+      super(_selector || 'broken', _initialClass);
 
-      protected _afterFirstRender(): void {
-        componentControls.afterFirstRender?.();
+      this._renderFn = renderFn;
+      this._componentControls = componentControls;
+      if (_isComplexRendering) {
+        this._setComplexRendering();
       }
-      
-      protected _onDestroy(): void {
-        componentControls.onDestroy?.();
-      }
-      
-      protected _onInputsChange(): void {
-        componentControls.onInputsChange?.(this._inputs);
-      }
-      
-      protected _onInputChange(name: string): void {
-        componentControls.onInputChange?.[name]?.(this._inputs[name], this._inputs);
-      }
+    }
 
-      protected _render(): RenderResult {
-        const rendered = renderFn(this._inputs);
+    public setInput<K extends keyof TInputs>(name: K, input: TInputs[K]) {
+      return this.setInputs({ [name]: input } as unknown as Partial<TInputs>);
+    }
 
-        if (this._isRenderResult(rendered)) {
-          this._postRenderFn = null;
-          return rendered;
-        } else {
-          this._postRenderFn = rendered[1];
-          return rendered[0];
-        }
-      }
+    public setInputs(inputs: Partial<TInputs>): this {
+      super.setInputs(inputs);
+      return this;
+    }
 
-      protected _postRender(componentToRender: HTMLElement) {
-        this._postRenderFn?.(componentToRender);
-      }
+    protected _afterFirstRender(): void {
+      this._componentControls.afterFirstRender?.();
+    }
 
-      private _isRenderResult(result: unknown | RenderResult): result is RenderResult {
-        return !result || typeof result === 'string' || typeof result[1] !== 'function';
-      }
-    });
+    protected _onDestroy(): void {
+      this._componentControls.onDestroy?.();
+    }
+
+    protected _onInputsChange(): void {
+      this._componentControls.onInputsChange?.(this._inputs);
+    }
+
+    protected _onInputChange(name: string): void {
+      this._componentControls.onInputChange?.[name]?.(this._inputs[name], this._inputs);
+    }
+
+    protected _postRender(componentToRender: HTMLElement) {
+      this._postRenderFn?.(componentToRender);
+    }
+
+    private _isRenderResult(result: unknown | RenderResult): result is RenderResult {
+      return !result || typeof result === 'string' || typeof result[1] !== 'function';
+    }
+
+    private _hasComplexPostRender(result: ReturnType<ComplexRendering<object>>): result is PostRenderingHandler {
+      return !!result && typeof result === 'function';
+    }
+  };
+}
+
+export function inlineComponent<TInputs extends object = EmptyObject, TSideInputs extends object = null>(
+  componentFunction: (controls: ComponentControls<TInputs, TSideInputs>) => BaseRendering<TInputs> | ComplexRendering<TInputs>
+): { (inputs?: TInputs): Component<TInputs>; component: NewableComponent<TInputs> } {
+  const constructor = inlineComponentConstructor<TInputs, TSideInputs>(componentFunction);
+  const result = function(inputs?: TInputs) {
+    let component: Component<TInputs> = new constructor();
 
     if (inputs) {
       component.setInputs(inputs);
@@ -104,4 +141,8 @@ export function inlineComponent<TInputs extends object = EmptyObject, TSideInput
 
     return component;
   };
+
+  result.component = constructor;
+
+  return result;
 }

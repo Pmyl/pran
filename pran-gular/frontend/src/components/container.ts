@@ -38,7 +38,14 @@ export class Container<T extends object | null = EmptyObject> extends Component<
   public append(component: string | Component<object | null>): this {
     this._subComponents.push(component);
     this.render();
-    
+
+    return this;
+  }
+
+  public appendMultiple(components: Array<string | Component<object | null>>): this {
+    components.forEach(component => this._subComponents.push(component));
+    this.render();
+
     return this;
   }
 
@@ -46,9 +53,7 @@ export class Container<T extends object | null = EmptyObject> extends Component<
     this.clear();
   }
 
-  protected _render(): RenderResult {
-    return this._subComponents;
-  }
+  protected _render = (): RenderResult => this._subComponents;
 
   public static CreateEmptyElement(selector: string, initialClass?: string): Container;
 
