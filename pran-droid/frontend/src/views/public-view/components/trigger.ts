@@ -6,8 +6,8 @@ export const trigger = inlineComponent<{ trigger: ReactionTrigger }>(controls =>
   controls.setup("reactions-table-trigger", "reactions-table-trigger");
 
   return inputs => controls.mandatoryInput("trigger") && inputs.trigger.type === 'ChatCommand' ?
-    `<span class="reactions-table-trigger_command" title="Command, use this at the beginning of your message to trigger the reaction">${inputs.trigger.command}</span>` :
-    `<span class="reactions-table-trigger_keyword" title="Keyword, use this anywhere in your message to trigger the reaction">${inputs.trigger.keyword}</span>`;
+    `<span class="reactions-table-trigger_command" title="Command, use this at the beginning of your message to trigger the reaction">${inputs.trigger.command || ''}</span>` :
+    `<span class="reactions-table-trigger_keyword" title="Keyword, use this anywhere in your message to trigger the reaction">${inputs.trigger.keyword || ''}</span>`;
 });
 
 

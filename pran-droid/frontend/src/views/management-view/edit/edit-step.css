@@ -1,0 +1,14 @@
+.edit-step .edit-step_container {
+  display: block;
+}
+
+.edit-step_alternative-container {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.edit-step_alternative-probability {
+  display: inline-block;
+  margin-right: 10px;
+}

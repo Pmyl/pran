@@ -1,0 +1,23 @@
+.edit-trigger-modal {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+}
+
+.edit-trigger-modal_form-container {
+  margin-top: 10px;
+}
+
+.edit-trigger-modal_buttons-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: auto;
+}
+
+.edit-trigger-modal label {
+  display: block;
+}
+
+.edit-trigger-modal_form-input-container + .edit-trigger-modal_form-input-container {
+  margin-top: 10px;
+}

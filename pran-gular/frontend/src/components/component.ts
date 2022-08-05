@@ -177,7 +177,6 @@ export class ComplexRenderer {
 
   // Component
   public cmp<TInputs extends object>(cmp: { component: NewableComponent<TInputs> }, inputs?: TInputs): this {
-    // TODO: A component counts as an element that opens and close so it should behave the same as el + endEl, no more no less
     const instruction = 'cmp';
     const currentInstruction = this._instructions[this._currentInstructionIndex];
     let instance: Component;
@@ -236,6 +235,11 @@ export class ComplexRenderer {
     }
 
     return instance;
+  }
+
+  private _removeComponent(component: Component<object>) {
+    console.log(`--- Component: ${component.selector}`);
+    component.componentElement.remove();
   }
 
   private _getOrCreateNewableComponents(newableComponents: Map<NewableComponent<object>, Set<Component>>, component: NewableComponent<object>) {
@@ -322,6 +326,8 @@ export class ComplexRenderer {
         if (this._isCreateElementInstruction(currentInstruction)) {
           currentRemovedElement = currentInstruction[1];
           this._removeElement(currentRemovedElement);
+        } if (currentInstruction[0] === 'cmp') {
+          this._removeComponent(currentInstruction[2]);
         } else if (currentInstruction[0] === 'text' && currentInstruction[1] !== currentRemovedElement) {
           this._setElementText(currentInstruction[1], '');
         } else if (currentInstruction[0] === 'attr' && currentInstruction[1] !== currentRemovedElement) {
@@ -335,6 +341,8 @@ export class ComplexRenderer {
         if (this._isCreateElementInstruction(currentInstruction)) {
           currentRemovedElement = currentInstruction[1];
           this._removeElement(currentRemovedElement);
+        } if (currentInstruction[0] === 'cmp') {
+          this._removeComponent(currentInstruction[2]);
         } else if (currentInstruction[0] === 'text' && currentInstruction[1] !== currentRemovedElement) {
           this._setElementText(currentInstruction[1], '');
         } else if (currentInstruction[0] === 'attr' && currentInstruction[1] !== currentRemovedElement) {

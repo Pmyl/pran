@@ -1,8 +1,13 @@
-export function onChange(element: HTMLElement, selector: string, action: (e: MouseEvent & { target: HTMLInputElement}) => void) {
-  const elementThatListens = element.querySelector(selector);
 
-  if (!elementThatListens.hasAttribute('data-change-listener')) {
-    elementThatListens.setAttribute('data-change-listener', 'true');
-    elementThatListens.addEventListener('input', action);
+export function onChange(element: HTMLElement, selector: string, action: (e: MouseEvent & { target: HTMLInputElement}) => void) {
+  element.querySelectorAll(selector).forEach(elementThatListens => {
+    onChangeElement(elementThatListens, action);
+  });
+}
+
+export function onChangeElement(element: Element, action: (e: MouseEvent & { target: HTMLInputElement}) => void) {
+  if (!element.hasAttribute('data-change-listener')) {
+    element.setAttribute('data-change-listener', 'true');
+    element.addEventListener('input', action);
   }
 }
