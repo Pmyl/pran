@@ -1,7 +1,6 @@
 use dotenv::dotenv;
 use std::env;
 use std::future::{Future};
-use std::sync::Arc;
 use log::{debug, LevelFilter};
 use simplelog::SimpleLogger;
 use pran_droid_brain::{PranDroidBrainConfig, start_droid_brain};
@@ -63,7 +62,7 @@ async fn main() {
 }
 
 fn start_brain(config: &Config) -> impl Future<Output=()> {
-    let reaction_repo = Arc::new(DetaReactionRepository::new(config.deta_project_key.clone(), config.deta_project_id.clone()));
+    let reaction_repo = DetaReactionRepository::new(config.deta_project_key.clone(), config.deta_project_id.clone());
 
     let twitch_client_secret = config.twitch_client_secret.clone();
     let twitch_client_id = config.twitch_client_id.clone();
@@ -84,7 +83,7 @@ fn start_brain(config: &Config) -> impl Future<Output=()> {
             websocket_port,
             api_base_path,
             api_secret_key,
-        }, reaction_repo).await
+        }, &reaction_repo).await
     }
 }
 

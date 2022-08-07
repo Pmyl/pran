@@ -1,4 +1,4 @@
-use std::sync::Arc;
+
 use crate::application::images::dtos::image_dto::ImageDto;
 use crate::domain::images::image_repository::ImageRepository;
 

@@ -69,7 +69,7 @@ pub struct PranDroidBrainConfig {
 
 pub async fn start_droid_brain(
     config: PranDroidBrainConfig,
-    reaction_repository: Arc<dyn ReactionDefinitionRepository>
+    reaction_repository: &dyn ReactionDefinitionRepository
 ) {
     pran_phonemes_core::phonemes::pran_phonemes().expect("PranPhonemes failed to initialise");
 
@@ -78,7 +78,7 @@ pub async fn start_droid_brain(
         api_base_path: config.api_base_path,
         api_secret_key: config.api_secret_key
     });
-    let mut brain = create_droid_brain(&reaction_repository, &text_phonemiser, &reaction_notifier).await;
+    let mut brain = create_droid_brain(reaction_repository, &text_phonemiser, &reaction_notifier).await;
 
     let token = authenticate(
         config.twitch_client_secret,

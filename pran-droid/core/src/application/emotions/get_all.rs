@@ -1,4 +1,4 @@
-use std::sync::Arc;
+
 use crate::application::emotions::dtos::emotion_dto::EmotionDto;
 use crate::domain::emotions::emotion_repository::EmotionRepository;
 

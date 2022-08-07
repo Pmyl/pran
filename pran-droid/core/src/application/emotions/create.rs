@@ -1,4 +1,4 @@
-use std::sync::Arc;
+
 use std::fmt::Debug;
 use thiserror::Error;
 use crate::application::emotions::dtos::emotion_dto::EmotionDto;
