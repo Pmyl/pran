@@ -25,7 +25,7 @@ pub mod tests {
     use crate::domain::images::image::ImageUrl;
     use super::*;
 
-    pub async fn setup_dummy_images(ids: Vec<&str>, repository: &Arc<dyn ImageRepository>) {
+    pub async fn setup_dummy_images(ids: Vec<&str>, repository: &dyn ImageRepository) {
         for id in ids {
             repository.insert(&
                 Image {

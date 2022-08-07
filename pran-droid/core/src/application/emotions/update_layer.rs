@@ -22,7 +22,7 @@ pub struct AddEmotionAnimationLayerRequest {
     pub index: usize
 }
 
-pub async fn update_emotion_animation_layer(request: AddEmotionAnimationLayerRequest, repository: &Arc<dyn EmotionRepository>, image_repository: &Arc<dyn ImageRepository>) -> Result<(), AddEmotionAnimationLayerError> {
+pub async fn update_emotion_animation_layer(request: AddEmotionAnimationLayerRequest, repository: &dyn EmotionRepository, image_repository: &dyn ImageRepository) -> Result<(), AddEmotionAnimationLayerError> {
     let mut emotion = repository.get(&EmotionId(request.emotion_id.clone()))
         .await
         .ok_or_else(|| AddEmotionAnimationLayerError::BadRequest(format!("Emotion with id {:?} does not exists", request.emotion_id)))?;
@@ -47,8 +47,8 @@ mod tests {
 
     #[tokio::test]
     async fn update_emotion_animation_layer_wrong_id_return_error() {
-        let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
-        let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
+        let repository = InMemoryEmotionRepository::new();
+        let image_repository = InMemoryImageRepository::new();
         setup_dummy_emotion(&repository).await;
         setup_dummy_images(vec!["id1"], &image_repository).await;
 
@@ -63,8 +63,8 @@ mod tests {
 
     #[tokio::test]
     async fn update_emotion_animation_layer_correct_input_returns_nothing() {
-        let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
-        let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
+        let repository = InMemoryEmotionRepository::new();
+        let image_repository = InMemoryImageRepository::new();
         let emotion = setup_dummy_emotion(&repository).await;
         setup_dummy_images(vec!["id1"], &image_repository).await;
 
@@ -77,8 +77,8 @@ mod tests {
 
     #[tokio::test]
     async fn update_emotion_animation_layer_correct_input_updates_emotion() {
-        let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
-        let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
+        let repository = InMemoryEmotionRepository::new();
+        let image_repository = InMemoryImageRepository::new();
         let emotion = setup_dummy_emotion(&repository).await;
         setup_dummy_images(vec!["id1", "id2"], &image_repository).await;
 
@@ -110,8 +110,8 @@ mod tests {
 
     #[tokio::test]
     async fn update_emotion_animation_layer_image_not_existing_returns_error() {
-        let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
-        let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
+        let repository = InMemoryEmotionRepository::new();
+        let image_repository = InMemoryImageRepository::new();
         let emotion = setup_dummy_emotion(&repository).await;
         setup_dummy_images(vec!["id1", "id2"], &image_repository).await;
 
@@ -129,8 +129,8 @@ mod tests {
 
     #[tokio::test]
     async fn update_emotion_animation_layer_two_on_incrementing_index_add_both_layers() {
-        let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
-        let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
+        let repository = InMemoryEmotionRepository::new();
+        let image_repository = InMemoryImageRepository::new();
         let emotion = setup_dummy_emotion(&repository).await;
         setup_dummy_images(vec!["id1", "id2"], &image_repository).await;
 
@@ -178,8 +178,8 @@ mod tests {
 
     #[tokio::test]
     async fn update_emotion_animation_layer_with_mouth_layer_index_error() {
-        let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
-        let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
+        let repository = InMemoryEmotionRepository::new();
+        let image_repository = InMemoryImageRepository::new();
         let emotion = setup_dummy_emotion(&repository).await;
         setup_dummy_images(vec!["id1", "id2"], &image_repository).await;
 
@@ -197,8 +197,8 @@ mod tests {
 
     #[tokio::test]
     async fn update_emotion_animation_layer_with_out_of_bounds_index_returns_error() {
-        let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
-        let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
+        let repository = InMemoryEmotionRepository::new();
+        let image_repository = InMemoryImageRepository::new();
         let emotion = setup_dummy_emotion(&repository).await;
         setup_dummy_images(vec!["id1", "id2"], &image_repository).await;
 
@@ -216,8 +216,8 @@ mod tests {
 
     #[tokio::test]
     async fn update_emotion_animation_layer_with_existing_custom_layer_index_then_replace_layer() {
-        let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
-        let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
+        let repository = InMemoryEmotionRepository::new();
+        let image_repository = InMemoryImageRepository::new();
         let emotion = setup_dummy_emotion(&repository).await;
         setup_dummy_images(vec!["id1", "id2"], &image_repository).await;
 

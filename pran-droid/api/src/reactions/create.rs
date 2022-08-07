@@ -12,7 +12,7 @@ use crate::reactions::models::reaction_step_model::ReactionTriggerModel;
 
 #[post("/reactions", format = "json", data = "<payload>")]
 pub async fn api_create_reaction(_authenticated: Authenticated, payload: Json<CreateReactionApiRequest>, repo: &State<Arc<dyn ReactionDefinitionRepository>>) -> Result<Json<ReactionResponse>, Error> {
-    Ok(Json(create_reaction(payload.0.into(), repo).await?.into()))
+    Ok(Json(create_reaction(payload.0.into(), repo.as_ref()).await?.into()))
 }
 
 #[derive(Deserialize)]

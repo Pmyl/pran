@@ -23,7 +23,7 @@ pub struct UpdateEmotionMouthMappingRequest {
     pub mapping: Vec<UpdateEmotionMouthMappingElementRequest>
 }
 
-pub async fn update_emotion_mouth_mapping(request: UpdateEmotionMouthMappingRequest, repository: &Arc<dyn EmotionRepository>, image_repository: &Arc<dyn ImageRepository>) -> Result<(), UpdateEmotionMouthMappingError> {
+pub async fn update_emotion_mouth_mapping(request: UpdateEmotionMouthMappingRequest, repository: &dyn EmotionRepository, image_repository: &dyn ImageRepository) -> Result<(), UpdateEmotionMouthMappingError> {
     let mut emotion = repository.get(&EmotionId(request.emotion_id.clone()))
         .await
         .ok_or_else(|| UpdateEmotionMouthMappingError::BadRequest(format!("Emotion with id {:?} does not exists", request.emotion_id)))?;
@@ -58,8 +58,8 @@ mod tests {
 
     #[tokio::test]
     async fn update_emotion_mouth_mapping_wrong_id_return_error() {
-        let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
-        let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
+        let repository = InMemoryEmotionRepository::new();
+        let image_repository = InMemoryImageRepository::new();
         setup_dummy_emotion(&repository).await;
         setup_dummy_images(vec!["id1"], &image_repository).await;
 
@@ -81,8 +81,8 @@ mod tests {
 
     #[tokio::test]
     async fn update_emotion_mouth_mapping_correct_input_returns_nothing() {
-        let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
-        let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
+        let repository = InMemoryEmotionRepository::new();
+        let image_repository = InMemoryImageRepository::new();
         let emotion = setup_dummy_emotion(&repository).await;
         setup_dummy_images(vec!["id1"], &image_repository).await;
 
@@ -100,8 +100,8 @@ mod tests {
 
     #[tokio::test]
     async fn update_emotion_mouth_mapping_correct_input_updates_emotion() {
-        let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
-        let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
+        let repository = InMemoryEmotionRepository::new();
+        let image_repository = InMemoryImageRepository::new();
         let emotion = setup_dummy_emotion(&repository).await;
         setup_dummy_images(vec!["id1", "id2"], &image_repository).await;
 
@@ -136,8 +136,8 @@ mod tests {
 
     #[tokio::test]
     async fn update_emotion_mouth_mapping_of_unknown_position_returns_error() {
-        let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
-        let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
+        let repository = InMemoryEmotionRepository::new();
+        let image_repository = InMemoryImageRepository::new();
         let emotion = setup_dummy_emotion(&repository).await;
         setup_dummy_images(vec!["id1", "id2"], &image_repository).await;
 
@@ -159,8 +159,8 @@ mod tests {
 
     #[tokio::test]
     async fn update_emotion_mouth_mapping_of_unknown_image_id_returns_error() {
-        let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
-        let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
+        let repository = InMemoryEmotionRepository::new();
+        let image_repository = InMemoryImageRepository::new();
         let emotion = setup_dummy_emotion(&repository).await;
         setup_dummy_images(vec!["id1", "id2"], &image_repository).await;
 
@@ -182,8 +182,8 @@ mod tests {
 
     #[tokio::test]
     async fn update_emotion_mouth_mapping_existing_positions_replace_mappings() {
-        let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
-        let image_repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
+        let repository = InMemoryEmotionRepository::new();
+        let image_repository = InMemoryImageRepository::new();
         let emotion = setup_dummy_emotion(&repository).await;
         setup_dummy_images(vec!["id1", "id2", "id4"], &image_repository).await;
 

@@ -24,7 +24,7 @@ pub struct InsertTalkingStepToReactionRequest {
     pub alternatives: Vec<ReactionStepTextAlternativeDto>,
 }
 
-pub async fn insert_talking_step_to_reaction(request: InsertTalkingStepToReactionRequest, repository: &Arc<dyn ReactionDefinitionRepository>, emotion_repository: &Arc<dyn EmotionRepository>) -> Result<ReactionStepDto, AddTalkingStepToReactionError> {
+pub async fn insert_talking_step_to_reaction(request: InsertTalkingStepToReactionRequest, repository: &dyn ReactionDefinitionRepository, emotion_repository: &dyn EmotionRepository) -> Result<ReactionStepDto, AddTalkingStepToReactionError> {
     let mut reaction = repository.get(&ReactionDefinitionId(request.reaction_id.clone())).await
         .ok_or_else(|| AddTalkingStepToReactionError::BadRequest(String::from("The requested reaction id does not exist")))?;
 
@@ -45,7 +45,7 @@ pub async fn insert_talking_step_to_reaction(request: InsertTalkingStepToReactio
     Ok(reaction_step.into())
 }
 
-async fn insert_step_in_correct_index(reaction: &mut ReactionDefinition, reaction_step: TalkingReactionStepDefinition, step_index: usize, emotion_repository: &Arc<dyn EmotionRepository>) -> Result<(), AddTalkingStepToReactionError> {
+async fn insert_step_in_correct_index(reaction: &mut ReactionDefinition, reaction_step: TalkingReactionStepDefinition, step_index: usize, emotion_repository: &dyn EmotionRepository) -> Result<(), AddTalkingStepToReactionError> {
     if step_index > reaction.steps.len() {
         return Err(AddTalkingStepToReactionError::BadRequest(String::from("Index out of bounds")));
     } else if step_index == reaction.steps.len() {
@@ -69,8 +69,8 @@ mod tests {
 
     #[tokio::test]
     async fn insert_talking_step_to_reaction_wrong_id_return_error() {
-        let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
-        let emotion_repo: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
+        let repository = InMemoryReactionRepository::new();
+        let emotion_repo = InMemoryEmotionRepository::new();
         setup_dummy_chat_command_reaction_definition(&repository).await;
         setup_dummy_emotions(vec!["happy"], &emotion_repo).await;
 
@@ -85,8 +85,8 @@ mod tests {
 
     #[tokio::test]
     async fn insert_talking_step_to_reaction_valid_input_store_in_repository() {
-        let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
-        let emotion_repo: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
+        let repository = InMemoryReactionRepository::new();
+        let emotion_repo = InMemoryEmotionRepository::new();
         let reaction = setup_dummy_chat_command_reaction_definition(&repository).await;
         setup_dummy_emotions(vec!["happy"], &emotion_repo).await;
 
@@ -102,8 +102,8 @@ mod tests {
 
     #[tokio::test]
     async fn insert_talking_step_to_reaction_text_alternatives_do_not_add_up_to_100_percent_probability_errors() {
-        let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
-        let emotion_repo: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
+        let repository = InMemoryReactionRepository::new();
+        let emotion_repo = InMemoryEmotionRepository::new();
         let reaction = setup_dummy_chat_command_reaction_definition(&repository).await;
         setup_dummy_emotions(vec!["happy"], &emotion_repo).await;
 
@@ -132,8 +132,8 @@ mod tests {
 
     #[tokio::test]
     async fn insert_talking_step_to_reaction_text_no_alternatives_errors() {
-        let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
-        let emotion_repo: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
+        let repository = InMemoryReactionRepository::new();
+        let emotion_repo = InMemoryEmotionRepository::new();
         let reaction = setup_dummy_chat_command_reaction_definition(&repository).await;
         setup_dummy_emotions(vec!["happy"], &emotion_repo).await;
 
@@ -149,8 +149,8 @@ mod tests {
 
     #[tokio::test]
     async fn insert_talking_step_to_reaction_correctly_save_text() {
-        let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
-        let emotion_repo: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
+        let repository = InMemoryReactionRepository::new();
+        let emotion_repo = InMemoryEmotionRepository::new();
         let reaction = setup_dummy_chat_command_reaction_definition(&repository).await;
         setup_dummy_emotions(vec!["happy"], &emotion_repo).await;
 
@@ -186,8 +186,8 @@ mod tests {
 
     #[tokio::test]
     async fn insert_talking_step_to_reaction_with_non_existing_emotion_id_errors() {
-        let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
-        let emotion_repo: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
+        let repository = InMemoryReactionRepository::new();
+        let emotion_repo = InMemoryEmotionRepository::new();
         let reaction = setup_dummy_chat_command_reaction_definition(&repository).await;
         setup_dummy_emotions(vec!["happy"], &emotion_repo).await;
 
@@ -202,8 +202,8 @@ mod tests {
 
     #[tokio::test]
     async fn insert_talking_step_to_reaction_save_skip_configuration() {
-        let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
-        let emotion_repo: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
+        let repository = InMemoryReactionRepository::new();
+        let emotion_repo = InMemoryEmotionRepository::new();
         let reaction = setup_dummy_chat_command_reaction_definition(&repository).await;
         setup_dummy_emotions(vec!["happy", "sad"], &emotion_repo).await;
 
@@ -240,7 +240,7 @@ mod tests {
         assert!(matches!(third_talking_step.skip, ReactionStepSkipDto::AfterStepWithExtraMilliseconds(ms) if ms == 10));
     }
 
-    async fn get_talking_animation_step_at(repository: &Arc<dyn ReactionDefinitionRepository>, reaction_id: &String, index: usize) -> TalkingReactionStepDto {
+    async fn get_talking_animation_step_at(repository: &dyn ReactionDefinitionRepository, reaction_id: &String, index: usize) -> TalkingReactionStepDto {
         let step = try_get_animation_step_at(repository, reaction_id, index)
             .await.expect(format!("should have saved a step at index {}", index).as_str());
         if let ReactionStepDto::Talking(talking_step) = step {
@@ -250,8 +250,8 @@ mod tests {
         }
     }
 
-    async fn try_get_animation_step_at(repository: &Arc<dyn ReactionDefinitionRepository>, reaction_id: &String, index: usize) -> Result<ReactionStepDto, String> {
-        let updated_reaction = get_reaction(GetReactionRequest { id: reaction_id.clone() }, &repository)
+    async fn try_get_animation_step_at(repository: &dyn ReactionDefinitionRepository, reaction_id: &String, index: usize) -> Result<ReactionStepDto, String> {
+        let updated_reaction = get_reaction(GetReactionRequest { id: reaction_id.clone() }, repository)
             .await.expect(format!("should have a reaction with id {}", reaction_id).as_str());
         let maybe_step: Option<&ReactionStepDto> = updated_reaction.steps.get(index);
         maybe_step.map(|step| step.clone()).ok_or(format!("missing step at index {}", index))

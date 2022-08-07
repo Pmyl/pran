@@ -8,7 +8,7 @@ pub trait TextPhonemiser: Send + Sync {
     fn phonemise_text(&self, text: &str) -> Vec<String>;
 }
 
-pub async fn create_droid_brain(reaction_repository: &Arc<dyn ReactionDefinitionRepository>, text_phonemiser: &Arc<dyn TextPhonemiser>, reaction_notifier: &Arc<dyn ReactionNotifier>) -> PranDroidBrain {
+pub async fn create_droid_brain(reaction_repository: &dyn ReactionDefinitionRepository, text_phonemiser: &Arc<dyn TextPhonemiser>, reaction_notifier: &Arc<dyn ReactionNotifier>) -> PranDroidBrain {
     let reactions = reaction_repository.get_all().await;
     let mut brain_builder = PranDroidBrainBuilder::new(text_phonemiser.clone(), reaction_notifier.clone());
 
@@ -38,7 +38,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_droid_brain_reacts_to_stored_chat_command_reactions() {
-        let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let reaction_repository = InMemoryReactionRepository::new();
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
         setup_dummy_chat_command_reaction_definitions(vec!["!hello", "!hug"], &reaction_repository).await;
 
@@ -55,7 +55,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_droid_brain_not_reacts_to_stored_disabled_chat_command_reactions() {
-        let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let reaction_repository = InMemoryReactionRepository::new();
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
         let reactions = setup_dummy_chat_command_reaction_definitions(vec!["!hello"], &reaction_repository).await;
         update_reaction(UpdateReactionRequest {
@@ -77,7 +77,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_droid_brain_chat_command_react_only_if_message_starts_with_it() {
-        let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let reaction_repository = InMemoryReactionRepository::new();
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
         setup_dummy_chat_command_reaction_definitions(vec!["!hello"], &reaction_repository).await;
 
@@ -94,7 +94,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_droid_brain_chat_keyword_react_if_message_contains_it() {
-        let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let reaction_repository = InMemoryReactionRepository::new();
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
         setup_dummy_chat_keyword_reaction_definitions(vec!["hello message"], &reaction_repository).await;
 
@@ -114,7 +114,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_droid_brain_reacts_to_stimulus_with_defined_moving_steps() {
-        let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let reaction_repository = InMemoryReactionRepository::new();
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
         let mut reaction_definition = ReactionDefinition::new_empty(
             ReactionDefinitionId(String::from("0")),
@@ -164,7 +164,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_droid_brain_reacts_to_stimulus_with_defined_talking_steps() {
-        let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let reaction_repository = InMemoryReactionRepository::new();
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
         let mut reaction_definition = ReactionDefinition::new_empty(
             ReactionDefinitionId(String::from("0")),
@@ -206,7 +206,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_droid_brain_talking_reaction_phonemise_text() {
-        let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let reaction_repository = InMemoryReactionRepository::new();
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
         let mut reaction_definition = ReactionDefinition::new_empty(
             ReactionDefinitionId(String::from("0")),
@@ -236,7 +236,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_droid_brain_talking_reaction_interpolate_chat_message_with_user() {
-        let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let reaction_repository = InMemoryReactionRepository::new();
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
         let mut reaction_definition = ReactionDefinition::new_empty(
             ReactionDefinitionId(String::from("0")),
@@ -268,7 +268,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_droid_brain_talking_reaction_interpolate_chat_message_with_target() {
-        let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let reaction_repository = InMemoryReactionRepository::new();
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
         let mut reaction_definition = ReactionDefinition::new_empty(
             ReactionDefinitionId(String::from("0")),
@@ -297,7 +297,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_droid_brain_talking_reaction_interpolate_chat_message_with_count() {
-        let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let reaction_repository = InMemoryReactionRepository::new();
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
         let mut reaction_definition = ReactionDefinition::new_empty(
             ReactionDefinitionId(String::from("0")),
@@ -338,7 +338,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_droid_brain_talking_reaction_interpolate_chat_message_with_touser_user_if_target_missing() {
-        let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let reaction_repository = InMemoryReactionRepository::new();
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
         let mut reaction_definition = ReactionDefinition::new_empty(
             ReactionDefinitionId(String::from("0")),
@@ -370,7 +370,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_droid_brain_talking_reaction_interpolate_chat_message_with_touser_target_if_present() {
-        let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let reaction_repository = InMemoryReactionRepository::new();
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
         let mut reaction_definition = ReactionDefinition::new_empty(
             ReactionDefinitionId(String::from("0")),
@@ -402,7 +402,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_droid_brain_talking_reaction_interpolate_chat_message_before_phonemising_text() {
-        let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let reaction_repository = InMemoryReactionRepository::new();
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
         let mut reaction_definition = ReactionDefinition::new_empty(
             ReactionDefinitionId(String::from("0")),
@@ -437,7 +437,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_droid_brain_talking_reaction_with_target_not_react_if_target_is_not_specified() {
-        let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let reaction_repository = InMemoryReactionRepository::new();
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
         let mut reaction_definition = ReactionDefinition::new_empty(
             ReactionDefinitionId(String::from("0")),
@@ -459,7 +459,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_droid_brain_reaction_notify_new_usage_count() {
-        let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let reaction_repository = InMemoryReactionRepository::new();
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
         let mut reaction_definition = ReactionDefinition::new_empty(
             ReactionDefinitionId(String::from("0")),
@@ -484,7 +484,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_droid_brain_talking_reaction_chat_message_contains_interpolation_tags_not_replaced() {
-        let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let reaction_repository = InMemoryReactionRepository::new();
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
 
         let mut command_reaction_definition = create_command_reaction_definition("!hello");
@@ -528,7 +528,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_droid_brain_talking_reaction_contains_not_existing_interpolation_tags_not_replaced() {
-        let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let reaction_repository = InMemoryReactionRepository::new();
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
 
         let mut command_reaction_definition = create_keyword_reaction_definition("keyword");
@@ -543,7 +543,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_droid_brain_multiple_reactions_triggering_command_is_prioritised() {
-        let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let reaction_repository = InMemoryReactionRepository::new();
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
 
         let mut command_reaction_definition = create_command_reaction_definition("!hello");
@@ -568,7 +568,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_droid_brain_reaction_multiple_alternatives_use_one_with_100() {
-        let reaction_repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let reaction_repository = InMemoryReactionRepository::new();
         let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
 
         let mut reaction_definition = create_command_reaction_definition("!hello");

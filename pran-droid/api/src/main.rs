@@ -31,6 +31,7 @@ use crate::reactions::create::api_create_reaction;
 use crate::reactions::get::api_get_reaction;
 use crate::reactions::get_all::api_get_all_reactions;
 use crate::reactions::insert_step::api_insert_reaction_step;
+use crate::reactions::remove_step::api_remove_reaction_step;
 
 mod infrastructure;
 mod emotions;
@@ -99,6 +100,7 @@ async fn main() {
             api_get_reaction,
             api_get_all_reactions,
             api_insert_reaction_step,
+            api_remove_reaction_step
         ]).launch();
 
     let _ = api.await;

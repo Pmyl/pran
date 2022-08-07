@@ -89,6 +89,15 @@ impl ReactionDefinition {
         self.is_disabled = false;
     }
 
+    pub(crate) fn remove_step_at_index(&mut self, index: usize) -> Result<(), ()> {
+        if self.steps.len() > index {
+            self.steps.remove(index);
+            Ok(())
+        } else {
+            Err(())
+        }
+    }
+
     pub(super) fn add_step(&mut self, step: ReactionStepDefinition) {
         self.steps.push(step);
     }

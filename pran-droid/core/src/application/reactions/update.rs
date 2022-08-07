@@ -29,7 +29,7 @@ pub struct UpdateReactionRequest {
     pub count: Option<u32>
 }
 
-pub async fn update_reaction(request: UpdateReactionRequest, repository: &Arc<dyn ReactionDefinitionRepository>) -> Result<ReactionDto, UpdateReactionError> {
+pub async fn update_reaction(request: UpdateReactionRequest, repository: &dyn ReactionDefinitionRepository) -> Result<ReactionDto, UpdateReactionError> {
     let reaction_definition_id = ReactionDefinitionId(request.id);
 
     let mut definition = repository.get(&reaction_definition_id).await.ok_or_else(|| UpdateReactionError::missing_reaction())?;
@@ -37,7 +37,7 @@ pub async fn update_reaction(request: UpdateReactionRequest, repository: &Arc<dy
     if let Some(request_triggers) = request.triggers {
         assert_no_duplicate_triggers(&request_triggers)?;
         let triggers = build_domain_triggers(request_triggers)?;
-        assert_no_trigger_already_exists(&reaction_definition_id, &triggers, &repository).await?;
+        assert_no_trigger_already_exists(&reaction_definition_id, &triggers, repository).await?;
 
         definition.update_triggers(triggers).map_err(|_| UpdateReactionError::malformed_triggers())?;
     }
@@ -77,7 +77,7 @@ fn assert_no_duplicate_triggers(triggers: &Vec<ReactionTriggerDto>) -> Result<()
     }
 }
 
-async fn assert_no_trigger_already_exists(id: &ReactionDefinitionId, triggers: &Vec<ReactionTrigger>, repository: &Arc<dyn ReactionDefinitionRepository>) -> Result<(), UpdateReactionError> {
+async fn assert_no_trigger_already_exists(id: &ReactionDefinitionId, triggers: &Vec<ReactionTrigger>, repository: &dyn ReactionDefinitionRepository) -> Result<(), UpdateReactionError> {
     for trigger in triggers.iter() {
         if repository.other_exists_with_trigger(trigger, id).await {
             return Err(UpdateReactionError::Conflict(trigger.clone()));
@@ -98,7 +98,7 @@ mod tests {
 
     #[tokio::test]
     async fn update_reaction_with_duplicate_command_triggers_error() {
-        let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let repository = InMemoryReactionRepository::new();
         let reaction = create_reaction(CreateReactionRequest { trigger: command_dto("!some") }, &repository).await.unwrap();
 
         let triggers = vec![command_dto("!fire"), command_dto("!water"), command_dto("!fire")];
@@ -111,7 +111,7 @@ mod tests {
 
     #[tokio::test]
     async fn update_reaction_single_and_same_trigger_ok() {
-        let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let repository = InMemoryReactionRepository::new();
         let reaction = create_reaction(CreateReactionRequest { trigger: command_dto("!fire") }, &repository).await.unwrap();
 
         let request = create_request(&reaction, |req| req.triggers = Some(vec![command_dto("!fire")]));
@@ -125,7 +125,7 @@ mod tests {
 
     #[tokio::test]
     async fn update_reaction_single_and_different_trigger_updates_trigger() {
-        let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let repository = InMemoryReactionRepository::new();
         let reaction = create_reaction(CreateReactionRequest { trigger: command_dto("!fire") }, &repository).await.unwrap();
 
         let request = create_request(&reaction, |req| req.triggers = Some(vec![command_dto("!water")]));
@@ -139,7 +139,7 @@ mod tests {
 
     #[tokio::test]
     async fn update_reaction_not_existing_id_error() {
-        let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let repository = InMemoryReactionRepository::new();
         let reaction = create_reaction(CreateReactionRequest { trigger: command_dto("!fire") }, &repository).await.unwrap();
 
         let request = create_request(&reaction, |req| {
@@ -154,7 +154,7 @@ mod tests {
 
     #[tokio::test]
     async fn update_reaction_one_of_triggers_exists_conflict_error() {
-        let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let repository = InMemoryReactionRepository::new();
         let reaction = create_reaction(CreateReactionRequest { trigger: command_dto("!fire") }, &repository).await.unwrap();
         create_reaction(CreateReactionRequest { trigger: command_dto("!grass") }, &repository).await.unwrap();
 
@@ -166,7 +166,7 @@ mod tests {
 
     #[tokio::test]
     async fn update_reaction_with_no_triggers_bad_request_error() {
-        let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let repository = InMemoryReactionRepository::new();
         let reaction = create_reaction(CreateReactionRequest { trigger: command_dto("!fire") }, &repository).await.unwrap();
 
         let request = create_request(&reaction, |req| req.triggers = Some(vec![]));
@@ -177,7 +177,7 @@ mod tests {
 
     #[tokio::test]
     async fn update_reaction_set_disable_updates_reaction() {
-        let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let repository = InMemoryReactionRepository::new();
         let reaction = create_reaction(CreateReactionRequest { trigger: command_dto("!fire") }, &repository).await.unwrap();
 
         let request = create_request(&reaction, |req| req.is_disabled = Some(true));
@@ -191,7 +191,7 @@ mod tests {
 
     #[tokio::test]
     async fn update_reaction_set_count_updates_reaction() {
-        let repository: Arc<dyn ReactionDefinitionRepository> = Arc::new(InMemoryReactionRepository::new());
+        let repository = InMemoryReactionRepository::new();
         let reaction = create_reaction(CreateReactionRequest { trigger: command_dto("!fire") }, &repository).await.unwrap();
 
         let request = create_request(&reaction, |req| req.count = Some(14));
