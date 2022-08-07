@@ -148,7 +148,7 @@ pub struct ReactionStepMessageAlternativesDefinition(pub Vec<ReactionStepMessage
 #[derive(Clone, Debug)]
 pub struct ReactionStepMessageAlternativeDefinition {
     pub message: ReactionStepMessageDefinition,
-    pub probability: f32,
+    pub probability: Option<f32>,
 }
 
 pub type ReactionStepSkipDefinition = ReactionStepSkip;
@@ -156,9 +156,13 @@ pub type ReactionStepMessageDefinition = ReactionStepText;
 
 impl ReactionStepMessageAlternativesDefinition {
     pub fn try_new(alternatives: Vec<ReactionStepMessageAlternativeDefinition>) -> Result<ReactionStepMessageAlternativesDefinition, ()> {
-        let total_probability: f32 = alternatives.iter().map(|alternative| alternative.probability).sum();
+        let total_probability: f32 = alternatives.iter()
+            .filter(|alternative| alternative.probability.is_some())
+            .map(|alternative| alternative.probability.unwrap())
+            .sum();
+        let has_alternatives_without_probability = alternatives.iter().any(|alternative| alternative.probability.is_none());
 
-        if total_probability != 100.0 {
+        if total_probability > 100.0 || total_probability < 100.0 && !has_alternatives_without_probability {
             Err(())
         } else {
             Ok(Self(alternatives))
@@ -167,17 +171,32 @@ impl ReactionStepMessageAlternativesDefinition {
 
     pub fn new_single(text: ReactionStepMessageDefinition) -> ReactionStepMessageAlternativesDefinition {
         Self(vec![ReactionStepMessageAlternativeDefinition {
-            probability: 100.0,
+            probability: Some(100.0),
             message: text
         }])
     }
 
     pub(super) fn get_random_text_pure(alternatives: &Vec<ReactionStepMessageAlternativeDefinition>, mut random_hit: f32) -> ReactionStepMessageDefinition {
+        let alternatives_with_none_probability = alternatives.iter()
+            .filter(|alternative| alternative.probability.is_none())
+            .count() as f32;
+
+        let total_set_probability: f32 = alternatives.iter()
+            .map(|alternative| alternative.probability.unwrap_or(0.0))
+            .sum();
+
+        let probability_to_share_among_none: f32 = 100.0 - total_set_probability;
+
         for alternative in alternatives {
-            if alternative.probability > random_hit {
+            let probability = match alternative.probability {
+                None => probability_to_share_among_none / alternatives_with_none_probability,
+                Some(probability) => probability
+            };
+
+            if probability > random_hit {
                 return alternative.message.clone()
             } else {
-                random_hit -= alternative.probability;
+                random_hit -= probability;
             }
         }
 
@@ -248,15 +267,15 @@ mod tests {
     fn reaction_text_alternatives_get_random_text_max_random_hit_get_last() {
         let max_random_hit: f32 = 99.9999;
         assert!(matches!(
-            get_random_text(&[("some text", 100.0)], max_random_hit),
+            get_random_text(&[("some text", Some(100.0))], max_random_hit),
             ReactionStepText::Instant(text) if text == "some text"
         ));
         assert!(matches!(
-            get_random_text(&[("some text1", 20.0), ("some text2", 20.0), ("some text3", 20.0), ("some text4", 20.0), ("some text5", 20.0)], max_random_hit),
+            get_random_text(&[("some text1", Some(20.0)), ("some text2", Some(20.0)), ("some text3", Some(20.0)), ("some text4", Some(20.0)), ("some text5", Some(20.0))], max_random_hit),
             ReactionStepText::Instant(text) if text == "some text5"
         ));
         assert!(matches!(
-            get_random_text(&[("some text1", 99.9), ("some text2", 0.1)], max_random_hit),
+            get_random_text(&[("some text1", Some(99.9)), ("some text2", Some(0.1))], max_random_hit),
             ReactionStepText::Instant(text) if text == "some text2"
         ));
     }
@@ -265,15 +284,15 @@ mod tests {
     fn reaction_text_alternatives_get_random_text_zero_random_hit_get_first() {
         let max_random_hit: f32 = 0.0;
         assert!(matches!(
-            get_random_text(&[("some text", 100.0)], max_random_hit),
+            get_random_text(&[("some text", Some(100.0))], max_random_hit),
             ReactionStepText::Instant(text) if text == "some text"
         ));
         assert!(matches!(
-            get_random_text(&[("some text1", 20.0), ("some text2", 20.0), ("some text3", 20.0), ("some text4", 20.0), ("some text5", 20.0)], max_random_hit),
+            get_random_text(&[("some text1", Some(20.0)), ("some text2", Some(20.0)), ("some text3", Some(20.0)), ("some text4", Some(20.0)), ("some text5", Some(20.0))], max_random_hit),
             ReactionStepText::Instant(text) if text == "some text1"
         ));
         assert!(matches!(
-            get_random_text(&[("some text1", 0.1), ("some text2", 99.9)], max_random_hit),
+            get_random_text(&[("some text1", Some(0.1)), ("some text2", Some(99.9))], max_random_hit),
             ReactionStepText::Instant(text) if text == "some text1"
         ));
     }
@@ -281,16 +300,48 @@ mod tests {
     #[test]
     fn reaction_text_alternatives_get_random_text_alternative_with_zero_probability_never_hits() {
         assert!(matches!(
-            get_random_text(&[("some text1", 0.0), ("some text2", 100.0)], 0.0),
+            get_random_text(&[("some text1", Some(0.0)), ("some text2", Some(100.0))], 0.0),
             ReactionStepText::Instant(text) if text == "some text2"
         ));
         assert!(matches!(
-            get_random_text(&[("some text1", 100.0), ("some text2", 0.0)], 99.9999),
+            get_random_text(&[("some text1", Some(100.0)), ("some text2", Some(0.0))], 99.9999),
             ReactionStepText::Instant(text) if text == "some text1"
         ));
     }
 
-    fn get_random_text(alternatives: &[(&str, f32)], random_hit: f32) -> ReactionStepText {
+    #[test]
+    fn reaction_text_alternatives_get_random_text_alternative_with_none_probability_assume_remaining_probability() {
+        assert!(matches!(
+            get_random_text(&[("some text1", Some(100.0)), ("some text2", None)], 0.0),
+            ReactionStepText::Instant(text) if text == "some text1"
+        ));
+        assert!(matches!(
+            get_random_text(&[("some text1", Some(100.0)), ("some text2", None)], 99.9999),
+            ReactionStepText::Instant(text) if text == "some text1"
+        ));
+        assert!(matches!(
+            get_random_text(&[("some text1", Some(50.0)), ("some text2", None)], 49.9),
+            ReactionStepText::Instant(text) if text == "some text1"
+        ));
+        assert!(matches!(
+            get_random_text(&[("some text1", Some(50.0)), ("some text2", None)], 50.1),
+            ReactionStepText::Instant(text) if text == "some text2"
+        ));
+        assert!(matches!(
+            get_random_text(&[("some text1", Some(50.0)), ("some text2", None), ("some text3", None)], 49.9),
+            ReactionStepText::Instant(text) if text == "some text1"
+        ));
+        assert!(matches!(
+            get_random_text(&[("some text1", Some(50.0)), ("some text2", None), ("some text3", None)], 74.9),
+            ReactionStepText::Instant(text) if text == "some text2"
+        ));
+        assert!(matches!(
+            get_random_text(&[("some text1", Some(50.0)), ("some text2", None), ("some text3", None)], 75.1),
+            ReactionStepText::Instant(text) if text == "some text3"
+        ));
+    }
+
+    fn get_random_text(alternatives: &[(&str, Option<f32>)], random_hit: f32) -> ReactionStepText {
         ReactionStepMessageAlternativesDefinition::get_random_text_pure(
             &alternatives.iter().map(|alternative| ReactionStepMessageAlternativeDefinition {
                 message: ReactionStepText::Instant(alternative.0.to_string()),

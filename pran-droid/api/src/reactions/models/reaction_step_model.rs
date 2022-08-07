@@ -40,7 +40,7 @@ impl From<ReactionStepDto> for ReactionStepModel {
 #[derive(Deserialize, Serialize)]
 pub struct ReactionStepMessageAlternativeModel {
     pub message: ReactionStepMessageModel,
-    pub probability: f32,
+    pub probability: Option<f32>,
 }
 
 #[derive(Deserialize, Serialize)]

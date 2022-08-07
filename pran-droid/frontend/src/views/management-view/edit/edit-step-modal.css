@@ -1,0 +1,80 @@
+.edit-step-modal {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  position: relative;
+}
+
+.edit-step-modal_title {
+  margin: 0 0 10px 0;
+}
+
+.edit-step-modal_form-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.edit-step-modal_buttons-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: auto;
+  align-items: flex-end;
+  min-height: 50px;
+  padding-bottom: 10px;
+}
+
+.edit-step-modal_delete-button {
+  margin-right: auto;
+}
+
+.edit-step-modal_form-container label:not(.edit-step-modal_inline-label) {
+  display: block;
+}
+
+.edit-step-modal_alternatives-container {
+  margin-top: 10px;
+}
+
+.edit-step-modal_alternative-container {
+  margin-left: -20px;
+  margin-right: -20px;
+  padding: 10px 20px;
+  border-top: 1px solid gray;
+}
+
+.edit-step-modal_alternative-container:nth-child(odd) {
+  background-color: #f3f3f3;
+}
+
+.edit-step-modal_add-alternative-button {
+  margin-top: 5px;
+}
+
+.edit-step-modal_step-alternative-probability-input {
+  width: 3rem;
+}
+
+.edit-step-modal_step-alternative-text-input {
+  resize: vertical;
+  width: 100%;
+}
+
+.edit-step-modal_errors-container {
+  position: sticky;
+  top: 0;
+  right: 0;
+  text-align: right;
+  color: white;
+  font-weight: bold;
+}
+
+.edit-step-modal_error {
+  display: inline-block;
+  background-color: #dc3545;
+}
+
+.edit-step-modal_remove-alternative-button {
+  margin-left: 10px;
+  font-size: 1.5rem;
+}

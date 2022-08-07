@@ -1,7 +1,8 @@
-import { inlineComponent, Modal } from 'pran-gular-frontend';
+import { inlineComponent, Modal, onClick } from 'pran-gular-frontend';
 import { authorize } from '../../helpers/is-authorized';
 import { retryFetch } from '../../helpers/retry-fetch';
 import { reactionsTable } from '../public-view/components/table';
+import { getReaction, getReactions } from '../public-view/helpers/get-reactions';
 import { PranDroidReactionDefinitions } from '../public-view/models';
 import './management-view.css';
 import { editReactionModal } from './edit/edit-reaction-modal';
@@ -14,12 +15,16 @@ export const managementView = inlineComponent(controls => {
   let reactions: PranDroidReactionDefinitions;
 
   (async () => {
-    reactions = (await retryFetch("/api/reactions").then(r => r.json())).data;
+    await loadReactions();
     controls.changed();
   })();
 
+  function loadReactions() {
+    return getReactions().then(r => reactions = r);
+  }
+
   const reloadReaction = async reactionId => {
-    let reaction = (await retryFetch(`/api/reactions/${reactionId}`).then(r => r.json()));
+    let reaction = await getReaction(reactionId);
     replaceReactionInList(reaction);
     controls.changed();
   };
@@ -43,24 +48,34 @@ export const managementView = inlineComponent(controls => {
       });
   };
 
-  const editHandler = reactionId => {
+  const editReaction = reactionId => {
     const reaction = reactions.find(reaction => reaction.id === reactionId);
     Modal.open(editReactionModal({ reaction })).then(() => {
       reloadReaction(reactionId);
     });
   };
 
-  return (_, r) =>
+  const createReaction = () => {
+    Modal.open(editReactionModal()).then(loadReactions).then(controls.changed);
+  };
+
+  return (_, r) => {
     !reactions
       ? r.el('p').text('Loading...').endEl()
       : (() => {
         r.el('div', 'management-view_container');
           r.el('h1', 'management-view_title').text('Prandroid Reactions').endEl();
           r.el('h6', 'management-view_subtitle').text('Management app').endEl();
+          r.el('div', 'management-view_create-new-container');
+            r.el('button', 'button button-positive-alt management-view_create-new-button').attr('type', 'button').text('+').endEl();
+          r.endEl();
 
           r.el('div', 'public-view_table-container');
-            r.cmp(reactionsTable, { reactions, advanced: { toggleDisable: toggleDisableHandler, edit: editHandler } });
+            r.cmp(reactionsTable, { reactions, advanced: { toggleDisable: toggleDisableHandler, edit: editReaction } });
           r.endEl();
         r.endEl();
       })();
+
+    return e => onClick(e, '.management-view_create-new-button', () => createReaction());
+  };
 });

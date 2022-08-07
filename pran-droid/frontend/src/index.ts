@@ -1,8 +1,8 @@
+import './index.css';
 import { Container, Modal } from 'pran-gular-frontend';
 import { droidView } from './views/droid-view/droid-view';
 import { managementView } from './views/management-view/management-view';
 import { publicView } from './views/public-view/public-view';
-import './index.css';
 
 document.addEventListener('DOMContentLoaded', () => {
   const route = window.location.pathname;

@@ -26,7 +26,7 @@ pub struct TalkingReactionStepDto {
 
 #[derive(Clone, Debug)]
 pub struct ReactionStepTextAlternativeDto {
-    pub probability: f32,
+    pub probability: Option<f32>,
     pub text: ReactionStepTextDto
 }
 

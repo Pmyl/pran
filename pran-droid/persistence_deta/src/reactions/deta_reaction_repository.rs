@@ -54,7 +54,7 @@ enum ReactionStepStorage {
 
 #[derive(Debug, Serialize, Deserialize)]
 struct ReactionStepMessageAlternativeStorage {
-    probability: f32,
+    probability: Option<f32>,
     message: ReactionStepMessageStorage
 }
 

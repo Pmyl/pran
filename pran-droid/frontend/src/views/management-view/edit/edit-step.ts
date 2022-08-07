@@ -14,7 +14,11 @@ export const editStep = inlineComponent<{ step: ReactionStep, onDelete: () => vo
       } else {
         inputs.step.alternatives.forEach(alternative => {
           r.el('div', 'edit-step_alternative-container');
-            r.el('span', 'edit-step_alternative-probability').text(`${alternative.probability.toString()}%`).endEl();
+            if (alternative.probability !== null) {
+              r.el('span', 'edit-step_alternative-probability').text(`${alternative.probability?.toString() || '?'}%`).endEl();
+            } else {
+              r.el('i', 'edit-step_alternative-probability').text(`${alternative._calculatedProbability}%`).endEl();
+            }
             r.el('span', 'edit-step_alternative-text').text(alternative.message.text).endEl();
           r.endEl();
         });
@@ -27,7 +31,7 @@ export const editStep = inlineComponent<{ step: ReactionStep, onDelete: () => vo
 
 function showEditModal(step: ReactionStep, onDelete: () => void, onEdit: (newStep: ReactionStep) => void) {
   Modal.open(editStepModal({ step })).then(result => {
-    switch (result.action.type) {
+    switch (result?.action.type) {
       case 'edited':
         onEdit(result.action.editedStep);
         break;

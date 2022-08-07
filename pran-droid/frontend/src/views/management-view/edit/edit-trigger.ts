@@ -18,7 +18,7 @@ export const editTrigger = inlineComponent<{ trigger: ReactionTrigger, onDelete:
 
 function showEditModal(trigger: ReactionTrigger, onDelete: () => void, onEdit: (newTrigger: ReactionTrigger) => void) {
   Modal.open(editTriggerModal({ trigger })).then(result => {
-    switch (result.action.type) {
+    switch (result?.action.type) {
       case 'edited':
         onEdit(result.action.editedTrigger);
         break;

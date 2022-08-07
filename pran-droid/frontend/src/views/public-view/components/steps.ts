@@ -1,12 +1,13 @@
 import { inlineComponent } from 'pran-gular-frontend';
-import { ReactionStep, ReactionTalkingStepAlternative} from '../models';
+import { isNullOrUndefined } from '../../../helpers/is-null-or-undefined';
+import { ReactionStep, ReactionTalkingStep, ReactionTalkingStepAlternative } from '../models';
 import './steps.css';
 
 export const steps = inlineComponent<{ steps: Array<ReactionStep> }>(controls => {
   controls.setup("reactions-table-steps", "reactions-table-steps");
   controls.setComplexRendering();
 
-  function getReactionToShow(steps: Array<ReactionStep>): ReactionStep {
+  function getReactionToShow(steps: Array<ReactionStep>): ReactionStep | undefined {
     const firstTalkingStep = steps.find(step => step.type === 'Talking');
 
     if (!firstTalkingStep) {
@@ -16,19 +17,20 @@ export const steps = inlineComponent<{ steps: Array<ReactionStep> }>(controls =>
     return firstTalkingStep;
   }
 
-  function getMostProbableAlternative(talkingStep: ReactionStep): ReactionTalkingStepAlternative {
-    return (talkingStep as { alternatives: Array<ReactionTalkingStepAlternative> })
-      .alternatives.reduce((mostProbable, alternative) => {
-        if (!mostProbable || alternative.probability > mostProbable.probability) return alternative;
+  function getMostProbableAlternative(talkingStep: ReactionTalkingStep): ReactionTalkingStepAlternative {
+    return talkingStep.alternatives.reduce((mostProbable, alternative) => {
+        if (!mostProbable || (alternative.probability || +alternative._calculatedProbability) > (mostProbable.probability || +mostProbable._calculatedProbability)) return alternative;
         return mostProbable;
       }, null);
   }
 
   return (inputs, r) => {
     controls.mandatoryInput("steps");
-    const stepToShow: ReactionStep = getReactionToShow(inputs.steps);
+    const stepToShow: ReactionStep | undefined = getReactionToShow(inputs.steps);
 
-    if (stepToShow.type === 'Moving') {
+    if (!stepToShow) {
+      r.el('i').text('No steps defined').endEl();
+    } else if (stepToShow.type === 'Moving') {
       r.text('Animation');
     } else {
       const mostProbableMessage = getMostProbableAlternative(stepToShow);
@@ -36,7 +38,7 @@ export const steps = inlineComponent<{ steps: Array<ReactionStep> }>(controls =>
       mostProbableMessage.probability !== 100
         && r.el('span', 'reactions-table-steps_random').attr('title', 'Random response').html('&nbsp;🔀&nbsp;').endEl();
       inputs.steps.length > 1
-        && r.scel('br').el('span', 'reactions-table-steps_more').text(`and ${inputs.steps.length - 1} more steps`).endEl();
+        && r.scel('br').el('i', 'reactions-table-steps_more').text(`and ${inputs.steps.length - 1} more steps`).endEl();
     }
   };
 });

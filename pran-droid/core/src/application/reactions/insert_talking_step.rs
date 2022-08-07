@@ -110,8 +110,8 @@ mod tests {
             reaction_id: reaction.id.0.clone(),
             emotion_id: String::from("happy"),
             alternatives: vec![
-                ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("some text2")), probability: 75.0 },
-                ReactionStepTextAlternativeDto { text: ReactionStepTextDto::LetterByLetter(String::from("some text3")), probability: 26.0 },
+                ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("some text2")), probability: Some(75.0) },
+                ReactionStepTextAlternativeDto { text: ReactionStepTextDto::LetterByLetter(String::from("some text3")), probability: Some(26.0) },
             ],
             ..base_request()
         }, &repository, &emotion_repo).await;
@@ -120,13 +120,38 @@ mod tests {
             reaction_id: reaction.id.0.clone(),
             emotion_id: String::from("happy"),
             alternatives: vec![
-                ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("some text2")), probability: 99.0 },
+                ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("some text2")), probability: Some(99.0) },
             ],
             ..base_request()
         }, &repository, &emotion_repo).await;
 
         assert!(matches!(result_over, Err(AddTalkingStepToReactionError::BadRequest(_))));
         assert!(matches!(result_under, Err(AddTalkingStepToReactionError::BadRequest(_))));
+    }
+
+    #[tokio::test]
+    async fn insert_talking_step_to_reaction_text_alternatives_are_without_probability_save() {
+        let repository = InMemoryReactionRepository::new();
+        let emotion_repo = InMemoryEmotionRepository::new();
+        let reaction = setup_dummy_chat_command_reaction_definition(&repository).await;
+        setup_dummy_emotions(vec!["happy"], &emotion_repo).await;
+
+        insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
+            reaction_id: reaction.id.0.clone(),
+            emotion_id: String::from("happy"),
+            alternatives: vec![
+                ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("some text2")), probability: None },
+                ReactionStepTextAlternativeDto { text: ReactionStepTextDto::LetterByLetter(String::from("some text3")), probability: None },
+            ],
+            ..base_request()
+        }, &repository, &emotion_repo).await.expect("Inserting step with no probability alternatives should not fail");
+
+        let talking_step = get_talking_animation_step_at(&repository, &reaction.id.0, 0).await;
+        assert!(matches!(talking_step.text[..], [ReactionStepTextAlternativeDto {
+            text: ReactionStepTextDto::Instant(_), probability: None
+        }, ReactionStepTextAlternativeDto {
+            text: ReactionStepTextDto::LetterByLetter(_), probability: None
+        }]));
     }
 
     #[tokio::test]
@@ -156,7 +181,7 @@ mod tests {
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
             reaction_id: reaction.id.0.clone(),
             emotion_id: String::from("happy"),
-            alternatives: vec![ReactionStepTextAlternativeDto { text: ReactionStepTextDto::LetterByLetter(String::from("some text1")), probability: 100.0 }],
+            alternatives: vec![ReactionStepTextAlternativeDto { text: ReactionStepTextDto::LetterByLetter(String::from("some text1")), probability: Some(100.0) }],
             ..base_request()
         }, &repository, &emotion_repo).await.expect("Expected insert step not to fail");
         insert_talking_step_to_reaction(InsertTalkingStepToReactionRequest {
@@ -164,8 +189,8 @@ mod tests {
             reaction_id: reaction.id.0.clone(),
             emotion_id: String::from("happy"),
             alternatives: vec![
-                ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("some text2")), probability: 75.0 },
-                ReactionStepTextAlternativeDto { text: ReactionStepTextDto::LetterByLetter(String::from("some text3")), probability: 25.0 },
+                ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("some text2")), probability: Some(75.0) },
+                ReactionStepTextAlternativeDto { text: ReactionStepTextDto::LetterByLetter(String::from("some text3")), probability: Some(25.0) },
             ],
             ..base_request()
         }, &repository, &emotion_repo).await.expect("Expected insert step not to fail");
@@ -175,11 +200,11 @@ mod tests {
 
         assert!(matches!(talking_step_1.text[..], [ReactionStepTextAlternativeDto {
             text: ReactionStepTextDto::LetterByLetter(ref text),
-            probability
+            probability: Some(probability)
         }] if text == "some text1" && probability == 100.0));
         assert!(matches!(talking_step_2.text[..], [
-            ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(ref text_1), probability: probability_1 },
-            ReactionStepTextAlternativeDto { text: ReactionStepTextDto::LetterByLetter(ref text_2), probability: probability_2 },
+            ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(ref text_1), probability: Some(probability_1) },
+            ReactionStepTextAlternativeDto { text: ReactionStepTextDto::LetterByLetter(ref text_2), probability: Some(probability_2) },
         ] if text_1 == "some text2" && probability_1 == 75.0 && text_2 == "some text3" && probability_2 == 25.0));
     }
 
@@ -258,7 +283,7 @@ mod tests {
 
     fn base_request() -> InsertTalkingStepToReactionRequest {
         InsertTalkingStepToReactionRequest {
-            alternatives: vec![ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("some text")), probability: 100.0 }],
+            alternatives: vec![ReactionStepTextAlternativeDto { text: ReactionStepTextDto::Instant(String::from("some text")), probability: Some(100.0) }],
             skip: ReactionStepSkipDto::ImmediatelyAfter,
             emotion_id: String::from("an emotion"),
             step_index: 0,

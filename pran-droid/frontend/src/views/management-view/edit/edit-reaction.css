@@ -4,6 +4,10 @@
   height: 100%;
 }
 
+.edit-reaction_title {
+  margin: 0 0 10px 0;
+}
+
 .edit-reaction_form-alternative-container + .edit-reaction_form-alternative-container {
   border-top: 1px solid gray;
   padding: 5px 0;
@@ -13,6 +17,9 @@
   margin-top: auto;
   display: flex;
   justify-content: flex-end;
+  align-items: flex-end;
+  min-height: 50px;
+  padding-bottom: 10px;
 }
 
 .edit-reaction_trigger-container {
@@ -21,4 +28,18 @@
 
 .edit-reaction_trigger-container + .edit-reaction_trigger-container {
   margin-left: 5px;
+}
+
+.edit-reaction_add-trigger-button {
+  width: 100%;
+  margin-top: 5px;
+}
+
+.edit-reaction_form-add-step {
+  width: 100%;
+  margin-top: 5px;
+}
+
+.edit-reaction_form-input-container:first-of-type {
+  margin-top: 10px;
 }

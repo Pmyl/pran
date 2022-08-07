@@ -1,6 +1,7 @@
 import { inlineComponent} from 'pran-gular-frontend';
 import { retryFetch } from '../../helpers/retry-fetch';
 import { reactionsTable } from './components/table';
+import { getReactions } from './helpers/get-reactions';
 import { PranDroidReactionDefinitions} from './models';
 import './public-view.css';
 
@@ -11,7 +12,7 @@ export const publicView = inlineComponent(controls => {
   let reactions: PranDroidReactionDefinitions;
 
   (async () => {
-    reactions = (await retryFetch("/api/reactions").then(r => r.json())).data;
+    reactions = await getReactions();
     reactions = reactions.filter(reaction => !reaction.isDisabled);
     controls.changed();
   })();

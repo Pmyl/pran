@@ -85,8 +85,12 @@ export class ComplexRenderer {
     let closedElement: HTMLElement = this._elementQueue[0];
 
     const isDifferentInstruction = !!currentInstruction && (currentInstruction[0] !== newInstruction || currentInstruction[1] !== closedElement);
+    const isEndingBrandNewElementInParent = !!currentInstruction && currentInstruction[0] == 'endel' && this._openElements.has(currentInstruction[1]);
+
     if (isDifferentInstruction) {
-      this._undoInstructionsOnEndEl(closedElement);
+      if (!isEndingBrandNewElementInParent) {
+        this._undoInstructionsOnEndEl(closedElement);
+      }
     } else {
       this._currentInstructionIndex++;
     }
@@ -163,7 +167,7 @@ export class ComplexRenderer {
     } else {
       if (!this._components.has(component)) {
         component.render();
-        console.log(`+++ Component: ${component.selector}`);
+        console.debug(`+++ Component: ${component.selector}`);
       }
       this._elementQueue[0].append(component.componentElement)
     }
@@ -225,7 +229,7 @@ export class ComplexRenderer {
       instance = new cmp.component() as Component;
       !!inputs && instance.setInputs(inputs);
       instance.render();
-      console.log(`+++ Component: ${instance.selector}`);
+      console.debug(`+++ Component: ${instance.selector}`);
     }
 
     if (this._elementQueue[0].children.length === this._currentChildIndex) {
@@ -238,7 +242,7 @@ export class ComplexRenderer {
   }
 
   private _removeComponent(component: Component<object>) {
-    console.log(`--- Component: ${component.selector}`);
+    console.debug(`--- Component: ${component.selector}`);
     component.componentElement.remove();
   }
 
@@ -271,39 +275,39 @@ export class ComplexRenderer {
 
   private _createElement(selector: string): HTMLElement {
     const element = document.createElement(selector);
-    console.log(`+++ Element: ${element.tagName}`);
+    console.debug(`+++ Element: ${element.tagName}`);
     return element;
   }
 
   private _removeElement(element: HTMLElement): void {
-    console.log(`--- Element: ${element.tagName}`);
+    console.debug(`--- Element: ${element.tagName}`);
     element.remove();
   }
 
   private _setElementText(element: HTMLElement, text: string): void {
     if (!text) {
-      console.log(`--- Text: ${element.tagName}`);
+      console.debug(`--- Text: ${element.tagName}`);
     } else {
-      console.log(`+++ Text: ${element.tagName} -> ${text}`);
+      console.debug(`+++ Text: ${element.tagName} -> ${text}`);
     }
     element.innerText = text;
   }
 
   private _setElementAttr(element: HTMLElement, name: string, value: string | null): void {
     if (value === null) {
-      console.log(`--- Attr: ${element.tagName} ${name}`);
+      console.debug(`--- Attr: ${element.tagName} ${name}`);
       element.removeAttribute(name);
     } else {
-      console.log(`+++ Attr: ${element.tagName} ${name} -> ${value}`);
+      console.debug(`+++ Attr: ${element.tagName} ${name} -> ${value}`);
       element.setAttribute(name, value);
     }
   }
 
   private _setElementHtml(element: HTMLElement, html: string): void {
     if (!html) {
-      console.log(`--- Html: ${element.tagName}`);
+      console.debug(`--- Html: ${element.tagName}`);
     } else {
-      console.log(`+++ Html: ${element.tagName} -> ${html}`);
+      console.debug(`+++ Html: ${element.tagName} -> ${html}`);
     }
     element.innerHTML = html;
   }
@@ -326,7 +330,7 @@ export class ComplexRenderer {
         if (this._isCreateElementInstruction(currentInstruction)) {
           currentRemovedElement = currentInstruction[1];
           this._removeElement(currentRemovedElement);
-        } if (currentInstruction[0] === 'cmp') {
+        } else if (currentInstruction[0] === 'cmp') {
           this._removeComponent(currentInstruction[2]);
         } else if (currentInstruction[0] === 'text' && currentInstruction[1] !== currentRemovedElement) {
           this._setElementText(currentInstruction[1], '');
@@ -341,7 +345,7 @@ export class ComplexRenderer {
         if (this._isCreateElementInstruction(currentInstruction)) {
           currentRemovedElement = currentInstruction[1];
           this._removeElement(currentRemovedElement);
-        } if (currentInstruction[0] === 'cmp') {
+        } else if (currentInstruction[0] === 'cmp') {
           this._removeComponent(currentInstruction[2]);
         } else if (currentInstruction[0] === 'text' && currentInstruction[1] !== currentRemovedElement) {
           this._setElementText(currentInstruction[1], '');
@@ -351,6 +355,8 @@ export class ComplexRenderer {
         currentInstruction = this._instructions[++this._currentInstructionIndex];
       }
     }
+
+    this._currentInstructionIndex++;
   }
 
   private _undoInstructionsUntilElementRelated(): void {

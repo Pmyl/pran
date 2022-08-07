@@ -18,7 +18,7 @@
 }
 
 .reactions-table table th,
-.reactions-table table td:not(.reactions-table_actions-cell):not(.reactions-table_enabled-cell) {
+.reactions-table table td:not(.reactions-table_actions-cell):not(.reactions-table_options-cell) {
   padding: 8px 11px;
 }
 
@@ -46,7 +46,14 @@
   text-align: center;
 }
 
-.reactions-table button.edit-button,
-.reactions-table_enabled-cell .toggle-disabled:not([isDisabled]) {
-  font-size: 1.5em;
+.reactions-table_options-container {
+  display: inline-flex;
+  justify-content: center;
+  gap: 5px;
+  width: 100%;
+}
+
+.reactions-table .edit-button,
+.reactions-table_options-cell .toggle-disabled:not([isDisabled]) {
+  font-size: 1.5rem;
 }

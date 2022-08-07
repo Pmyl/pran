@@ -578,11 +578,11 @@ mod tests {
                 alternatives: ReactionStepMessageAlternativesDefinition::try_new(vec![
                     ReactionStepMessageAlternativeDefinition {
                         message: ReactionStepText::LetterByLetter("first message".to_string()),
-                        probability: 0.0
+                        probability: Some(0.0)
                     },
                     ReactionStepMessageAlternativeDefinition {
                         message: ReactionStepText::LetterByLetter("second message".to_string()),
-                        probability: 100.0
+                        probability: Some(100.0)
                     },
                 ]).unwrap(),
                 emotion_id: EmotionId(String::from("an emotion id"))

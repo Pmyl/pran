@@ -1,0 +1,30 @@
+.prompt-confirmation-modal {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.prompt-confirmation-modal_container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.prompt-confirmation-modal_text {
+  font-size: 32px;
+  margin: 0;
+  text-align: center;
+}
+
+.prompt-confirmation-modal_warning {
+  display: block;
+  text-align: center;
+  font-size: 120px;
+  color: #dddd00;
+}
+
+.prompt-confirmation-modal_buttons-container {
+  margin-top: auto;
+  display: flex;
+  justify-content: flex-end;
+}

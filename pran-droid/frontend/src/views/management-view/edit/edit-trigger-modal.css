@@ -4,14 +4,24 @@
   flex-direction: column;
 }
 
+.edit-trigger-modal_title {
+  margin: 0 0 10px 0;
+}
+
 .edit-trigger-modal_form-container {
   margin-top: 10px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .edit-trigger-modal_buttons-container {
   display: flex;
   justify-content: flex-end;
   margin-top: auto;
+  align-items: flex-end;
+  min-height: 50px;
+  padding-bottom: 10px;
 }
 
 .edit-trigger-modal label {
@@ -20,4 +30,8 @@
 
 .edit-trigger-modal_form-input-container + .edit-trigger-modal_form-input-container {
   margin-top: 10px;
+}
+
+.edit-trigger-modal_delete-button {
+  margin-right: auto;
 }

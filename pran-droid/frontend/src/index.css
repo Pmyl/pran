@@ -61,23 +61,34 @@ input::-moz-focus-inner {
     z-index: 1;
 }
 
-.button.button-tight {
+.button:where(.button-tight) {
     padding: 0;
 }
 
-.button.button-positive {
+.button:where(.button-small) {
+    padding: 2px 4px;
+    font-size: 14px;
+}
+
+.button:where(.button-positive) {
     color: white;
     background-color: #198754;
     border-color: #198754;
 }
 
-.button.button-danger {
+.button:where(.button-positive-alt) {
+    color: white;
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
+.button:where(.button-danger) {
     background-color: #dc3545;
     border-color: #dc3545;
     color: white;
 }
 
-.button.button-icon {
+.button:where(.button-icon) {
     font-size: 1em;
     line-height: 1em;
     padding: 0;
@@ -92,4 +103,8 @@ input::-moz-focus-inner {
 
 .button:focus-visible{
     box-shadow: 2px 2px 0 #000;
+}
+
+.modal-container {
+    font-family: sans-serif;
 }
