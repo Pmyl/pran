@@ -29,12 +29,9 @@ pub async fn remove_step_from_reaction(request: RemoveStepFromReactionRequest, r
 
 #[cfg(test)]
 mod tests {
-    use std::borrow::Borrow;
-    use std::sync::Arc;
     use crate::application::reactions::dtos::reaction_step_dto::{AnimationFrameDto, ReactionStepSkipDto};
     use crate::application::reactions::get::{get_reaction, GetReactionRequest};
     use crate::application::reactions::insert_movement_step::{insert_movement_step_to_reaction, InsertMovementStepToReactionRequest};
-    use crate::domain::images::image_repository::ImageRepository;
     use crate::domain::images::image_repository::tests::setup_dummy_images;
     use crate::domain::reactions::reaction_definition_repository::tests::setup_dummy_chat_command_reaction_definition;
     use crate::persistence::images::in_memory_image_repository::InMemoryImageRepository;

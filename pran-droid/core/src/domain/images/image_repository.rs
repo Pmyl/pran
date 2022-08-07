@@ -21,7 +21,6 @@ pub trait ImageRepository: Send + Sync {
 
 #[cfg(test)]
 pub mod tests {
-    use std::sync::Arc;
     use crate::domain::images::image::ImageUrl;
     use super::*;
 

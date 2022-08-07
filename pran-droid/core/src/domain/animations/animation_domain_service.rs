@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use crate::domain::animations::animation::Animation;
 use crate::domain::images::image_repository::ImageRepository;
 

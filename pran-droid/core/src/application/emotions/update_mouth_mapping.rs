@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use std::fmt::Debug;
 use thiserror::Error;
 use crate::domain::emotions::emotion::{EmotionId, MouthPositionName};
@@ -50,7 +49,6 @@ mod tests {
     use crate::application::emotions::dtos::emotion_dto::{EmotionDto, EmotionLayerDto};
     use crate::application::emotions::get::{get_emotion, GetEmotionRequest};
     use crate::domain::emotions::emotion_repository::tests::setup_dummy_emotion;
-    use crate::domain::images::image_repository::ImageRepository;
     use crate::domain::images::image_repository::tests::setup_dummy_images;
     use crate::persistence::emotions::in_memory_emotion_repository::InMemoryEmotionRepository;
     use crate::persistence::images::in_memory_image_repository::InMemoryImageRepository;

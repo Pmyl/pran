@@ -1,5 +1,4 @@
 use thiserror::Error;
-use std::sync::Arc;
 use crate::domain::animations::animation::Animation;
 use crate::domain::animations::animation_domain_service::validate_images;
 use crate::domain::emotions::emotion::{Emotion, MouthPositionName};

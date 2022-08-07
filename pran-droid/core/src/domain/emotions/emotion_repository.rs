@@ -30,7 +30,6 @@ pub trait EmotionRepository: Send + Sync {
 
 #[cfg(test)]
 pub mod tests {
-    use std::sync::Arc;
     use super::*;
 
     pub async fn setup_dummy_emotion(repository: &dyn EmotionRepository) -> Emotion {

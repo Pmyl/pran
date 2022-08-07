@@ -1,5 +1,4 @@
 use std::collections::HashSet;
-use std::sync::Arc;
 use std::fmt::Debug;
 use thiserror::Error;
 use crate::application::reactions::dtos::reaction_dto::{ReactionDto, ReactionTriggerDto};
@@ -92,7 +91,6 @@ mod tests {
     use crate::application::reactions::create::{create_reaction, CreateReactionRequest};
     use crate::application::reactions::dtos::reaction_dto::ReactionTriggerDto;
     use crate::application::reactions::get::{get_reaction, GetReactionRequest};
-    use crate::domain::reactions::reaction_definition_repository::ReactionDefinitionRepository;
     use crate::persistence::reactions::in_memory_reaction_repository::InMemoryReactionRepository;
     use super::*;
 

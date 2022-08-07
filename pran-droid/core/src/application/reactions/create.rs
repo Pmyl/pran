@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use std::fmt::Debug;
 use thiserror::Error;
 use crate::application::reactions::dtos::reaction_dto::{ReactionDto, ReactionTriggerDto};
@@ -36,7 +35,6 @@ pub async fn create_reaction(request: CreateReactionRequest, repository: &dyn Re
 #[cfg(test)]
 mod tests {
     use crate::application::reactions::dtos::reaction_dto::ReactionTriggerDto;
-    use crate::domain::reactions::reaction_definition_repository::ReactionDefinitionRepository;
     use crate::domain::reactions::reaction_definition::{ReactionDefinitionId};
     use crate::persistence::reactions::in_memory_reaction_repository::InMemoryReactionRepository;
     use super::*;

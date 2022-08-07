@@ -30,7 +30,6 @@ pub trait ReactionDefinitionRepository: Send + Sync {
 
 #[cfg(test)]
 pub mod tests {
-    use std::sync::Arc;
     use super::*;
 
     pub async fn setup_dummy_chat_command_reaction_definition(repository: &dyn ReactionDefinitionRepository) -> ReactionDefinition {

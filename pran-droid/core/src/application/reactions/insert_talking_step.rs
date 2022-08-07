@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use std::fmt::Debug;
 use thiserror::Error;
 use crate::application::reactions::dtos::reaction_step_dto::{ReactionStepDto, ReactionStepSkipDto, ReactionStepTextAlternativeDto, ReactionStepTextDto};
