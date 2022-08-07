@@ -21,5 +21,5 @@ impl From<Vec<ImageDto>> for GetAllImagesResponse {
 
 #[get("/images")]
 pub async fn api_get_all_images(_authenticated: AuthenticatedReadOnly, repo: &State<Arc<dyn ImageRepository>>) -> Json<GetAllImagesResponse> {
-    Json(get_all_images(repo).await.into())
+    Json(get_all_images(repo.as_ref()).await.into())
 }

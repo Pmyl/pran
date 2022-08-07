@@ -16,7 +16,7 @@ pub struct CreateEmotionApiRequest {
 
 #[post("/emotions", format = "json", data = "<payload>")]
 pub async fn api_create_emotions(_authenticated: Authenticated, payload: Json<CreateEmotionApiRequest>, repo: &State<Arc<dyn EmotionRepository>>) -> Result<Json<EmotionResponse>, Error> {
-    Ok(Json(create_emotion(CreateEmotionRequest { name: payload.name.clone() }, repo).await?.into()))
+    Ok(Json(create_emotion(CreateEmotionRequest { name: payload.name.clone() }, repo.as_ref()).await?.into()))
 }
 
 #[derive(thiserror::Error, Debug)]

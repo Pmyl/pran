@@ -21,5 +21,5 @@ impl From<Vec<EmotionDto>> for GetAllEmotionsResponse {
 
 #[get("/emotions")]
 pub async fn api_get_all_emotions(_authenticated: AuthenticatedReadOnly, repo: &State<Arc<dyn EmotionRepository>>) -> Json<GetAllEmotionsResponse> {
-    Json(get_all_emotions(repo).await.into())
+    Json(get_all_emotions(repo.as_ref()).await.into())
 }

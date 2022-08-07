@@ -14,7 +14,7 @@ use crate::images::responses::image_response::ImageResponse;
 #[post("/images", data = "<payload>")]
 pub async fn api_create_image(_authenticated: Authenticated, payload: Form<CreateImageApiRequest<'_>>, repo: &State<Arc<dyn ImageRepository>>, storage: &State<Arc<dyn ImageStorage>>) -> Result<Json<ImageResponse>, Error> {
     let request = into_request(payload)?;
-    Ok(Json(create_image(request, repo, storage).await?.into()))
+    Ok(Json(create_image(request, repo.as_ref(), storage.as_ref()).await?.into()))
 }
 
 #[derive(FromForm)]

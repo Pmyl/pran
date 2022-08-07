@@ -18,7 +18,7 @@ pub async fn api_patch_reaction(_authenticated: Authenticated, reaction_id: Stri
         triggers: payload.0.triggers.map(|triggers| triggers.into_iter().map(Into::into).collect()),
         is_disabled: payload.0.is_disabled,
         ..Default::default()
-    }, repo).await?.into()))
+    }, repo.as_ref()).await?.into()))
 }
 
 #[derive(Deserialize)]

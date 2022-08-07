@@ -19,7 +19,7 @@ pub struct CreateEmotionRequest {
     pub name: String
 }
 
-pub async fn create_emotion(request: CreateEmotionRequest, repository: &Arc<dyn EmotionRepository>) -> Result<EmotionDto, CreateEmotionError> {
+pub async fn create_emotion(request: CreateEmotionRequest, repository: &dyn EmotionRepository) -> Result<EmotionDto, CreateEmotionError> {
     let name = EmotionName::new(request.name)
         .map_err(|_| CreateEmotionError::BadRequest(String::from("Provided `name` is invalid")))?;
 
@@ -47,7 +47,7 @@ mod tests {
     async fn create_emotion_return_new_emotion() {
         let name = String::from("happy");
         let request = CreateEmotionRequest { name: name.clone() };
-        let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
+        let repository = InMemoryEmotionRepository::new();
 
         match create_emotion(request, &repository).await {
             Ok(emotion) => assert_eq!(emotion.name, name),
@@ -58,7 +58,7 @@ mod tests {
     #[tokio::test]
     async fn create_emotion_return_new_emotion_with_only_mouth_layer() {
         let request = CreateEmotionRequest { name: String::from("happy") };
-        let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
+        let repository = InMemoryEmotionRepository::new();
 
         match create_emotion(request, &repository).await {
             Ok(emotion) => {
@@ -72,7 +72,7 @@ mod tests {
     #[tokio::test]
     async fn create_emotion_return_new_emotion_without_mouth_mapping() {
         let request = CreateEmotionRequest { name: String::from("happy") };
-        let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
+        let repository = InMemoryEmotionRepository::new();
 
         match create_emotion(request, &repository).await {
             Ok(emotion) => {
@@ -85,9 +85,9 @@ mod tests {
     #[tokio::test]
     async fn create_emotion_save_emotion_in_repository() {
         let request = CreateEmotionRequest { name: String::from("sad") };
-        let repository = Arc::new(InMemoryEmotionRepository::new());
+        let repository = InMemoryEmotionRepository::new();
 
-        match create_emotion(request, &(repository.clone() as Arc<dyn EmotionRepository>)).await {
+        match create_emotion(request, &repository).await {
             Ok(emotion) => assert!(repository.exists(&EmotionId(emotion.id)).await),
             _ => unreachable!("expected create emotion to not fail")
         }
@@ -96,7 +96,7 @@ mod tests {
     #[tokio::test]
     async fn create_emotion_empty_name_error() {
         let request = CreateEmotionRequest { name: String::from("") };
-        let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
+        let repository = InMemoryEmotionRepository::new();
 
         match create_emotion(request, &repository).await {
             Err(error) => match error {
@@ -112,8 +112,8 @@ mod tests {
         let name = String::from("sad");
         let request1 = CreateEmotionRequest { name: name.clone() };
         let request2 = CreateEmotionRequest { name: name.clone() };
-        let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
-        create_emotion(request1, &repository.clone()).await.unwrap();
+        let repository = InMemoryEmotionRepository::new();
+        create_emotion(request1, &repository).await.unwrap();
 
         match create_emotion(request2, &repository).await {
             Err(error) => match error {
@@ -128,8 +128,8 @@ mod tests {
     async fn create_emotion_twice_different_name_not_fail() {
         let request1 = CreateEmotionRequest { name: String::from("happy") };
         let request2 = CreateEmotionRequest { name: String::from("sad") };
-        let repository: Arc<dyn EmotionRepository> = Arc::new(InMemoryEmotionRepository::new());
-        create_emotion(request1, &repository.clone()).await.unwrap();
+        let repository = InMemoryEmotionRepository::new();
+        create_emotion(request1, &repository).await.unwrap();
 
         match create_emotion(request2, &repository).await {
             Ok(_) => {},

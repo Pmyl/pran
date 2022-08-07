@@ -62,7 +62,7 @@ async fn main() {
             emotion_repo = Arc::new(InMemoryEmotionRepository::new());
             images_repo = Arc::new(InMemoryImageRepository::new());
             images_storage = Arc::new(InMemoryImageStorage::new());
-            build_test_database(reaction_repo.clone(), emotion_repo.clone(), images_repo.clone(), images_storage.clone()).await;
+            build_test_database(reaction_repo.as_ref(), emotion_repo.as_ref(), images_repo.as_ref(), images_storage.as_ref()).await;
         },
         RuntimeMode::Production => {
             reaction_repo = Arc::new(DetaReactionRepository::new(config.deta_project_key.clone(), config.deta_project_id.clone()));

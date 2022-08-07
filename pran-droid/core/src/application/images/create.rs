@@ -23,7 +23,7 @@ pub enum StoreImageError {
     Unexpected
 }
 
-pub async fn create_image(request: CreateImageRequest, repo: &Arc<dyn ImageRepository>, storage: &Arc<dyn ImageStorage>) -> Result<ImageDto, StoreImageError> {
+pub async fn create_image(request: CreateImageRequest, repo: &dyn ImageRepository, storage: &dyn ImageStorage) -> Result<ImageDto, StoreImageError> {
     match (ImageId::try_from(request.id), ImageData::try_from(request.image)) {
         (Ok(id), Ok(image_data)) => {
             let image_url = storage.save(&id, &image_data).await.map_err(|_| StoreImageError::StorageFail)?;
@@ -38,7 +38,7 @@ pub async fn create_image(request: CreateImageRequest, repo: &Arc<dyn ImageRepos
     }
 }
 
-async fn save_in_repo(id: &ImageId, url: &ImageUrl, repository: &Arc<dyn ImageRepository>) -> Result<Image, StoreImageError> {
+async fn save_in_repo(id: &ImageId, url: &ImageUrl, repository: &dyn ImageRepository) -> Result<Image, StoreImageError> {
     let image = Image::new(id, url);
 
     repository.insert(&image).await. map_err(|e| match e {
@@ -65,10 +65,10 @@ mod tests {
 
     #[tokio::test]
     async fn store_image_storage_errors_return_storage_fail() {
-        let repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
+        let repository = InMemoryImageRepository::new();
         let mut storage = InMemoryImageStorage::new();
         storage.set_error_on_save();
-        let storage_arc: Arc<dyn ImageStorage> = Arc::new(storage);
+        let storage_arc = storage;
 
         match create_image(CreateImageRequest { image: fake_image(), id: create_id() }, &repository, &storage_arc).await {
             Err(e) => match e {
@@ -81,8 +81,8 @@ mod tests {
 
     #[tokio::test]
     async fn store_image_empty_image_return_bad_request() {
-        let repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let storage: Arc<dyn ImageStorage> = Arc::new(InMemoryImageStorage::new());
+        let repository = InMemoryImageRepository::new();
+        let storage = InMemoryImageStorage::new();
 
         match create_image(CreateImageRequest { image: vec![], id: create_id() }, &repository, &storage).await {
             Err(e) => match e {
@@ -95,8 +95,8 @@ mod tests {
 
     #[tokio::test]
     async fn store_image_empty_id_return_bad_request() {
-        let repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let storage: Arc<dyn ImageStorage> = Arc::new(InMemoryImageStorage::new());
+        let repository = InMemoryImageRepository::new();
+        let storage = InMemoryImageStorage::new();
 
         match create_image(CreateImageRequest { image: fake_image(), id: String::from("") }, &repository, &storage).await {
             Err(e) => match e {
@@ -109,17 +109,17 @@ mod tests {
 
     #[tokio::test]
     async fn store_image_conflict_return_conflict_and_image_not_on_fs() {
-        let repository: Arc<dyn ImageRepository> = Arc::new(InMemoryImageRepository::new());
-        let storage = Arc::new(InMemoryImageStorage::new());
+        let repository = InMemoryImageRepository::new();
+        let storage = InMemoryImageStorage::new();
         let image = fake_image();
         let mut image_conflict = fake_image();
         image_conflict.push(1);
         let id = create_id();
 
-        let first_image = create_image(CreateImageRequest { image: image.clone(), id: id.clone() }, &repository, &(storage.clone() as Arc<dyn ImageStorage>))
+        let first_image = create_image(CreateImageRequest { image: image.clone(), id: id.clone() }, &repository, &storage)
             .await.unwrap();
 
-        let error = create_image(CreateImageRequest { image: image_conflict, id: id.clone() }, &repository, &(storage.clone() as Arc<dyn ImageStorage>))
+        let error = create_image(CreateImageRequest { image: image_conflict, id: id.clone() }, &repository, &storage)
             .await.expect_err("Creation of image with existing id should have errored");
 
         assert!(matches!(error, StoreImageError::Conflict(_)));
@@ -129,15 +129,15 @@ mod tests {
 
     #[tokio::test]
     async fn store_image_save_in_repo_and_store_on_fs() {
-        let repository = Arc::new(InMemoryImageRepository::new());
-        let storage = Arc::new(InMemoryImageStorage::new());
+        let repository = InMemoryImageRepository::new();
+        let storage = InMemoryImageStorage::new();
         let image = fake_image();
         let id = create_id();
 
         match create_image(
             CreateImageRequest { image, id: id.clone() },
-            &(repository.clone() as Arc<dyn ImageRepository>),
-            &(storage.clone() as Arc<dyn ImageStorage>)
+            &repository,
+            &storage
         ).await {
             Ok(image) => {
                 assert_eq!(image.id, id.clone());

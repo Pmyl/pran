@@ -54,7 +54,7 @@ pub struct ReactionContext {
 }
 
 impl Reaction {
-    pub(crate) fn try_create(text_phonemiser: &Arc<dyn TextPhonemiser>, definition: &ReactionDefinition, context: &ReactionContext) -> Option<Self> {
+    pub(crate) fn try_create(text_phonemiser: &dyn TextPhonemiser, definition: &ReactionDefinition, context: &ReactionContext) -> Option<Self> {
         let mut steps = vec![];
         for step in &definition.steps {
             steps.push(ReactionStep::try_create(text_phonemiser, step, context)?);
@@ -65,7 +65,7 @@ impl Reaction {
 }
 
 impl ReactionStep {
-    pub(crate) fn try_create(text_phonemiser: &Arc<dyn TextPhonemiser>, step_definition: &ReactionStepDefinition, context: &ReactionContext) -> Option<Self> {
+    pub(crate) fn try_create(text_phonemiser: &dyn TextPhonemiser, step_definition: &ReactionStepDefinition, context: &ReactionContext) -> Option<Self> {
         Some(match step_definition {
             ReactionStepDefinition::Moving(moving_step_definition) =>
                 ReactionStep::Moving(moving_step_definition.clone()),
@@ -78,7 +78,7 @@ impl ReactionStep {
 }
 
 impl TalkingReactionStep {
-    fn try_create(text_phonemiser: &Arc<dyn TextPhonemiser>, step_definition: &TalkingReactionStepDefinition, context: &ReactionContext) -> Option<Self> {
+    fn try_create(text_phonemiser: &dyn TextPhonemiser, step_definition: &TalkingReactionStepDefinition, context: &ReactionContext) -> Option<Self> {
         let text = step_definition.alternatives.get_random_text().try_contextualise_text_reaction(context)?;
 
         Some(TalkingReactionStep {

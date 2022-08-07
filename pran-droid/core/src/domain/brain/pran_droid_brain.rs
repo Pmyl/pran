@@ -70,7 +70,7 @@ impl PranDroidBrain {
             let new_count = *self.reaction_counters.get(&definition_id).unwrap();
             self.reaction_notifier.notify_reaction_usage(&definition_id, new_count);
 
-            Reaction::try_create(&self.text_phonemiser, reaction_definition, &ReactionContext {
+            Reaction::try_create(self.text_phonemiser.as_ref(), reaction_definition, &ReactionContext {
                 count: new_count,
                 stimulus
             })

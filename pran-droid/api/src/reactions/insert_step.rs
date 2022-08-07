@@ -16,10 +16,10 @@ use crate::reactions::models::reaction_step_model::{AnimationFrameModel, from_mo
 pub async fn api_insert_reaction_step(_authenticated: Authenticated, reaction_id: String, payload: Json<InsertReactionStepApiRequest>, repo: &State<Arc<dyn ReactionDefinitionRepository>>, image_repo: &State<Arc<dyn ImageRepository>>, emotion_repo: &State<Arc<dyn EmotionRepository>>) -> Result<Json<ReactionStepModel>, Error> {
     match payload {
         Json(InsertReactionStepApiRequest::Moving(request)) => {
-            Ok(Json(insert_movement_step_to_reaction(request.into_request(reaction_id), repo, image_repo).await?.into()))
+            Ok(Json(insert_movement_step_to_reaction(request.into_request(reaction_id), repo.as_ref(), image_repo.as_ref()).await?.into()))
         },
         Json(InsertReactionStepApiRequest::Talking(request)) => {
-            Ok(Json(insert_talking_step_to_reaction(request.into_request(reaction_id), repo, emotion_repo).await?.into()))
+            Ok(Json(insert_talking_step_to_reaction(request.into_request(reaction_id), repo.as_ref(), emotion_repo.as_ref()).await?.into()))
         }
     }
 }
