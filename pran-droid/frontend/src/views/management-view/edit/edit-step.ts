@@ -17,7 +17,7 @@ export const editStep = inlineComponent<{ step: ReactionStep, onDelete: () => vo
             if (alternative.probability !== null) {
               r.el('span', 'edit-step_alternative-probability').text(`${alternative.probability?.toString() || '?'}%`).endEl();
             } else {
-              r.el('i', 'edit-step_alternative-probability').text(`${alternative._calculatedProbability}%`).endEl();
+              r.el('i', 'edit-step_alternative-probability').text(`${alternative._calculatedProbability.toFixed(0)}%`).endEl();
             }
             r.el('span', 'edit-step_alternative-text').text(alternative.message.text).endEl();
           r.endEl();

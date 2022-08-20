@@ -53,13 +53,8 @@ export const editTriggerModal = inlineComponent<Inputs>(controls => {
         r.endEl();
       r.endEl();
       r.el('div', 'edit-trigger-modal_form-input-container');
-      if (editModel.type == 'ChatCommand') {
         r.el('label').attr('for', 'edit-trigger-modal_trigger-text-input').text('Trigger').endEl();
-        r.el('input').attr('id', 'edit-trigger-modal_trigger-text-input').attr('value', editModel.command || '').endEl();
-      } else {
-        r.el('label').attr('for', 'edit-trigger-modal_trigger-text-input').text('Trigger').endEl();
-        r.el('input').attr('id', 'edit-trigger-modal_trigger-text-input').attr('value', editModel.keyword || '').endEl();
-      }
+        r.el('input').attr('id', 'edit-trigger-modal_trigger-text-input').endEl();
       r.endEl();
 
       r.el('div', 'edit-trigger-modal_buttons-container');
@@ -68,7 +63,7 @@ export const editTriggerModal = inlineComponent<Inputs>(controls => {
         }
         r.el('button', 'button edit-trigger-modal_cancel-button').text('CANCEL').attr('type', 'button').endEl();
         r.el('button', 'button button-positive edit-trigger-modal_save-button').text('OK').attr('type', 'submit');
-          if(editModel.type === 'ChatCommand' && (!editModel.command || editModel.command?.includes(' '))
+          if (editModel.type === 'ChatCommand' && (!editModel.command || editModel.command?.includes(' '))
             || editModel.type === 'ChatKeyword' && !editModel.keyword?.trim()) {
             r.attr('disabled', 'disabled');
           }
@@ -77,9 +72,10 @@ export const editTriggerModal = inlineComponent<Inputs>(controls => {
     r.endEl();
 
     return e => (
+      (e.querySelector('#edit-trigger-modal_trigger-text-input') as HTMLInputElement).value = (editModel.type === 'ChatCommand' ? editModel.command : editModel.keyword) || '',
       onChange(e, '#edit-trigger-modal_trigger-type-input', e => (editModel.type = e.target.value as any, controls.changed())),
       onChange(e, '#edit-trigger-modal_trigger-text-input', e => (editModel.type === 'ChatCommand' ? editModel.command = e.target.value : editModel.keyword = e.target.value, controls.changed())),
-      onClick(e, '.edit-trigger-modal_cancel-button', () => inputs.close()),
+      onClick(e, '.edit-trigger-modal_cancel-button', () => inputs.dismiss()),
       onClick(e, '.edit-trigger-modal_save-button', () => inputs.close({ action: { type: 'edited', editedTrigger: editModel } })),
       onClick(e, '.edit-trigger-modal_delete-button', () => promptDeleteConfirmation('Are you sure you want to delete this trigger?').onConfirm(() => inputs.close({ action: { type: 'deleted' } })))
     );

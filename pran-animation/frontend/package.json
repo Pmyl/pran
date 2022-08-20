@@ -17,9 +17,9 @@
   },
   "devDependencies": {
     "@types/dom-mediacapture-record": "^1.0.10",
-    "@types/jasmine": "^3.8.2",
+    "@types/jasmine": "^3.10.6",
     "concurrently": "^6.2.1",
-    "jasmine": "^3.8.0",
+    "jasmine": "^3.99.0",
     "jasmine-ts": "^0.4.0",
     "microbundle": "^0.13.3",
     "ncp": "^2.0.0",

@@ -19,7 +19,7 @@ export const steps = inlineComponent<{ steps: Array<ReactionStep> }>(controls =>
 
   function getMostProbableAlternative(talkingStep: ReactionTalkingStep): ReactionTalkingStepAlternative {
     return talkingStep.alternatives.reduce((mostProbable, alternative) => {
-        if (!mostProbable || (alternative.probability || +alternative._calculatedProbability) > (mostProbable.probability || +mostProbable._calculatedProbability)) return alternative;
+        if (!mostProbable || (alternative.probability || alternative._calculatedProbability) > (mostProbable.probability || mostProbable._calculatedProbability)) return alternative;
         return mostProbable;
       }, null);
   }
@@ -35,7 +35,7 @@ export const steps = inlineComponent<{ steps: Array<ReactionStep> }>(controls =>
     } else {
       const mostProbableMessage = getMostProbableAlternative(stepToShow);
       r.el('p', 'reactions-table-steps_message').text(mostProbableMessage.message.text).endEl();
-      mostProbableMessage.probability !== 100
+      stepToShow.alternatives.length !== 1 && mostProbableMessage.probability !== 100
         && r.el('span', 'reactions-table-steps_random').attr('title', 'Random response').html('&nbsp;🔀&nbsp;').endEl();
       inputs.steps.length > 1
         && r.scel('br').el('i', 'reactions-table-steps_more').text(`and ${inputs.steps.length - 1} more steps`).endEl();

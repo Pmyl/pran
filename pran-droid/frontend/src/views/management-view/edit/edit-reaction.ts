@@ -12,7 +12,7 @@ type PranDroidReactionDefinitionFormModel = Omit<PranDroidReactionDefinition, 'i
   id?: PranDroidReactionDefinition['id']
 };
 
-export const editReaction = inlineComponent<{ reaction?: PranDroidReactionDefinition, onDone: () => void, interceptDismiss: (interceptPromise: () => Promise<InterceptResult>) => void }>(controls => {
+export const editReaction = inlineComponent<{ reaction?: PranDroidReactionDefinition, onDone: () => void, onCancel: () => void, interceptDismiss: (interceptPromise: () => Promise<InterceptResult>) => void }>(controls => {
   authorize();
   controls.setup("edit-reaction", "edit-reaction");
   controls.setComplexRendering();
@@ -137,7 +137,7 @@ export const editReaction = inlineComponent<{ reaction?: PranDroidReactionDefini
           return;
         }
 
-        inputs.onDone();
+        inputs.onCancel();
       }),
       onClick(e, '.edit-reaction_save-button', async () => {
         if (isSaving) {

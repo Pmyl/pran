@@ -10,5 +10,5 @@ export const editReactionModal = inlineComponent<ModalContentInputs<void> & { re
   controls.setComplexRendering();
 
   return (inputs, r) =>
-    r.cmp(editReaction, { reaction: inputs.reaction, onDone: inputs.close, interceptDismiss: inputs.interceptDismiss });
+    r.cmp(editReaction, { reaction: inputs.reaction, onDone: inputs.close, onCancel: inputs.dismiss, interceptDismiss: inputs.interceptDismiss });
 });

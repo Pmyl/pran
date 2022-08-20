@@ -17,10 +17,11 @@ type Instruction =
   | ['text', HTMLElement]
   | ['html', HTMLElement]
   | CreateElementInstruction
-  | ['cmpi', Component]
-  | ['cmp', NewableComponent<object>, Component];
+  | ['cmpi', Component<object>]
+  | ['cmp', NewableComponent<object>, Component<object>];
 
 export class ComplexRenderer {
+  private static _isDebugLogActive: boolean = false;
   private readonly _elementQueue: Array<HTMLElement> = [];
   private _instructions: Array<Instruction> = [];
   private _newInstructions: Array<Instruction> = [];
@@ -29,11 +30,22 @@ export class ComplexRenderer {
   private _openElements: Set<HTMLElement> = new Set();
   private _components: Set<Component> = new Set();
   private _newComponents: Set<Component> = new Set();
-  private _newableComponents: Map<NewableComponent<object>, Set<Component>> = new Map();
-  private _newNewableComponents: Map<NewableComponent<object>, Set<Component>> = new Map();
+  private _newableComponents: Map<NewableComponent<object>, Set<Component<object>>> = new Map();
+  private _newNewableComponents: Map<NewableComponent<object>, Set<Component<object>>> = new Map();
+  private _log: (...args: any[]) => void;
 
-  constructor(hostElement: HTMLElement) {
+  constructor(hostElement: HTMLElement, options: { isDebugLogActive?: boolean | undefined } = {}) {
     this._elementQueue.unshift(hostElement);
+    options = Object.assign({ isDebugLogActive: ComplexRenderer._isDebugLogActive }, options);
+    this._log = options.isDebugLogActive ? console.debug : () => {};
+  }
+
+  public static enableDebug() {
+    ComplexRenderer._isDebugLogActive = true;
+  }
+
+  public static disableDebug() {
+    ComplexRenderer._isDebugLogActive = false
   }
 
   public startRender() {
@@ -60,10 +72,10 @@ export class ComplexRenderer {
       this._currentInstructionIndex++;
     } else {
       element = this._createElement(selector);
-      element.setAttribute('data-pa-pos', this._currentChildIndex.toString());
-      this._elementQueue[0].append(element)
+      this._insertElementAt(this._elementQueue[0], element, this._currentChildIndex);
     }
 
+    element.setAttribute('data-pa-pos', this._currentChildIndex.toString());
     element.className = classes ? classes : '';
     this._elementQueue.unshift(element);
     this._openElements.add(element);
@@ -74,8 +86,8 @@ export class ComplexRenderer {
   }
 
   // Self closing Element
-  public scel(selfClosingElement: string): this {
-    return this.el(selfClosingElement).endEl();
+  public scel(selfClosingElement: string, classes?: string): this {
+    return this.el(selfClosingElement, classes).endEl();
   }
 
   // End Element
@@ -85,10 +97,10 @@ export class ComplexRenderer {
     let closedElement: HTMLElement = this._elementQueue[0];
 
     const isDifferentInstruction = !!currentInstruction && (currentInstruction[0] !== newInstruction || currentInstruction[1] !== closedElement);
-    const isEndingBrandNewElementInParent = !!currentInstruction && currentInstruction[0] == 'endel' && this._openElements.has(currentInstruction[1]);
+    const isEndingAssociatedElement = !!currentInstruction && this._getElementInstructionIsActingOn(currentInstruction) === closedElement;
 
     if (isDifferentInstruction) {
-      if (!isEndingBrandNewElementInParent) {
+      if (isEndingAssociatedElement) {
         this._undoInstructionsOnEndEl(closedElement);
       }
     } else {
@@ -167,7 +179,7 @@ export class ComplexRenderer {
     } else {
       if (!this._components.has(component)) {
         component.render();
-        console.debug(`+++ Component: ${component.selector}`);
+        this._log(`+++ Component: ${component.selector}`);
       }
       this._elementQueue[0].append(component.componentElement)
     }
@@ -180,13 +192,13 @@ export class ComplexRenderer {
   }
 
   // Component
-  public cmp<TInputs extends object>(cmp: { component: NewableComponent<TInputs> }, inputs?: TInputs): this {
+  public cmp<TInputs extends object>(cmp: { component: NewableComponent<TInputs> }, inputs: Partial<TInputs> = {}): this {
     const instruction = 'cmp';
     const currentInstruction = this._instructions[this._currentInstructionIndex];
-    let instance: Component;
+    let instance: Component<TInputs>;
 
     if (!!currentInstruction && currentInstruction[0] === instruction && currentInstruction[1] === cmp.component) {
-      instance = currentInstruction[2];
+      instance = currentInstruction[2] as Component<TInputs>;
       if (this._getOrCreateNewableComponents(this._newableComponents, cmp.component).has(instance)) {
         // Component exists in same place, update inputs if needed
         if (!this._areInputsEqual(instance.inputs, inputs)) {
@@ -198,7 +210,6 @@ export class ComplexRenderer {
       }
       this._currentInstructionIndex++;
     } else {
-      !!currentInstruction && this._undoInstructionsOnEndEl(this._getParentElement(currentInstruction));
       instance = this._insertComponentAtCurrentIndex(cmp, inputs);
     }
 
@@ -210,8 +221,30 @@ export class ComplexRenderer {
     return this;
   }
 
+  public endRender() {
+    if (this._elementQueue.length !== 1) {
+      throw new Error('Complex rendering error, missing closing tags')
+    }
+
+    this._undoInstructionsOnEndEl(this._elementQueue[0]);
+    this._instructions = this._newInstructions;
+
+    this._newComponents.forEach(cmp => !this._components.has(cmp) && cmp.destroy());
+    this._components = this._newComponents;
+    this._newComponents = new Set<Component>();
+    this._newableComponents.forEach((instances, newableCmp) => {
+      const newNewableComponents = this._getOrCreateNewableComponents(this._newNewableComponents, newableCmp);
+
+      this._getOrCreateNewableComponents(this._newableComponents, newableCmp).forEach(instance => {
+        !newNewableComponents.has(instance) && instance.destroy();
+      });
+    });
+    this._newableComponents = this._newNewableComponents;
+    this._newNewableComponents = new Map<NewableComponent<object>, Set<Component>>();
+  }
+
   private _insertComponentAtCurrentIndex<TInputs extends object>(cmp: { component: NewableComponent<TInputs> }, inputs: TInputs) {
-    let instances: Set<Component> = this._getOrCreateNewableComponents(this._newableComponents, cmp.component);
+    let instances: Set<Component<TInputs>> = this._getOrCreateNewableComponents(this._newableComponents, cmp.component);
     let instance: Component;
 
     if (instances.size > 0) {
@@ -229,7 +262,7 @@ export class ComplexRenderer {
       instance = new cmp.component() as Component;
       !!inputs && instance.setInputs(inputs);
       instance.render();
-      console.debug(`+++ Component: ${instance.selector}`);
+      this._log(`+++ Component: ${instance.selector}`);
     }
 
     if (this._elementQueue[0].children.length === this._currentChildIndex) {
@@ -242,72 +275,52 @@ export class ComplexRenderer {
   }
 
   private _removeComponent(component: Component<object>) {
-    console.debug(`--- Component: ${component.selector}`);
+    this._log(`--- Component: ${component.selector}`);
     component.componentElement.remove();
   }
 
-  private _getOrCreateNewableComponents(newableComponents: Map<NewableComponent<object>, Set<Component>>, component: NewableComponent<object>) {
+  private _getOrCreateNewableComponents<TInputs extends object>(newableComponents: Map<NewableComponent<object>, Set<Component<object>>>, component: NewableComponent<TInputs>) {
     if (!newableComponents.has(component)) {
       newableComponents.set(component, new Set());
     }
 
-    return newableComponents.get(component);
+    return newableComponents.get(component) as Set<Component<TInputs>>;
   }
-
-  public endRender() {
-    if (this._elementQueue.length !== 1) {
-      throw new Error('Complex rendering error, missing closing tags')
-    }
-
-    this._instructions = this._newInstructions;
-
-    this._newComponents.forEach(cmp => !this._components.has(cmp) && cmp.destroy());
-    this._components = this._newComponents;
-    this._newComponents = new Set<Component>();
-    this._newNewableComponents.forEach((instances, newableCmp) => {
-      this._getOrCreateNewableComponents(this._newableComponents, newableCmp).forEach(instance => {
-        !instances.has(instance) && instance.destroy();
-      });
-    });
-    this._newableComponents = this._newNewableComponents;
-    this._newNewableComponents = new Map<NewableComponent<object>, Set<Component>>();
-  }
-
   private _createElement(selector: string): HTMLElement {
     const element = document.createElement(selector);
-    console.debug(`+++ Element: ${element.tagName}`);
+    this._log(`+++ Element: ${element.tagName}`);
     return element;
   }
 
   private _removeElement(element: HTMLElement): void {
-    console.debug(`--- Element: ${element.tagName}`);
+    this._log(`--- Element: ${element.tagName}`);
     element.remove();
   }
 
   private _setElementText(element: HTMLElement, text: string): void {
     if (!text) {
-      console.debug(`--- Text: ${element.tagName}`);
+      this._log(`--- Text: ${element.tagName}`);
     } else {
-      console.debug(`+++ Text: ${element.tagName} -> ${text}`);
+      this._log(`+++ Text: ${element.tagName} -> ${text}`);
     }
     element.innerText = text;
   }
 
   private _setElementAttr(element: HTMLElement, name: string, value: string | null): void {
     if (value === null) {
-      console.debug(`--- Attr: ${element.tagName} ${name}`);
+      this._log(`--- Attr: ${element.tagName} ${name}`);
       element.removeAttribute(name);
     } else {
-      console.debug(`+++ Attr: ${element.tagName} ${name} -> ${value}`);
+      this._log(`+++ Attr: ${element.tagName} ${name} -> ${value}`);
       element.setAttribute(name, value);
     }
   }
 
   private _setElementHtml(element: HTMLElement, html: string): void {
     if (!html) {
-      console.debug(`--- Html: ${element.tagName}`);
+      this._log(`--- Html: ${element.tagName}`);
     } else {
-      console.debug(`+++ Html: ${element.tagName} -> ${html}`);
+      this._log(`+++ Html: ${element.tagName} -> ${html}`);
     }
     element.innerHTML = html;
   }
@@ -317,8 +330,8 @@ export class ComplexRenderer {
   }
 
   private _areInputsEqual(inputs1: object, inputs2: object): boolean {
-    return Object.keys(inputs1).every(key => inputs1[key] === inputs2[key])
-      && Object.keys(inputs1).length === Object.keys(inputs2).length;
+    return !(!inputs1 || !inputs2) && (inputs1 === inputs2 || Object.keys(inputs1).every(key => inputs1[key] === inputs2[key])
+      && Object.keys(inputs1).length === Object.keys(inputs2).length);
   }
 
   private _undoInstructionsOnEndEl(endedElement: HTMLElement): void {
@@ -330,7 +343,7 @@ export class ComplexRenderer {
         if (this._isCreateElementInstruction(currentInstruction)) {
           currentRemovedElement = currentInstruction[1];
           this._removeElement(currentRemovedElement);
-        } else if (currentInstruction[0] === 'cmp') {
+        } else if (currentInstruction[0] === 'cmp' && !this._getOrCreateNewableComponents(this._newNewableComponents, currentInstruction[1]).has(currentInstruction[2])) {
           this._removeComponent(currentInstruction[2]);
         } else if (currentInstruction[0] === 'text' && currentInstruction[1] !== currentRemovedElement) {
           this._setElementText(currentInstruction[1], '');
@@ -345,7 +358,7 @@ export class ComplexRenderer {
         if (this._isCreateElementInstruction(currentInstruction)) {
           currentRemovedElement = currentInstruction[1];
           this._removeElement(currentRemovedElement);
-        } else if (currentInstruction[0] === 'cmp') {
+        } else if (currentInstruction[0] === 'cmp' && !this._getOrCreateNewableComponents(this._newNewableComponents, currentInstruction[1]).has(currentInstruction[2])) {
           this._removeComponent(currentInstruction[2]);
         } else if (currentInstruction[0] === 'text' && currentInstruction[1] !== currentRemovedElement) {
           this._setElementText(currentInstruction[1], '');
@@ -372,14 +385,16 @@ export class ComplexRenderer {
     }
   }
 
-  private _getParentElement(instruction: Instruction): HTMLElement {
+  // Example: el -> parent element, attr -> element
+  private _getElementInstructionIsActingOn(instruction: Instruction): HTMLElement {
     switch (instruction[0]) {
-      case 'endel':
       case 'text':
       case 'attr':
-        return instruction[1].parentElement;
+        return instruction[1];
       case 'cmp':
         return instruction[2].componentElement.parentElement;
+      case 'endel':
+        return instruction[1].parentElement;
       default:
         if (this._isCreateElementInstruction(instruction)) {
           return instruction[1].parentElement;
@@ -401,6 +416,14 @@ export class ComplexRenderer {
           return true;
         }
         throw new Error(`Cannot know if instruction is element related, missing implementation for ${instruction[0]}`);
+    }
+  }
+
+  private _insertElementAt(parentElement: HTMLElement, childElement: HTMLElement, index: number) {
+    if (parentElement.children.length > index) {
+      parentElement.insertBefore(childElement, parentElement.children[index]);
+    } else {
+      parentElement.append(childElement);
     }
   }
 }
@@ -595,8 +618,8 @@ export abstract class Component<T extends object | null = EmptyObject> {
     return element instanceof Component;
   }
 
-  protected _setComplexRendering(): void {
-    this._cr = new ComplexRenderer(this.componentElement);
+  protected _setComplexRendering(options: { debugLog?: boolean | undefined } = {}): void {
+    this._cr = new ComplexRenderer(this.componentElement, { isDebugLogActive: options.debugLog });
     this._isComplex = true;
   }
 

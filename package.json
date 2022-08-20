@@ -15,5 +15,9 @@
     "pran-animation-editor/frontend",
     "pran-echo/frontend",
     "pran-droid/frontend"
-  ]
+  ],
+  "dependencies": {
+    "@types/jasmine": "^3.10.6",
+    "jasmine": "^3.99.0"
+  }
 }

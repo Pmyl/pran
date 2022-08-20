@@ -34,7 +34,7 @@ export const editStepModal = inlineComponent<Inputs>(controls => {
       if (s.type !== 'Talking') {
         throw new Error('How???');
       } else {
-        editModel = { ...s, alternatives: s.alternatives.map(alternative => ({ ...alternative })), skip: { ...s.skip } };
+        editModel = { ...s, alternatives: s.alternatives.map(alternative => ({ ...alternative, message: { ...alternative.message } })), skip: { ...s.skip } };
       }
     },
     interceptDismiss: i => i(() => isFormDirty()
@@ -133,7 +133,7 @@ export const editStepModal = inlineComponent<Inputs>(controls => {
     return e => (
       onChange(e, '.edit-step-modal_step-alternative-text-input', e => ((editModel as ReactionTalkingStep).alternatives[+e.target.getAttribute('data-index')].message.text = e.target.value, controls.changed())),
       onChange(e, '.edit-step-modal_step-alternative-probability-input', e => ((editModel as ReactionTalkingStep).alternatives[+e.target.getAttribute('data-index')].probability = e.target.value === '' ? null : +e.target.value, controls.changed())),
-      onClick(e, '.edit-step-modal_add-alternative-button', () => ((editModel as ReactionTalkingStep).alternatives.push({ message: { mode: 'Instant', text: '' }, probability: 0 }), controls.changed())),
+      onClick(e, '.edit-step-modal_add-alternative-button', () => ((editModel as ReactionTalkingStep).alternatives.push({ message: { mode: 'Instant', text: '' }, probability: null }), controls.changed())),
       onClick(e, '.edit-step-modal_remove-alternative-button', e => ((editModel as ReactionTalkingStep).alternatives.splice(+e.target.getAttribute('data-index'), 1), controls.changed())),
       onClick(e, '.edit-step-modal_cancel-button', () => inputs.dismiss()),
       onClick(e, '.edit-step-modal_save-button', () => inputs.close({ action: { type: 'edited', editedStep: fixStepProbabilities(editModel) } })),

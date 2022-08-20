@@ -16,7 +16,7 @@ export function fixStepProbabilities(step: ReactionStep) {
 
     step.alternatives.forEach(alternative => {
       if (alternative.probability === null) {
-        alternative._calculatedProbability = (remainingProbability / nullProbabilities).toFixed(0);
+        alternative._calculatedProbability = remainingProbability / nullProbabilities;
       } else {
         alternative._calculatedProbability = null;
       }
