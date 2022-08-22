@@ -11,9 +11,26 @@
     position: relative;
 }
 
+.management-view_title-container {
+    display: flex;
+    align-items: flex-end;
+}
+
 .management-view_title {
     text-align: center;
     margin-bottom: 0;
+}
+
+.management-view_preview-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 2rem;
+    margin-left: 15px;
+}
+
+.management-view_preview-button > img {
+    width: 35px;
 }
 
 .management-view_subtitle {

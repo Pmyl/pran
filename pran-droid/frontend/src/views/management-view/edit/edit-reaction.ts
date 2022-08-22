@@ -1,6 +1,5 @@
 import { inlineComponent, InterceptResult, Modal, onChange, onClick } from 'pran-gular-frontend';
 import { promptDeleteConfirmation } from '../../../helpers/confirmation-modal';
-import { authorize } from '../../../helpers/is-authorized';
 import { PranDroidReactionDefinition, ReactionStep, ReactionTrigger } from '../../public-view/models';
 import './edit-reaction.css';
 import { editStep } from './edit-step';
@@ -13,7 +12,6 @@ type PranDroidReactionDefinitionFormModel = Omit<PranDroidReactionDefinition, 'i
 };
 
 export const editReaction = inlineComponent<{ reaction?: PranDroidReactionDefinition, onDone: () => void, onCancel: () => void, interceptDismiss: (interceptPromise: () => Promise<InterceptResult>) => void }>(controls => {
-  authorize();
   controls.setup("edit-reaction", "edit-reaction");
   controls.setComplexRendering();
 

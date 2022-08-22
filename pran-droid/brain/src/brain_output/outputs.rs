@@ -2,26 +2,26 @@ use serde::Serialize;
 use pran_droid_core::domain::reactions::reaction::{Reaction, ReactionStep, ReactionStepSkip, ReactionStepText};
 
 #[derive(Clone, Debug, Serialize)]
-pub(crate) struct ReactionOutput {
+pub struct ReactionOutput {
     pub steps: Vec<ReactionStepOutput>,
 }
 
 #[derive(Clone, Debug, Serialize)]
 #[serde(tag = "type")]
-pub(crate) enum ReactionStepOutput {
+pub enum ReactionStepOutput {
     Moving(MovingReactionStepOutput),
     Talking(TalkingReactionStepOutput),
 }
 
 #[derive(Clone, Debug, Serialize)]
-pub(crate) struct MovingReactionStepOutput {
+pub struct MovingReactionStepOutput {
     pub animation: Vec<AnimationFrameOutput>,
     pub skip: Option<ReactionStepSkipOutput>,
 }
 
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct TalkingReactionStepOutput {
+pub struct TalkingReactionStepOutput {
     pub bubble: String,
     pub phonemes: Vec<String>,
     pub emotion: String,
@@ -30,7 +30,7 @@ pub(crate) struct TalkingReactionStepOutput {
 
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct AnimationFrameOutput {
+pub struct AnimationFrameOutput {
     pub frame_start: u16,
     pub frame_end: u16,
     pub image_id: String,
@@ -38,7 +38,7 @@ pub(crate) struct AnimationFrameOutput {
 
 #[derive(Clone, Debug, Serialize)]
 #[serde(tag = "type")]
-pub(crate) enum ReactionStepSkipOutput {
+pub enum ReactionStepSkipOutput {
     #[serde(rename = "AfterTime", rename_all = "camelCase")]
     AfterMilliseconds { ms: u16 },
     #[serde(rename = "AfterStep", rename_all = "camelCase")]

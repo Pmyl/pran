@@ -57,7 +57,7 @@ pub async fn create_channel_events_stream(options: TwitchConnectOptions) -> impl
     let ponged_check = Arc::clone(&ponged_original);
     let ponged_update = Arc::clone(&ponged_original);
     let ping_command = serde_json::to_string(&PingCommand::new()).unwrap();
-    
+
     debug!("{}", ping_command.clone());
 
     tokio::spawn(async move {

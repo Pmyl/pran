@@ -14,5 +14,6 @@ serde = "1.0.128"
 simplelog = "0.12.0"
 thiserror = "1.0.30"
 tokio = "1.19.2"
+pran-droid-brain = { path = "../brain" }
 pran-droid-core = { path = "../core" }
 pran-droid-persistence-deta = { path = "../persistence_deta" }

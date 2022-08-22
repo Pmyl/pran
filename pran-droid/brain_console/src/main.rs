@@ -3,9 +3,9 @@ use std::env;
 use std::future::{Future};
 use log::{debug, LevelFilter};
 use simplelog::SimpleLogger;
-use pran_droid_brain::{PranDroidBrainConfig, start_droid_brain};
-use crate::asciifier::asciify_gif;
+use pran_droid_brain::run::{PranDroidBrainConfig, start_droid_brain};
 use pran_droid_persistence_deta::reactions::deta_reaction_repository::DetaReactionRepository;
+use crate::asciifier::asciify_gif;
 
 mod asciifier;
 

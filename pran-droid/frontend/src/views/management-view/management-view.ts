@@ -6,6 +6,7 @@ import { getReaction, getReactions } from '../public-view/helpers/get-reactions'
 import { PranDroidReactionDefinitions } from '../public-view/models';
 import './management-view.css';
 import { editReactionModal } from './edit/edit-reaction-modal';
+import { previewModal } from './preview/preview-modal';
 
 export const managementView = inlineComponent(controls => {
   authorize();
@@ -59,12 +60,21 @@ export const managementView = inlineComponent(controls => {
     Modal.open(editReactionModal()).then(loadReactions).then(controls.changed);
   };
 
+  const openPreviewModal = () => {
+    Modal.open(previewModal());
+  };
+
   return (_, r) => {
     !reactions
       ? r.el('p').text('Loading...').endEl()
       : (() => {
         r.el('div', 'management-view_container');
-          r.el('h1', 'management-view_title').text('Prandroid Reactions').endEl();
+          r.el('div', 'management-view_title-container');
+            r.el('h1', 'management-view_title').text('Prandroid Reactions').endEl();
+            r.el('button', 'button management-view_preview-button').attr('type', 'button');
+              r.el('img').attr('src', './resources/preview-icon.png').endEl();
+            r.endEl();
+          r.endEl();
           r.el('h6', 'management-view_subtitle').text('Management app').endEl();
           r.el('div', 'management-view_create-new-container');
             r.el('button', 'button button-positive-alt management-view_create-new-button').attr('type', 'button').text('+').endEl();
@@ -76,6 +86,9 @@ export const managementView = inlineComponent(controls => {
         r.endEl();
       })();
 
-    return e => onClick(e, '.management-view_create-new-button', () => createReaction());
+    return e => (
+      onClick(e, '.management-view_create-new-button', () => createReaction()),
+      onClick(e, '.management-view_preview-button', () => openPreviewModal())
+    );
   };
 });

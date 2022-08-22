@@ -11,14 +11,17 @@ pran-phonemes-core = { path = "../../pran-phonemes/core" }
 pran-droid-core = { path = "../core" }
 futures = "0.3.21"
 log = "0.4.17"
-rand = "0.8.5"
-reqwest = { version = "0.11.10", features = ["multipart", "json"] }
 serde = { version = "1.0.137", features = ["derive"] }
-serde_json = "1.0.81"
-tokio =  { version = "1.19.2", features = ["macros", "rt", "rt-multi-thread"] }
-tokio-stream = { version = "0.1.9", features = ["io-util"] }
-tokio-tungstenite = { version = "0.17.1", features = ["native-tls"] }
-twitch_api2 = { version = "0.6.1", features = ["pubsub"] }
-twitch-irc = { version = "4.0.0" }
-twitch_oauth2 = { version = "0.7.0", features = ["reqwest", "mock_api"] }
-url = "2.2.2"
+rand = { version = "0.8.5", optional = true }
+reqwest = { version = "0.11.10", features = ["multipart", "json"], optional = true }
+serde_json = { version = "1.0.81", optional = true }
+tokio = { version = "1.19.2", features = ["macros", "rt", "rt-multi-thread"], optional = true }
+tokio-stream = { version = "0.1.9", features = ["io-util"], optional = true }
+tokio-tungstenite = { version = "0.17.1", features = ["native-tls"], optional = true }
+twitch_api2 = { version = "0.6.1", features = ["pubsub"], optional = true }
+twitch-irc = { version = "4.0.0", optional = true }
+twitch_oauth2 = { version = "0.7.0", features = ["reqwest", "mock_api"], optional = true }
+url = { version = "2.2.2", optional = true }
+
+[features]
+twitch = ["rand", "reqwest", "serde_json", "tokio", "tokio-stream", "tokio-tungstenite", "twitch_api2", "twitch-irc", "twitch_oauth2", "url"]

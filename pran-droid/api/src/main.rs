@@ -32,11 +32,13 @@ use crate::reactions::get::api_get_reaction;
 use crate::reactions::get_all::api_get_all_reactions;
 use crate::reactions::insert_step::api_insert_reaction_step;
 use crate::reactions::remove_step::api_remove_reaction_step;
+use crate::brain::simulate_message::api_brain_simulate_message;
 
 mod infrastructure;
 mod emotions;
 mod images;
 mod reactions;
+mod brain;
 mod test_database;
 
 #[get("/<_..>", rank = 2)]
@@ -100,7 +102,8 @@ async fn main() {
             api_get_reaction,
             api_get_all_reactions,
             api_insert_reaction_step,
-            api_remove_reaction_step
+            api_remove_reaction_step,
+            api_brain_simulate_message
         ]).launch();
 
     let _ = api.await;
