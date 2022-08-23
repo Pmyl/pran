@@ -1,7 +1,10 @@
-import { Animator, AnimatorManager, CanvasControllerFactory } from 'pran-animation-frontend';
+import { Animator, AnimatorManager, CanvasControllerFactory, drawId, wait } from 'pran-animation-frontend';
 import { Container } from 'pran-gular-frontend';
+import { randomFramesBetweenInMs } from '../animation/helpers/random';
 import { PlayerController } from '../animation/player-controller';
 import { PranDroidAnimationPlayer } from '../animation/pran-droid-animation-player';
+import { AnimationRun } from '../animation/run/animation-run';
+import { StepAnimationRun } from '../animation/run/step/step-animation-run';
 import { animationToTimelineActions } from '../helpers/animation-to-timeline-action';
 import { retryFetch } from '../helpers/retry-fetch';
 import { SpeechBubble } from '../speech-bubble/speech-bubble';
@@ -12,6 +15,7 @@ export async function buildDroid(pranCanvas: Container, speechBubble: SpeechBubb
   const animationPlayer = await setupPranDroidAnimation(pranCanvas);
   const pranDroid = new PranDroid(animationPlayer, speechBubble);
   await setupEmotions(pranDroid);
+  pranDroid.setIdle(getIdleAnimation());
 
   return pranDroid;
 }
@@ -57,4 +61,36 @@ async function setupEmotions(pranDroid: PranDroid): Promise<void> {
 
     return acc;
   }, {}));
+}
+
+// Temporary idle animation, this is going to come from the API when the feature has been added
+function getIdleAnimation(): AnimationRun {
+  return StepAnimationRun.animating({
+    nextStep() {
+      const fps = 60;
+
+      return {
+        fps: fps,
+        layers: [
+          [
+            drawId('happyIdle')
+          ],
+          [
+            drawId('eyes_open'),
+            wait(randomFramesBetweenInMs(5000, 10000, fps)),
+            drawId('eyes_semi_open'),
+            wait(3),
+            drawId('eyes_closed'),
+            wait(3),
+            drawId('eyes_semi_open'),
+            wait(3),
+            drawId('eyes_open')
+          ],
+          [
+            drawId('head_idle')
+          ]
+        ]
+      }
+    }
+  });
 }

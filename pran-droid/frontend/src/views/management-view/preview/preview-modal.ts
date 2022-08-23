@@ -1,9 +1,5 @@
-import { drawId, wait } from 'pran-animation-frontend';
 import { Container, inlineComponent, ModalContentInputs, onClick } from 'pran-gular-frontend';
-import { randomFramesBetweenInMs } from '../../../animation/helpers/random';
-import { AnimationRun } from '../../../animation/run/animation-run';
-import { StepAnimationRun } from '../../../animation/run/step/step-animation-run';
-import { reactionToSteps } from '../../../brain-connection/response-parsers';
+import { simulateBrainMessage } from '../../../brain-connection/simulate-brain';
 import { PranDroid } from '../../../droid/droid';
 import { buildDroid } from '../../../droid/droid-builder';
 import { SpeechBubble } from '../../../speech-bubble/speech-bubble';
@@ -25,24 +21,8 @@ export const previewModal = inlineComponent<ModalContentInputs<void>>(controls =
 
   (async() => {
     pranDroid = await buildDroid(pranCanvas, speechBubble);
-    pranDroid.setIdle(getIdleAnimation());
     pranDroid.start();
   })();
-
-  async function simulateMessage(message: string) {
-    const reaction = await fetch(
-      `/api/brain/simulation/message`,
-      {
-        method: 'POST',
-        body: JSON.stringify({ text: message, isMod: true, userName: 'pranessa' }),
-        headers: { 'Content-Type': 'application/json' }
-      })
-      .then(x => x.json());
-
-    if (!!reaction) {
-      pranDroid.react(reactionToSteps(reaction));
-    }
-  }
 
   return (inputs, r) => {
     r.cmpi(speechBubbleCanvas)
@@ -56,39 +36,8 @@ export const previewModal = inlineComponent<ModalContentInputs<void>>(controls =
 
     return e => onClick(e, '.preview-modal_send-button', ev => (
       ev.preventDefault(),
-      simulateMessage((e.querySelector('#preview-modal_message-input') as HTMLInputElement).value),
+      simulateBrainMessage(pranDroid, (e.querySelector('#preview-modal_message-input') as HTMLInputElement).value),
       (e.querySelector('#preview-modal_message-input') as HTMLInputElement).value = ''
     ));
   };
 });
-
-function getIdleAnimation(): AnimationRun {
-  return StepAnimationRun.animating({
-    nextStep() {
-      const fps = 60;
-
-      return {
-        fps: fps,
-        layers: [
-          [
-            drawId('happyIdle')
-          ],
-          [
-            drawId('eyes_open'),
-            wait(randomFramesBetweenInMs(5000, 10000, fps)),
-            drawId('eyes_semi_open'),
-            wait(3),
-            drawId('eyes_closed'),
-            wait(3),
-            drawId('eyes_semi_open'),
-            wait(3),
-            drawId('eyes_open')
-          ],
-          [
-            drawId('head_idle')
-          ]
-        ]
-      }
-    }
-  });
-}

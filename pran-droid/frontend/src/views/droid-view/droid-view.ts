@@ -1,8 +1,4 @@
-import { drawId, wait } from 'pran-animation-frontend';
 import { Container, inlineComponent } from 'pran-gular-frontend';
-import { randomFramesBetweenInMs } from '../../animation/helpers/random';
-import { AnimationRun } from '../../animation/run/animation-run';
-import { StepAnimationRun } from '../../animation/run/step/step-animation-run';
 import { connectToBrain } from '../../brain-connection/connect-to-brain';
 import { buildDroid } from '../../droid/droid-builder';
 import { authorize } from '../../helpers/is-authorized';
@@ -24,7 +20,6 @@ export const droidView = inlineComponent(controls => {
 
   (async() => {
     const pranDroid = await buildDroid(pranCanvas, speechBubble);
-    pranDroid.setIdle(getIdleAnimation());
     pranDroid.start();
     connectToBrain(pranDroid);
   })();
@@ -34,34 +29,3 @@ export const droidView = inlineComponent(controls => {
     pranCanvas
   ];
 });
-
-function getIdleAnimation(): AnimationRun {
-  return StepAnimationRun.animating({
-    nextStep() {
-      const fps = 60;
-
-      return {
-        fps: fps,
-        layers: [
-          [
-            drawId('happyIdle')
-          ],
-          [
-            drawId('eyes_open'),
-            wait(randomFramesBetweenInMs(5000, 10000, fps)),
-            drawId('eyes_semi_open'),
-            wait(3),
-            drawId('eyes_closed'),
-            wait(3),
-            drawId('eyes_semi_open'),
-            wait(3),
-            drawId('eyes_open')
-          ],
-          [
-            drawId('head_idle')
-          ]
-        ]
-      }
-    }
-  });
-}
