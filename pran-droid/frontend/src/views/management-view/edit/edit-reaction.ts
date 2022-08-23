@@ -1,5 +1,6 @@
 import { inlineComponent, InterceptResult, Modal, onChange, onClick } from 'pran-gular-frontend';
 import { promptDeleteConfirmation } from '../../../helpers/confirmation-modal';
+import { orderTriggers } from '../../public-view/helpers/order-triggers';
 import { PranDroidReactionDefinition, ReactionStep, ReactionTrigger } from '../../public-view/models';
 import './edit-reaction.css';
 import { editStep } from './edit-step';
@@ -48,18 +49,14 @@ export const editReaction = inlineComponent<{ reaction?: PranDroidReactionDefini
 
     const indexToReplace: number = reaction.triggers.findIndex(trigger => areSameTrigger(trigger, original));
     reaction.triggers.splice(indexToReplace, 1, edited);
-    orderTriggers();
+    orderTriggers(reaction.triggers);
     controls.changed();
   }
 
   function addTriggerForUpdate(newTrigger: ReactionTrigger) {
     reaction.triggers.push(newTrigger);
-    orderTriggers();
+    orderTriggers(reaction.triggers);
     controls.changed();
-  }
-
-  function orderTriggers() {
-    reaction.triggers.sort((a, b) => a.type.localeCompare(b.type));
   }
 
   function storeStepForUpdate(original: ReactionStep, index: number) {
@@ -99,7 +96,7 @@ export const editReaction = inlineComponent<{ reaction?: PranDroidReactionDefini
       r.el('button', 'button button-positive-alt button-small edit-reaction_form-add-step').text('+ Step').endEl();
     r.endEl();
 
-    r.el('div', 'edit-reaction_buttons-container');
+    r.el('div', 'edit-reaction_buttons-container buttons-container');
       // r.el('button', 'button button-danger edit-reaction_delete-button').text('DELETE REACTION').endEl();
       r.el('button', 'button edit-reaction_cancel-button').text('CANCEL').attr('type', 'button').endEl();
       r.el('button', 'button button-positive edit-reaction_save-button').text('SAVE');

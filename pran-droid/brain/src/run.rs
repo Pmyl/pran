@@ -10,7 +10,7 @@ use reqwest::Client;
 use tokio_tungstenite::tungstenite::Message;
 use pran_droid_core::application::brain::pran_droid_brain::{create_droid_brain, TextPhonemiser};
 use pran_droid_core::domain::brain::pran_droid_brain::ReactionNotifier;
-use pran_droid_core::domain::brain::stimuli::{ChatMessageStimulus, Source, Stimulus};
+use pran_droid_core::domain::brain::stimuli::{Action, ActionStimulus, ChatMessageStimulus, Source, Stimulus};
 use pran_droid_core::domain::reactions::reaction_definition::ReactionDefinitionId;
 use pran_droid_core::domain::reactions::reaction_definition_repository::ReactionDefinitionRepository;
 use crate::phonemiser::pran_text_phonemiser::PranTextPhonemiser;
@@ -153,7 +153,15 @@ impl Into<Option<Stimulus>> for ChatEvent {
                     is_mod: chat_message.is_mod, user_name: chat_message.name
                 }
             })),
-            ChatEvent::Action(_) => None
+            ChatEvent::Action(chat_action) => Some(Stimulus::Action(ActionStimulus {
+                action: Action {
+                    id: chat_action.action_id,
+                    name: chat_action.action_name
+                },
+                source: Source {
+                    is_mod: chat_action.is_mod, user_name: chat_action.name
+                }
+            }))
         }
     }
 }

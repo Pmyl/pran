@@ -14,3 +14,4 @@ export * from './modifiers/set-property';
 export * from './modal/modal';
 export * from './modal/modal-content-inputs';
 export * from './modal/modal-template/modal-template';
+export * from './dropdown/dropdown';

@@ -1,7 +1,6 @@
 use std::sync::Arc;
 use crate::domain::brain::builder::PranDroidBrainBuilder;
 use crate::domain::brain::pran_droid_brain::{PranDroidBrain, ReactionNotifier};
-use crate::domain::reactions::reaction_definition::ReactionTrigger;
 use crate::domain::reactions::reaction_definition_repository::ReactionDefinitionRepository;
 
 pub trait TextPhonemiser: Send + Sync {
@@ -13,9 +12,7 @@ pub async fn create_droid_brain(reaction_repository: &dyn ReactionDefinitionRepo
     let mut brain_builder = PranDroidBrainBuilder::new(text_phonemiser.clone(), reaction_notifier.clone());
 
     for reaction in reactions {
-        if reaction.triggers.iter().any(|trigger| matches!(trigger, ReactionTrigger::ChatCommand(_)) || matches!(trigger, ReactionTrigger::ChatKeyword(_))) {
-            brain_builder.with_reaction(reaction)
-        }
+        brain_builder.with_reaction(reaction)
     }
 
     brain_builder.build()
@@ -27,12 +24,12 @@ mod tests {
     use crate::application::reactions::update::{update_reaction, UpdateReactionRequest};
     use crate::domain::animations::animation::{Animation, AnimationFrame, AnimationFrames};
     use crate::domain::brain::pran_droid_brain::ReactionNotifier;
-    use crate::domain::brain::stimuli::{ChatMessageStimulus, Source, Stimulus};
+    use crate::domain::brain::stimuli::{Action, ActionStimulus, ChatMessageStimulus, Source, Stimulus};
     use crate::domain::emotions::emotion::EmotionId;
     use crate::domain::images::image::ImageId;
     use crate::domain::reactions::reaction::{Milliseconds, TalkingReactionStep, Reaction, ReactionStepSkip, ReactionStep, ReactionStepText};
     use crate::domain::reactions::reaction_definition::{MovingReactionStepDefinition, ReactionDefinition, ReactionDefinitionId, ReactionStepDefinition, ReactionStepMessageAlternativeDefinition, ReactionStepMessageAlternativesDefinition, TalkingReactionStepDefinition};
-    use crate::domain::reactions::reaction_definition_repository::tests::{setup_dummy_chat_command_reaction_definitions, setup_dummy_chat_keyword_reaction_definitions};
+    use crate::domain::reactions::reaction_definition_repository::tests::{setup_dummy_action_reaction_definitions, setup_dummy_chat_command_reaction_definitions, setup_dummy_chat_keyword_reaction_definitions};
     use crate::persistence::reactions::in_memory_reaction_repository::InMemoryReactionRepository;
     use super::*;
 
@@ -110,6 +107,28 @@ mod tests {
         assert!(reaction_not_contain.is_none());
         assert!(reaction_touch_other.is_none());
         assert!(reaction_contains.is_some());
+    }
+
+    #[tokio::test]
+    async fn create_droid_brain_action_react_if_name_and_id_matches() {
+        let reaction_repository = InMemoryReactionRepository::new();
+        let text_phonemiser: Arc<dyn TextPhonemiser> = Arc::new(SplitLettersTextPhonemiser {});
+        setup_dummy_action_reaction_definitions(vec![("action id", "action name")], &reaction_repository).await;
+
+        let mut brain = create_droid_brain(&reaction_repository, &text_phonemiser, &create_dummy_notifier()).await;
+
+        let reaction_different_id = stimulate_with_action(&mut brain, |stimulus|
+            stimulus.action.name = String::from("action name"));
+        let reaction_different_name = stimulate_with_action(&mut brain, |stimulus|
+            stimulus.action.id = String::from("action id"));
+        let reaction_both_match = stimulate_with_action(&mut brain, |stimulus| {
+            stimulus.action.id = String::from("action id");
+            stimulus.action.name = String::from("action name");
+        });
+
+        assert!(reaction_different_id.is_none());
+        assert!(reaction_different_name.is_none());
+        assert!(reaction_both_match.is_some());
     }
 
     #[tokio::test]
@@ -613,6 +632,23 @@ mod tests {
         func(&mut chat_message_stimulus);
 
         Stimulus::ChatMessage(chat_message_stimulus)
+    }
+
+    fn stimulate_with_action<F>(brain: &mut PranDroidBrain, func: F) -> Option<Reaction> where F: Fn(&mut ActionStimulus) -> () {
+        brain.stimulate(create_action_stimulus(func))
+    }
+
+    fn create_action_stimulus<F>(func: F) -> Stimulus where F: Fn(&mut ActionStimulus) -> () {
+        let mut action_stimulus = ActionStimulus {
+            action: Action {
+                id: String::from("_an id_"),
+                name: String::from("_a name_")
+            },
+            source: Source { user_name: String::from("_a name_"), is_mod: false }
+        };
+        func(&mut action_stimulus);
+
+        Stimulus::Action(action_stimulus)
     }
 
     struct SplitLettersTextPhonemiser {}

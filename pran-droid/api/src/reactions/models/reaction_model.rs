@@ -29,6 +29,7 @@ impl Into<ReactionTriggerModel> for ReactionTriggerDto {
         match self {
             ReactionTriggerDto::ChatCommand(chat_trigger) => ReactionTriggerModel::ChatCommand { command: chat_trigger },
             ReactionTriggerDto::ChatKeyword(chat_trigger) => ReactionTriggerModel::ChatKeyword { keyword: chat_trigger },
+            ReactionTriggerDto::Action(id, name) => ReactionTriggerModel::Action { id, name },
         }
     }
 }
@@ -38,6 +39,7 @@ impl Into<ReactionTriggerDto> for ReactionTriggerModel {
         match self {
             ReactionTriggerModel::ChatCommand { command: chat_trigger } => ReactionTriggerDto::ChatCommand(chat_trigger),
             ReactionTriggerModel::ChatKeyword { keyword: chat_trigger } => ReactionTriggerDto::ChatKeyword(chat_trigger),
+            ReactionTriggerModel::Action { id, name } => ReactionTriggerDto::Action(id, name),
         }
     }
 }

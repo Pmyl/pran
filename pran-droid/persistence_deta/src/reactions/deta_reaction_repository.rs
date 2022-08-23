@@ -44,6 +44,8 @@ enum ReactionTriggerStorage {
     ChatCommand { command: String },
     #[serde(rename = "chat_keyword")]
     ChatKeyword { command: String },
+    #[serde(rename = "action")]
+    Action { id: String, name: String },
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -105,7 +107,8 @@ impl From<&ReactionDefinition> for ReactionStorage {
 fn into_trigger_storage(trigger: &ReactionTrigger) -> ReactionTriggerStorage {
     match trigger {
         ReactionTrigger::ChatCommand(chat_command) => ReactionTriggerStorage::ChatCommand { command: chat_command.text.clone() },
-        ReactionTrigger::ChatKeyword(chat_command) => ReactionTriggerStorage::ChatKeyword { command: chat_command.text.clone() },
+        ReactionTrigger::ChatKeyword(chat_keyword) => ReactionTriggerStorage::ChatKeyword { command: chat_keyword.text.clone() },
+        ReactionTrigger::Action(action_trigger) => ReactionTriggerStorage::Action { id: action_trigger.id.clone(), name: action_trigger.name.clone() },
     }
 }
 
@@ -113,6 +116,7 @@ fn into_trigger_domain(trigger: &ReactionTriggerStorage) -> ReactionTrigger {
     match trigger {
         ReactionTriggerStorage::ChatCommand { command } => ReactionTrigger::ChatCommand(ChatCommandTrigger { text: command.clone() }),
         ReactionTriggerStorage::ChatKeyword { command } => ReactionTrigger::new_chat_keyword(command.clone()).unwrap(),
+        ReactionTriggerStorage::Action { id, name } => ReactionTrigger::new_action(id.clone(), name.clone()).unwrap(),
     }
 }
 

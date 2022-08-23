@@ -1,6 +1,7 @@
 import { retryFetch } from '../../../helpers/retry-fetch';
 import { PranDroidReactionDefinition, PranDroidReactionDefinitions } from '../models';
 import { fixReactionProbabilities } from './fix-reaction-probabilities';
+import { orderTriggers } from './order-triggers';
 
 export async function getReactions() {
   const reactions: PranDroidReactionDefinitions = await retryFetch("/api/reactions")
@@ -9,6 +10,7 @@ export async function getReactions() {
 
   reactions.forEach(reaction => {
     fixReactionProbabilities(reaction);
+    orderTriggers(reaction.triggers);
   });
 
   return reactions;

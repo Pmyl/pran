@@ -43,7 +43,7 @@ input::-moz-focus-inner {
     white-space: nowrap;
 }
 
-.button + .button {
+.buttons-container .button + .button {
     margin-left: 5px;
 }
 

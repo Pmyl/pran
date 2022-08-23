@@ -1,12 +1,25 @@
 #[derive(Debug)]
 pub enum Stimulus {
-    ChatMessage(ChatMessageStimulus)
+    ChatMessage(ChatMessageStimulus),
+    Action(ActionStimulus)
 }
 
 #[derive(Debug)]
 pub struct ChatMessageStimulus {
     pub source: Source,
     pub text: String,
+}
+
+#[derive(Debug)]
+pub struct ActionStimulus {
+    pub source: Source,
+    pub action: Action
+}
+
+#[derive(Debug)]
+pub struct Action {
+    pub id: String,
+    pub name: String
 }
 
 #[derive(Debug)]
@@ -18,7 +31,8 @@ pub struct Source {
 impl Stimulus {
     pub(crate) fn get_source_name(&self) -> String {
         match self {
-            Stimulus::ChatMessage(ChatMessageStimulus { source: Source { user_name, .. }, .. }) => user_name.clone()
+            Stimulus::ChatMessage(ChatMessageStimulus { source: Source { user_name, .. }, .. }) => user_name.clone(),
+            Stimulus::Action(ActionStimulus { source: Source { user_name, .. }, .. }) => user_name.clone()
         }
     }
 }

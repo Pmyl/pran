@@ -50,6 +50,13 @@ pub mod tests {
         ).await
     }
 
+    pub async fn setup_dummy_action_reaction_definitions(action_triggers: Vec<(&str, &str)>, repository: &dyn ReactionDefinitionRepository) -> Vec<ReactionDefinition> {
+        setup_dummy_reaction_definitions_with_triggers(
+            action_triggers.iter().map(|trigger| ReactionTrigger::new_action(trigger.0.to_string(), trigger.1.to_string()).unwrap()).collect(),
+            repository
+        ).await
+    }
+
     async fn setup_dummy_reaction_definitions_with_triggers(triggers: Vec<ReactionTrigger>, repository: &dyn ReactionDefinitionRepository) -> Vec<ReactionDefinition> {
         let mut reactions = vec![];
 

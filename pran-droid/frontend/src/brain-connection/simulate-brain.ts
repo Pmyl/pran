@@ -15,3 +15,18 @@ export async function simulateBrainMessage(pranDroid: PranDroid, message: string
     pranDroid.react(reactionToSteps(reaction));
   }
 }
+
+export async function simulateBrainRedeem(pranDroid: PranDroid, id: string) {
+  const reaction = await fetch(
+    `/api/brain/simulation/action`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ id, name: 'reward_redeem', isMod: true, userName: 'pranessa' }),
+      headers: { 'Content-Type': 'application/json' }
+    })
+    .then(x => x.json());
+
+  if (!!reaction) {
+    pranDroid.react(reactionToSteps(reaction));
+  }
+}

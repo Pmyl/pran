@@ -61,7 +61,7 @@ export const managementView = inlineComponent(controls => {
   };
 
   const openPreviewModal = () => {
-    Modal.open(previewModal());
+    Modal.open(previewModal({ reactions: reactions || [] }));
   };
 
   return (_, r) => {

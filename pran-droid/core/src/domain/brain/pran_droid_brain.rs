@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 use crate::application::brain::pran_droid_brain::TextPhonemiser;
-use crate::domain::brain::stimuli::{ChatMessageStimulus, Stimulus};
+use crate::domain::brain::stimuli::{Action, ActionStimulus, ChatMessageStimulus, Stimulus};
 use crate::domain::reactions::reaction::{Reaction, ReactionContext};
-use crate::domain::reactions::reaction_definition::{ChatCommandTrigger, ChatKeywordTrigger, ReactionDefinition, ReactionDefinitionId};
+use crate::domain::reactions::reaction_definition::{ActionTrigger, ChatCommandTrigger, ChatKeywordTrigger, ReactionDefinition, ReactionDefinitionId};
 
 pub trait ReactionNotifier: Send + Sync {
     fn notify_reaction_usage(&self, reaction_definition_id: &ReactionDefinitionId, new_count: u32);
@@ -12,6 +12,7 @@ pub trait ReactionNotifier: Send + Sync {
 pub struct PranDroidBrain {
     chat_command_triggers: Vec<(ChatCommandTrigger, ReactionDefinitionId)>,
     chat_keyword_triggers: Vec<(ChatKeywordTrigger, ReactionDefinitionId)>,
+    action_triggers: Vec<(ActionTrigger, ReactionDefinitionId)>,
     reaction_definitions: HashMap<ReactionDefinitionId, ReactionDefinition>,
     reaction_counters: HashMap<ReactionDefinitionId, u32>,
     text_phonemiser: Arc<dyn TextPhonemiser>,
@@ -24,6 +25,7 @@ impl PranDroidBrain {
         reaction_notifier: Arc<dyn ReactionNotifier>,
         chat_command_triggers: Vec<(ChatCommandTrigger, ReactionDefinitionId)>,
         chat_keyword_triggers: Vec<(ChatKeywordTrigger, ReactionDefinitionId)>,
+        action_triggers: Vec<(ActionTrigger, ReactionDefinitionId)>,
         reaction_definitions: Vec<ReactionDefinition>,
     ) -> Self {
         let mut chat_keyword_triggers = chat_keyword_triggers.clone();
@@ -33,6 +35,7 @@ impl PranDroidBrain {
             reaction_notifier,
             chat_command_triggers,
             chat_keyword_triggers,
+            action_triggers,
             reaction_counters: HashMap::new(),
             reaction_definitions: reaction_definitions.into_iter().map(|definition| (definition.id.clone(), definition)).collect()
         }
@@ -45,6 +48,11 @@ impl PranDroidBrain {
                 let text = { text.clone() };
                 self.try_react_to_chat_message(stimulus, &text)
             },
+            Stimulus::Action(ActionStimulus { action: Action { ref id, ref name }, .. }) => {
+                let id = { id.clone() };
+                let name = { name.clone() };
+                self.try_react_to_action(stimulus, id.as_str(), name.as_str())
+            }
         }
     }
 
@@ -57,6 +65,15 @@ impl PranDroidBrain {
                 .iter()
                 .find(|(trigger, _)| trigger.matches(text))
                 .map(|(_, definition_id)| definition_id));
+
+        self.try_react(stimulus, definition_id.cloned())
+    }
+
+    fn try_react_to_action(&mut self, stimulus: Stimulus, id: &str, name: &str) -> Option<Reaction> {
+        let definition_id = self.action_triggers
+            .iter()
+            .find(|(trigger, _)| trigger.id == id && trigger.name == name)
+            .map(|(_, definition_id)| definition_id);
 
         self.try_react(stimulus, definition_id.cloned())
     }

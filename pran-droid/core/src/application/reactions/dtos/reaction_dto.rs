@@ -27,6 +27,7 @@ impl From<ReactionDefinition> for ReactionDto {
 pub enum ReactionTriggerDto {
     ChatCommand(String),
     ChatKeyword(String),
+    Action(String, String)
 }
 
 impl From<ReactionTrigger> for ReactionTriggerDto {
@@ -34,6 +35,7 @@ impl From<ReactionTrigger> for ReactionTriggerDto {
         match value {
             ReactionTrigger::ChatCommand(chat) => ReactionTriggerDto::ChatCommand(chat.text),
             ReactionTrigger::ChatKeyword(chat) => ReactionTriggerDto::ChatKeyword(chat.text),
+            ReactionTrigger::Action(action) => ReactionTriggerDto::Action(action.id, action.name),
         }
     }
 }
@@ -44,6 +46,7 @@ impl TryInto<ReactionTrigger> for ReactionTriggerDto {
         match self {
             ReactionTriggerDto::ChatCommand(text) => ReactionTrigger::new_chat_command(text),
             ReactionTriggerDto::ChatKeyword(text) => ReactionTrigger::new_chat_keyword(text),
+            ReactionTriggerDto::Action(id, name) => ReactionTrigger::new_action(id, name),
         }
     }
 }

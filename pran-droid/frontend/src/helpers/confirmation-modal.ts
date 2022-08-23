@@ -49,7 +49,7 @@ const promptConfirmationModal = inlineComponent<PromptConfirmationModalInputs>(c
     r.el('div', 'prompt-confirmation-modal_container');
       r.el('span', 'prompt-confirmation-modal_warning').text('⚠').endEl();
       r.el('p', 'prompt-confirmation-modal_text').text(inputs.text).endEl();
-      r.el('div', 'prompt-confirmation-modal_buttons-container');
+      r.el('div', 'prompt-confirmation-modal_buttons-container buttons-container');
         inputs.buttons.forEach(button => {
           r.el('button', `button ${buttonClass(button.type)} prompt-confirmation-modal_button`).text(button.text);
           if (button.isConfirmation) {

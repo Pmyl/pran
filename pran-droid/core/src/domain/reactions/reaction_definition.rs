@@ -22,6 +22,7 @@ pub struct ReactionDefinitionId(pub String);
 pub enum ReactionTrigger {
     ChatCommand(ChatCommandTrigger),
     ChatKeyword(ChatKeywordTrigger),
+    Action(ActionTrigger)
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -33,6 +34,12 @@ pub struct ChatCommandTrigger {
 pub struct ChatKeywordTrigger {
     pub text: String,
     match_regex: regex::Regex,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ActionTrigger {
+    pub id: String,
+    pub name: String,
 }
 
 impl PartialEq for ChatKeywordTrigger {
@@ -123,6 +130,14 @@ impl ReactionTrigger {
         }
 
         Ok(ReactionTrigger::ChatKeyword(ChatKeywordTrigger::new(trigger)))
+    }
+
+    pub fn new_action(action_id: String, action_name: String) -> Result<Self, ()> {
+        if action_id.is_empty() || action_name.is_empty() {
+            return Err(());
+        }
+
+        Ok(ReactionTrigger::Action(ActionTrigger { id: action_id, name: action_name }))
     }
 }
 
@@ -224,7 +239,7 @@ impl ReactionStepMessageDefinition {
 
         for template_chunk in template_chunks {
             if template_chunk.starts_with("{user}") {
-                write!(output_message, "{}", template_chunk.replacen("{user}", &context.stimulus.get_source_name(), 1).as_str()).unwrap();
+                write!(output_message, "{}", template_chunk.replacen("{user}", &context.stimulus.get_source_name(), 1)).unwrap();
                 continue;
             }
 
@@ -249,7 +264,13 @@ impl ReactionStepMessageDefinition {
                                1)).unwrap();
                         continue;
                     }
-                }
+                },
+                Stimulus::Action(_) => {
+                    if template_chunk.starts_with("{touser}") {
+                        write!(output_message, "{}", template_chunk.replacen("{touser}", &context.stimulus.get_source_name(), 1)).unwrap();
+                        continue;
+                    }
+                },
             }
 
             write!(output_message, "${}", template_chunk.to_string()).unwrap();

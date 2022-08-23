@@ -34,9 +34,11 @@
 }
 
 .reactions-table-trigger_command,
-.reactions-table-trigger_keyword {
+.reactions-table-trigger_keyword,
+.reactions-table-trigger_reward-redeem {
   border-radius: 5px;
   padding: 2px 4px;
+  white-space: nowrap;
 }
 
 .reactions-table-trigger_command {
@@ -55,4 +57,13 @@
 
 .reactions-table-trigger_keyword:before {
   content: '💬';
+}
+
+.reactions-table-trigger_reward-redeem {
+  background-color: chocolate;
+  color: white;
+}
+
+.reactions-table-trigger_reward-redeem:before {
+  content: '🥐';
 }

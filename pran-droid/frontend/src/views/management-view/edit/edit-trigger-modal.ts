@@ -1,7 +1,8 @@
 import { inlineComponent, ModalContentInputs, onChange, onClick } from 'pran-gular-frontend';
+import { assertUnreachable } from '../../../helpers/assert-unreachable';
 import { promptDeleteConfirmation } from '../../../helpers/confirmation-modal';
 import { trigger } from '../../public-view/components/trigger';
-import { ReactionTrigger } from '../../public-view/models';
+import { RewardRedeemTrigger, ReactionTrigger } from '../../public-view/models';
 import './edit-trigger-modal.css';
 
 type EditTriggerAction = { type: 'deleted' } | { type: 'edited', editedTrigger: ReactionTrigger };
@@ -45,10 +46,13 @@ export const editTriggerModal = inlineComponent<Inputs>(controls => {
         r.el('label').attr('for', 'edit-trigger-modal_trigger-type-input').text('Trigger type').endEl();
         r.el('select').attr('id', 'edit-trigger-modal_trigger-type-input');
           r.el('option').attr('value', 'ChatCommand').text('ChatCommand');
-          editModel.type == 'ChatCommand' && r.attr('selected', 'selected');
+            editModel.type === 'ChatCommand' && r.attr('selected', 'selected');
           r.endEl();
           r.el('option').attr('value', 'ChatKeyword').text('ChatKeyword')
-          editModel.type == 'ChatKeyword' && r.attr('selected', 'selected');
+            editModel.type === 'ChatKeyword' && r.attr('selected', 'selected');
+          r.endEl();
+          r.el('option').attr('value', 'RewardRedeem').text('Reward redeem')
+            editModel.type === 'Action' && editModel.name === 'reward_redeem' && r.attr('selected', 'selected');
           r.endEl();
         r.endEl();
       r.endEl();
@@ -57,7 +61,7 @@ export const editTriggerModal = inlineComponent<Inputs>(controls => {
         r.el('input').attr('id', 'edit-trigger-modal_trigger-text-input').endEl();
       r.endEl();
 
-      r.el('div', 'edit-trigger-modal_buttons-container');
+      r.el('div', 'edit-trigger-modal_buttons-container buttons-container');
         if (!isNew) {
           r.el('button', 'button button-danger button-small edit-trigger-modal_delete-button').text('DELETE TRIGGER').attr('type', 'button').endEl();
         }
@@ -72,13 +76,72 @@ export const editTriggerModal = inlineComponent<Inputs>(controls => {
     r.endEl();
 
     return e => (
-      (e.querySelector('#edit-trigger-modal_trigger-text-input') as HTMLInputElement).value = (editModel.type === 'ChatCommand' ? editModel.command : editModel.keyword) || '',
-      onChange(e, '#edit-trigger-modal_trigger-type-input', e => (editModel.type = e.target.value as any, controls.changed())),
-      onChange(e, '#edit-trigger-modal_trigger-text-input', e => (editModel.type === 'ChatCommand' ? editModel.command = e.target.value : editModel.keyword = e.target.value, controls.changed())),
+      setInputValue(e, editModel),
+      onChange(e, '#edit-trigger-modal_trigger-type-input', e => (setEditModelType(editModel, e.target as { value: 'ChatKeyword' | 'ChatCommand' | 'RewardRedeem' }), controls.changed())),
+      onChange(e, '#edit-trigger-modal_trigger-text-input', e => (setEditModelValue(editModel, e.target as HTMLInputElement), controls.changed())),
       onClick(e, '.edit-trigger-modal_cancel-button', () => inputs.dismiss()),
       onClick(e, '.edit-trigger-modal_save-button', () => inputs.close({ action: { type: 'edited', editedTrigger: editModel } })),
       onClick(e, '.edit-trigger-modal_delete-button', () => promptDeleteConfirmation('Are you sure you want to delete this trigger?').onConfirm(() => inputs.close({ action: { type: 'deleted' } })))
     );
   };
 });
+
+function setEditModelType(editModel: ReactionTrigger, inputElement: { value: 'ChatKeyword' | 'ChatCommand' | 'RewardRedeem' }) {
+  switch (inputElement.value) {
+    case 'ChatKeyword':
+    case 'ChatCommand':
+      editModel.type = inputElement.value;
+      break;
+    case 'RewardRedeem':
+      editModel.type = 'Action';
+      (editModel as RewardRedeemTrigger).name = 'reward_redeem';
+      break;
+    default:
+      assertUnreachable(inputElement.value);
+  }
+}
+
+function setInputValue(componentElement: HTMLElement, trigger: ReactionTrigger) {
+  switch (trigger.type) {
+    case 'ChatKeyword':
+      (componentElement.querySelector('#edit-trigger-modal_trigger-text-input') as HTMLInputElement).value = trigger.keyword || '';
+      break;
+    case 'ChatCommand':
+      (componentElement.querySelector('#edit-trigger-modal_trigger-text-input') as HTMLInputElement).value = trigger.command || '';
+      break;
+    case 'Action':
+      switch (trigger.name) {
+        case 'reward_redeem':
+          (componentElement.querySelector('#edit-trigger-modal_trigger-text-input') as HTMLInputElement).value = trigger.id || '';
+          break;
+        default:
+          assertUnreachable(trigger.name);
+      }
+      break;
+    default:
+      assertUnreachable(trigger);
+  }
+}
+
+function setEditModelValue(editModel: ReactionTrigger, inputElement: HTMLInputElement) {
+  switch (editModel.type) {
+    case 'ChatKeyword':
+      editModel.keyword = inputElement.value;
+      break;
+    case 'ChatCommand':
+      editModel.command = inputElement.value;
+      break;
+    case 'Action':
+      switch (editModel.name) {
+        case 'reward_redeem':
+          editModel.id = inputElement.value;
+          break;
+        default:
+          assertUnreachable(editModel.name);
+      }
+      break;
+    default:
+      assertUnreachable(editModel);
+  }
+}
 

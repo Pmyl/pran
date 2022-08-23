@@ -117,7 +117,7 @@ export const editStepModal = inlineComponent<Inputs>(controls => {
         });
       r.endEl();
       r.el('button', 'button button-positive-alt button-small edit-step-modal_add-alternative-button').text('+ Alternative').attr('type', 'button').endEl();
-      r.el('div', 'edit-step-modal_buttons-container');
+      r.el('div', 'edit-step-modal_buttons-container buttons-container');
         if (!isNew) {
           r.el('button', 'button button-danger button-small edit-step-modal_delete-button').text('DELETE STEP').attr('type', 'button').endEl();
         }

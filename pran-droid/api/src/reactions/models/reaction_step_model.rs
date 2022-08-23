@@ -80,6 +80,7 @@ pub(crate) fn from_model_to_dto(model: Option<ReactionStepSkipModel>) -> Reactio
 pub(crate) enum ReactionTriggerModel {
     ChatCommand { command: String },
     ChatKeyword { keyword: String },
+    Action { id: String, name: String },
 }
 
 #[derive(Deserialize, Serialize)]

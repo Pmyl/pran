@@ -1,0 +1,25 @@
+.dropdown-container {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-buttons-container {
+  --dropdown-buttons-bottom: -100%;
+  display: none;
+  position: absolute;
+  min-width: 160px;
+  z-index: 1;
+  bottom: var(--dropdown-buttons-bottom);
+}
+
+.dropdown-buttons-container.dropdown-top {
+  --dropdown-buttons-bottom: 100%;
+}
+
+.dropdown-buttons-container.dropdown-show {
+  display:block;
+}
+
+.dropdown-item-button {
+  width: 100%;
+}
