@@ -21,6 +21,7 @@ export class SpeechBubble {
   private _lastText: string = '';
   private _lastDrawCancellation: () => void;
   private _bubbleOpen: boolean;
+  private _talkAudio: HTMLAudioElement;
 
   constructor(canvas: HTMLCanvasElement) {
     this._canvas = canvas;
@@ -31,6 +32,7 @@ export class SpeechBubble {
     this._canvas.style.height = SPEECH_BUBBLE_CANVAS_HEIGHT + 'px';
     this._context = this._canvas.getContext('2d');
     this._context.translate(.5, .5);
+    this._talkAudio = new Audio('./resources/sounds/talking.wav');
   }
 
   public openBubble(): void {
@@ -198,6 +200,9 @@ export class SpeechBubble {
         this._clearBubble();
         textToWrite += char;
         this._drawSpeechInstant(context, textToWrite, options);
+        if (/[a-zA-Z1-9]/.test(char)) {
+          (this._talkAudio.cloneNode(false) as HTMLAudioElement).play().catch(() => {});
+        }
         await waitFor(LETTER_DURATION);
       }
     })();
