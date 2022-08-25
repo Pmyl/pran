@@ -5,7 +5,9 @@ on:
     branches:
       - main
     paths:
-      - pran-droid/**
+      - pran-droid/brain/**
+      - pran-droid/brain_console/**
+      - pran-droid/core/**
   workflow_dispatch:
 
 jobs:

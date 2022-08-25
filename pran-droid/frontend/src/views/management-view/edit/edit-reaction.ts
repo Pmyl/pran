@@ -1,4 +1,5 @@
 import { inlineComponent, InterceptResult, Modal, onChange, onClick } from 'pran-gular-frontend';
+import { assertUnreachable } from '../../../helpers/assert-unreachable';
 import { promptDeleteConfirmation } from '../../../helpers/confirmation-modal';
 import { orderTriggers } from '../../public-view/helpers/order-triggers';
 import { PranDroidReactionDefinition, ReactionStep, ReactionTrigger } from '../../public-view/models';
@@ -174,8 +175,19 @@ export const editReaction = inlineComponent<{ reaction?: PranDroidReactionDefini
   };
 });
 
-const areSameTrigger = (original: ReactionTrigger, edited: ReactionTrigger) =>
-  original.type === edited.type
-  && (original.type === 'ChatCommand'
-    ? original.command === (edited as any).command
-    : (original as any).keyword === (edited as any).keyword);
+const areSameTrigger = (original: ReactionTrigger, edited: ReactionTrigger) => {
+  if (original.type !== edited.type) {
+    return false;
+  }
+
+  switch (original.type) {
+    case 'ChatCommand':
+      return original.command === (edited as any).command;
+    case 'ChatKeyword':
+      return original.keyword === (edited as any).keyword;
+    case 'Action':
+      return original.name === (edited as any).name && original.id === (edited as any).id;
+  }
+
+  return assertUnreachable(original);
+};
