@@ -23,7 +23,8 @@ jobs:
       - name: Upload artifact
         uses: softprops/action-gh-release@v1
         with:
-          draft: true
+          draft: false
           prerelease: false
-          name: Main release
+          tag_name: v0.1.0-brain-console-release
+          name: Brain console release
           files: ./pran-droid/brain_console/target/release/brain_console.exe
