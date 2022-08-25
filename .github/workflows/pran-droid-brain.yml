@@ -1,0 +1,27 @@
+name: Create Pran Droid Brain Console release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - pran-droid/**
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+      - run: cargo build --manifest-path pran-droid\brain_console\Cargo.toml --release
+      - name: Upload artifact
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          prerelease: false
+          name: Main release
+          files: ./pran-droid/brain_console/target/release/brain_console.exe

@@ -109,7 +109,8 @@ pub async fn create_channel_events_stream(options: TwitchConnectOptions) -> impl
                                 tx.send(ChatEvent::Action(ChatAction {
                                     name: user_name.to_owned().into_string(),
                                     action_name: "reward_redeem".to_string(),
-                                    action_id: title.to_string()
+                                    action_id: title.to_string(),
+                                    is_mod: false
                                 })).await.unwrap();
                             }
                         },
@@ -128,7 +129,8 @@ pub async fn create_channel_events_stream(options: TwitchConnectOptions) -> impl
                                 tx.send(ChatEvent::Action(ChatAction {
                                     name: user_name.to_owned().into_string(),
                                     action_name: "bits".to_string(),
-                                    action_id: bits_used.to_string()
+                                    action_id: bits_used.to_string(),
+                                    is_mod: false
                                 })).await.unwrap();
                             }
                         },
