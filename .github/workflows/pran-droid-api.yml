@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - main
+    paths:
+      - pran-gular/**
+      - pran-droid/**
+      - pran-animation/**
+      - pran-phonemes/**
   workflow_dispatch:
 
 jobs:

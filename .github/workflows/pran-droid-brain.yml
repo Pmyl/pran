@@ -17,7 +17,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
-      - run: cargo build --manifest-path pran-droid\brain_console\Cargo.toml --release
+      - run: cargo build --manifest-path ./pran-droid/brain_console/Cargo.toml --release
       - name: Upload artifact
         uses: softprops/action-gh-release@v1
         with:
