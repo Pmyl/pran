@@ -10,6 +10,7 @@ import { retryFetch } from '../helpers/retry-fetch';
 import { SpeechBubble } from '../speech-bubble/speech-bubble';
 import { PranDroid } from './droid';
 import { ConfigurableEmotion, EmotionLayer } from './emotion';
+import { testIdleTranslation } from './test-idle-translation';
 
 export async function buildDroid(pranCanvas: Container, speechBubble: SpeechBubble): Promise<PranDroid> {
   const animationPlayer = await setupPranDroidAnimation(pranCanvas);
@@ -71,13 +72,22 @@ function getIdleAnimation(): AnimationRun {
 
       return {
         fps: fps,
-        layers: [
-          [
-            drawId('happyIdle')
-          ],
-          [
+        layers: [{
+          id: 'head',
+          actions: [drawId('head_idle')],
+          translations: testIdleTranslation,
+          loop: true
+        }, {
+          id: 'mouth',
+          parentId: 'head',
+          actions: [drawId('happyIdle'), wait(200)],
+          loop: false
+        }, {
+          id: 'eyes',
+          parentId: 'head',
+          actions: [
             drawId('eyes_open'),
-            wait(randomFramesBetweenInMs(5000, 10000, fps)),
+            wait(randomFramesBetweenInMs(1000, 3000, fps)),
             drawId('eyes_semi_open'),
             wait(3),
             drawId('eyes_closed'),
@@ -86,10 +96,18 @@ function getIdleAnimation(): AnimationRun {
             wait(3),
             drawId('eyes_open')
           ],
-          [
-            drawId('head_idle')
-          ]
-        ]
+          translations: [
+            [0, [0, 0]],
+            [10, [0, 5]],
+            [20, [0, 5]],
+            [30, [0, 3]],
+            [35, [0, 2]],
+            [60, [0, -5]],
+            [70, [0, -8]],
+            [75, [0, -2]],
+          ],
+          loop: true
+        }]
       }
     }
   });

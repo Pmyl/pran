@@ -1,11 +1,15 @@
+import { v4 as uuidv4 } from 'uuid';
+import { CanvasController } from '../canvas-controller/canvas-controller';
 import { MainCanvasController } from '../canvas-controller/main-canvas-controller';
 import { Timeline } from '../timeline/timeline';
 import { TimelineAction } from '../timeline/timeline-action';
 import { TimelineChange, TimelineChangeType } from './events/events';
-import { v4 as uuidv4 } from 'uuid';
 
 export interface TimelineConfig {
+  id?: string | undefined;
+  parentId?: string | undefined;
   actions: TimelineAction[];
+  translations?: Map<number, [number, number]> | undefined;
   /**
    * Set the timeline as looping, this ensures that the animation doesn't end even though the tick goes over the total
    * frame count.
@@ -26,6 +30,9 @@ export class Animator {
   public get hasLoopingTimelines(): boolean {
     return this._hasLoopingTimelines;
   };
+  public get hasNonLoopingTimelines(): boolean {
+    return this._hasNonLoopingTimelines;
+  };
   private _onFrameChangeSubscribers: ((frame: number) => void)[] = [];
   private _onTotalFramesChangeSubscribers: ((totalFrames: number) => void)[] = [];
   private _onTimelineChangeSubscribers: ((timeline: Timeline, change: TimelineChange) => void)[] = [];
@@ -34,6 +41,7 @@ export class Animator {
   private _nonLoopingTotalFrames: number = 0;
   private _currentFrame: number = 0;
   private _hasLoopingTimelines: boolean = false;
+  private _hasNonLoopingTimelines: boolean = false;
 
   constructor(canvasController: MainCanvasController) {
     this._canvasController = canvasController;
@@ -44,6 +52,7 @@ export class Animator {
   };
 
   private readonly _timelines: Timeline[] = [];
+  private readonly _timelinesMap: Map<string, Timeline> = new Map();
 
   public tick(amount: number = 1): void {
     if (this._currentFrame === this._totalFrames && !this.hasLoopingTimelines) {
@@ -59,28 +68,35 @@ export class Animator {
     this._applyFrameChange(Math.min(this._currentFrame + amount, this._totalFrames), true);
   }
 
-  public addTimeline(config: TimelineAction[] | TimelineConfig): Timeline {
-    return this.addTimelineAt(this.timelines.length, config);
+  public addTimeline(timelineBuilder: (canvasLayer: CanvasController) => Timeline): Timeline;
+  public addTimeline(config: TimelineConfig): Timeline;
+  public addTimeline(configOrTimelineBuilder: TimelineConfig | ((canvasLayer: CanvasController) => Timeline)): Timeline {
+    return this.addTimelineAt(this._canvasController.layersCount, configOrTimelineBuilder);
   }
 
-  public addTimelineAt(index: number, config: TimelineAction[] | TimelineConfig): Timeline {
-    let animation: TimelineAction[],
-      loop: boolean;
+  public addTimelineAt(index: number, configOrTimelineBuilder: TimelineConfig | ((canvasLayer: CanvasController) => Timeline)): Timeline {
+    let timeline: Timeline;
 
-    if (Array.isArray(config)) {
-      animation = config;
-      loop = false;
+    if (typeof(configOrTimelineBuilder) === 'function') {
+      timeline = configOrTimelineBuilder(this._canvasController.addLayerAt(uuidv4(), index));
     } else {
-      animation = config.actions;
-      loop = config.loop;
+      const layerId: string = configOrTimelineBuilder.id || uuidv4();
+      const parentTimeline = this._timelinesMap.get(configOrTimelineBuilder.parentId);
+      const canvasLayer = !parentTimeline
+        ? this._canvasController.addLayerAt(layerId, index)
+        : parentTimeline.layer.addLayerAt(layerId, parentTimeline.layer.layersCount);
+
+      timeline = new Timeline(layerId, canvasLayer, configOrTimelineBuilder.actions);
+      parentTimeline && timeline.setParentId(configOrTimelineBuilder.parentId);
+      configOrTimelineBuilder.loop && timeline.activateLoop();
+      configOrTimelineBuilder.translations && timeline.setTranslations(configOrTimelineBuilder.translations);
     }
 
-    const timeline = new Timeline(this._canvasController.addLayerAt(uuidv4(), index), animation);
-
-    loop && timeline.activateLoop();
-    this._hasLoopingTimelines = this._hasLoopingTimelines || loop;
+    this._hasLoopingTimelines = this._hasLoopingTimelines || timeline.isLoop;
+    this._hasNonLoopingTimelines = this._hasNonLoopingTimelines || !timeline.isLoop;
 
     this._timelines.splice(index, 0, timeline);
+    this._timelinesMap.set(timeline.id, timeline);
     this._recalculateTotalFrames();
     this._notifyTimelineChanged(timeline, {
       type: TimelineChangeType.Add,
@@ -91,11 +107,10 @@ export class Animator {
   }
 
   public removeTimeline(timeline: Timeline): number {
-    const index = this._timelines.indexOf(timeline);
-    this._canvasController.removeLayer(timeline.layer.id);
+    const index = this._removeTimeline(timeline);
 
-    this._timelines.splice(index, 1);
     this._hasLoopingTimelines = this._timelines.some(timeline => timeline.isLoop);
+    this._hasNonLoopingTimelines = this._timelines.some(timeline => !timeline.isLoop);
     this._recalculateTotalFrames();
     this._notifyTimelineChanged(timeline, {
       type: TimelineChangeType.Remove,
@@ -103,6 +118,24 @@ export class Animator {
     });
 
     return index;
+  }
+
+  public replaceTimelines(timelineConfigs: TimelineConfig[]) {
+    const timelineMap = new Map(this._timelinesMap),
+      timelines = this._timelines.slice();
+
+    for (let i = 0; i < timelines.length; i++) {
+      this._removeTimeline(timelines[i]);
+    }
+
+    for (let i = 0; i < timelineConfigs.length; i++) {
+      const config = timelineConfigs[i];
+      const timelineWithSameId = timelineMap.get(config.id);
+      const addedTimeline = this.addTimeline(config);
+      if (!!timelineWithSameId) {
+        addedTimeline.startFrom(timelineWithSameId);
+      }
+    }
   }
 
   public restart(): void {
@@ -207,5 +240,30 @@ export class Animator {
     for (const subscriber of this._onTimelineChangeSubscribers) {
       subscriber(timeline, change);
     }
+  }
+
+  private _removeTimeline(timeline: Timeline): number {
+    if (!this._timelinesMap.has(timeline.id)) {
+      return -1;
+    }
+
+    const timelines = this._timelines.slice();
+    for (let i = 0; i < timelines.length; i++) {
+      if (timelines[i].parentId === timeline.id) {
+        this._removeTimeline(timelines[i]);
+      }
+    }
+
+    if (!timeline.parentId) {
+      this._canvasController.removeLayer(timeline.layer.id);
+    } else {
+      this._timelinesMap.get(timeline.parentId).layer.removeLayer(timeline.layer.id);
+    }
+
+    const index = this._timelines.indexOf(timeline);
+    this._timelines.splice(index, 1);
+    this._timelinesMap.delete(timeline.id);
+
+    return index;
   }
 }

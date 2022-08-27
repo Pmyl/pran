@@ -11,7 +11,10 @@ export interface ManagerTimelineDrawAction {
 }
 
 export interface ManagerTimelineComplex {
+  id?: string | undefined;
+  parentId?: string | undefined;
   actions: ManagerTimelineAction[];
+  translations?: [number, [number, number]][] | undefined;
   loop: boolean;
 }
 
@@ -44,7 +47,7 @@ export class AnimatorManager {
     const animator = new Animator(this._canvasController);
     const allAnimations = maybeAnimator ? [maybeAnimator, ...animations] : [];
     for (let i = 0; i < allAnimations.length; i++) {
-      this._addTimeline(animator, allAnimations[i]);
+      animator.addTimeline(this._toTimelineConfig(allAnimations[i]));
     }
 
     return animator;
@@ -57,29 +60,22 @@ export class AnimatorManager {
   public copyAnimatorFrom(animator: Animator): Animator {
     const animatorCopy = new Animator(this._canvasController);
     animator.timelines.forEach(t => {
-      animatorCopy.addTimeline(t.timelineActions.slice());
+      animatorCopy.addTimeline(t.clone());
     });
 
     return animatorCopy;
   }
 
   private _replaceAnimation(animator: Animator, ...animations: ManagerTimelineConfig[]): Animator {
-    animator.timelines.slice().forEach(t => {
-      animator.removeTimeline(t);
-    });
-
-    for (let i = 0; i < animations.length; i++) {
-      this._addTimeline(animator, animations[i]);
-    }
-
+    animator.replaceTimelines(animations.map(animation => this._toTimelineConfig(animation)));
     return animator;
   }
 
-  private _addTimeline(animator: Animator, animation: ManagerTimelineComplex | ManagerTimelineAction[]) {
+  private _toTimelineConfig(animation: ManagerTimelineComplex | ManagerTimelineAction[]) {
     if (Array.isArray(animation)) {
-      animator.addTimeline(this._toAnimationDetails(animation));
+      return { actions: this._toAnimationDetails(animation), loop: false };
     } else {
-      animator.addTimeline({ actions: this._toAnimationDetails(animation.actions), loop: animation.loop });
+      return { actions: this._toAnimationDetails(animation.actions), loop: animation.loop, id: animation.id, parentId: animation.parentId, translations: new Map(animation.translations) };
     }
   }
 

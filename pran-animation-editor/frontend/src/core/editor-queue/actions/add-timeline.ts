@@ -7,7 +7,7 @@ export function addTimeline(animator: Animator): EditorAction {
   return {
     name: 'Add timeline',
     do() {
-      addedTimeline = animator.addTimeline([]);
+      addedTimeline = animator.addTimeline({ actions: [], loop: false });
     },
     undo() {
       animator.removeTimeline(addedTimeline);

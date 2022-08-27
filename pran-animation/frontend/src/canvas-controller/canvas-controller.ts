@@ -1,7 +1,8 @@
 import { MainCanvasController } from './main-canvas-controller';
 
 export interface CanvasController {
-  id: string;
+  readonly id: string;
+  readonly layersCount: number;
   draw(image: HTMLImageElement): void;
   clear(): void;
   dryDraw(image: HTMLImageElement): void;
@@ -10,15 +11,27 @@ export interface CanvasController {
   waitForMs(ms: number): Promise<void>;
   addLayer(id: string): CanvasController;
   addLayerAt(id: string, index: number): CanvasController;
+  removeLayer(id: string): CanvasController;
+  getTranslation(): { x: number, y: number };
+  moveTo(translateX: number, translateY: number): void;
+  move(translateX: number, translateY: number): void;
+  dryMoveTo(translateX: number, translateY: number): void;
+  dryMove(translateX: number, translateY: number): void;
 }
 
 export class ParentCanvasController implements MainCanvasController {
+  public layersCount: number;
+  public globalX: number = 0;
+  public globalY: number = 0;
+  public localX: number = 0;
+  public localY: number = 0;
   protected readonly _context2d: CanvasRenderingContext2D;
   private readonly _layers: (typeof ParentCanvasController.LayerCanvasControllerImpl.prototype)[];
 
   constructor(context2d: CanvasRenderingContext2D) {
     this._context2d = context2d;
     this._layers = [];
+    this.layersCount = 0;
   }
 
   public addLayer(id: string): CanvasController {
@@ -26,11 +39,13 @@ export class ParentCanvasController implements MainCanvasController {
   }
 
   public addLayerAt(id: string, index: number): CanvasController {
-    this._layers.splice(index, 0, new ParentCanvasController.LayerCanvasControllerImpl(this._context2d, this, id));
+    this.layersCount++;
+    this._layers.splice(index, 0, new ParentCanvasController.LayerCanvasControllerImpl(this._context2d, this, id, this.globalX, this.globalY));
     return this._layers[index];
   }
 
   public removeLayer(id: string): CanvasController {
+    this.layersCount--;
     return this._layers.splice(this._layers.findIndex(l => l.id === id), 1)[0];
   }
 
@@ -59,12 +74,13 @@ export class ParentCanvasController implements MainCanvasController {
     public readonly id: string;
     private readonly _parent: ParentCanvasController;
     private _imagesToDraw: HTMLImageElement[];
-  
-    constructor(context2d: CanvasRenderingContext2D, parent: ParentCanvasController, id: string) {
+
+    constructor(context2d: CanvasRenderingContext2D, parent: ParentCanvasController, id: string, parentPositionX: number = 0, parentPositionY: number = 0) {
       super(context2d);
       this._parent = parent;
       this._imagesToDraw = [];
       this.id = id;
+      this._moveGlobally(parentPositionX, parentPositionY);
     }
 
     public clear(): void {
@@ -91,7 +107,7 @@ export class ParentCanvasController implements MainCanvasController {
 
     public redraw(): void {
       for (let i = 0; i < this._imagesToDraw.length; i++) {
-        this._context2d.drawImage(this._imagesToDraw[i], 0, 0);
+        this._context2d.drawImage(this._imagesToDraw[i], this.globalX, this._context2d.canvas.height - this._imagesToDraw[i].height + this.globalY);
       }
     }
 
@@ -103,6 +119,42 @@ export class ParentCanvasController implements MainCanvasController {
 
     public canvasChanged(): void {
       this._parent.canvasChanged();
+    }
+
+    public getTranslation(): { x: number, y: number } {
+      return { x: this.localX, y: this.localY };
+    }
+
+    public moveTo(translateX: number, translateY: number): void {
+      this.move(translateX - this.localX, translateY - this.localY);
+    }
+
+    public dryMoveTo(translateX: number, translateY: number): void {
+      this.dryMove(translateX - this.localX, translateY - this.localY);
+    }
+
+    public move(translateX: number, translateY: number): void {
+      this.localX += translateX;
+      this.localY += translateY;
+
+      this._moveGlobally(translateX, translateY);
+      this._parent.canvasChanged();
+    }
+
+    public dryMove(translateX: number, translateY: number): void {
+      this.localX += translateX;
+      this.localY += translateY;
+
+      this._moveGlobally(translateX, translateY);
+    }
+
+    private _moveGlobally(translateX: number, translateY: number): void {
+      for (let i = 0; i < this._layers.length; i++) {
+        this._layers[i]._moveGlobally(translateX, translateY);
+      }
+
+      this.globalX += translateX;
+      this.globalY += translateY;
     }
   }
 }

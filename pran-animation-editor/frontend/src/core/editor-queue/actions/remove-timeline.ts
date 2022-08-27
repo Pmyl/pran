@@ -10,7 +10,7 @@ export function removeTimeline(animator: Animator, timeline: Timeline): EditorAc
       index = animator.removeTimeline(timeline);
     },
     undo() {
-      timeline = animator.addTimelineAt(index, timeline.timelineActions.slice());
+      timeline = animator.addTimelineAt(index, timeline.clone());
     }
   }
 }

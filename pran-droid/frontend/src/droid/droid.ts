@@ -28,6 +28,10 @@ export class PranDroid {
     this._emotionRange = emotionRange;
   }
 
+  public getEmotionRange(): { [emotion: string]: Emotion } {
+    return this._emotionRange;
+  }
+
   public start(): void {
     this._stayIdling();
     this._isReacting = false;

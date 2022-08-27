@@ -60,7 +60,7 @@ export class PlayerController {
       elapsed = now - then;
       if (elapsed > fpsInterval) {
         this._animator.tick();
-        if (this._state !== PlayerState.End && this._animator.nonLoopingTotalFrames <= this._animator.currentFrame) {
+        if (this._animator.hasNonLoopingTimelines && this._state !== PlayerState.End && this._animator.nonLoopingTotalFrames <= this._animator.currentFrame) {
           this._emitStateChange(PlayerState.End);
           if (this._isLooping) {
             this._animator.restart();
