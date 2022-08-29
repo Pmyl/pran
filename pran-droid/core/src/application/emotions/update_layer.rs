@@ -2,10 +2,11 @@ use std::fmt::Debug;
 use thiserror::Error;
 use crate::application::reactions::dtos::reaction_step_dto::{AnimationFrameDto, frames_dtos_to_animation};
 use crate::domain::animations::animation::CreateAnimationError;
-use crate::domain::emotions::emotion::{EmotionId};
+use crate::domain::emotions::emotion::{AnyLayerId, EmotionId, EmotionLayerId, MouthLayerId};
 use crate::domain::emotions::emotion_domain_service::{update_layer_in_emotion};
 use crate::domain::emotions::emotion_repository::{EmotionRepository};
 use crate::domain::images::image_repository::ImageRepository;
+use crate::application::emotions::dtos::emotion_dto::{EmotionDto, MOUTH_LAYER_ID};
 
 #[derive(Debug, Error)]
 pub enum AddEmotionAnimationLayerError {
@@ -17,20 +18,33 @@ pub enum AddEmotionAnimationLayerError {
 
 pub struct AddEmotionAnimationLayerRequest {
     pub emotion_id: String,
+    pub id: String,
+    pub parent_id: Option<String>,
     pub animation: Vec<AnimationFrameDto>,
     pub index: usize
 }
 
 pub async fn update_emotion_animation_layer(request: AddEmotionAnimationLayerRequest, repository: &dyn EmotionRepository, image_repository: &dyn ImageRepository) -> Result<(), AddEmotionAnimationLayerError> {
+    EmotionDto::assert_id_is_not_mouth_reserved_string(&request.id)
+        .map_err(|_| AddEmotionAnimationLayerError::BadRequest(format!("Layer ids cannot be {} because it's reserved for the mouth layer", MOUTH_LAYER_ID)))?;
+
     let mut emotion = repository.get(&EmotionId(request.emotion_id.clone()))
         .await
         .ok_or_else(|| AddEmotionAnimationLayerError::BadRequest(format!("Emotion with id {:?} does not exists", request.emotion_id)))?;
 
-    update_layer_in_emotion(request.index, &mut emotion, frames_dtos_to_animation(request.animation)?, image_repository)
+    let parent_id = request.parent_id.map(into_emotion_layer_id);
+    update_layer_in_emotion(request.index, &mut emotion, AnyLayerId(request.id), frames_dtos_to_animation(request.animation)?, parent_id, image_repository)
         .await
         .map_err(|error| AddEmotionAnimationLayerError::BadRequest(error.0.clone()))?;
     repository.update(&emotion).await.unwrap();
     Ok(())
+}
+
+fn into_emotion_layer_id(id_string: String) -> EmotionLayerId {
+    match id_string.as_str() {
+        MOUTH_LAYER_ID => EmotionLayerId::Mouth(MouthLayerId),
+        _ => EmotionLayerId::Custom(AnyLayerId(id_string.clone()))
+    }
 }
 
 #[cfg(test)]
@@ -53,6 +67,8 @@ mod tests {
         let result = update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
             index: 1,
             emotion_id: String::from("not existing id"),
+            id: String::from("an id"),
+            parent_id: Some(String::from("parent id")),
             animation: vec![]
         }, &repository, &image_repository).await;
 
@@ -69,6 +85,8 @@ mod tests {
         update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
             index: 1,
             emotion_id: emotion.id.0,
+            id: String::from("an id"),
+            parent_id: None,
             animation: vec![]
         }, &repository, &image_repository).await.expect("expected add emotion animation layer not to fail");
     }
@@ -83,6 +101,8 @@ mod tests {
         update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
             index: 1,
             emotion_id: emotion.id.0.clone(),
+            id: String::from("an id"),
+            parent_id: None,
             animation: vec![
                 AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("id1") },
                 AnimationFrameDto { frame_start: 11, frame_end: 20, image_id: String::from("id2") }
@@ -92,9 +112,11 @@ mod tests {
         let emotion = get_emotion(GetEmotionRequest { id: emotion.id.0 }, &repository).await.expect("Emotion expected");
         assert_eq!(emotion.animation.len(), 2);
         assert!(matches!(emotion.animation.get(0).unwrap(), EmotionLayerDto::Mouth { .. }));
-        assert!(matches!(emotion.animation.get(1).unwrap(), EmotionLayerDto::Animation(_)));
+        assert!(matches!(emotion.animation.get(1).unwrap(), EmotionLayerDto::Animation { .. }));
 
-        if let EmotionLayerDto::Animation(layer) = emotion.animation.get(1).unwrap() {
+        if let EmotionLayerDto::Animation { id, animation: layer, parent_id } = emotion.animation.get(1).unwrap() {
+            assert_eq!(id, "an id");
+            assert_eq!(parent_id, &None);
             assert_eq!(layer.len(), 2);
             assert_eq!(layer.get(0).unwrap().image_id, "id1");
             assert_eq!(layer.get(0).unwrap().frame_start, 0);
@@ -107,6 +129,180 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn update_emotion_animation_layer_id_already_exists_at_different_index_returns_error() {
+        let repository = InMemoryEmotionRepository::new();
+        let image_repository = InMemoryImageRepository::new();
+        let emotion = setup_dummy_emotion(&repository).await;
+        setup_dummy_images(vec!["id1", "id2"], &image_repository).await;
+
+        update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
+            index: 1,
+            emotion_id: emotion.id.0.clone(),
+            id: String::from("an id"),
+            parent_id: None,
+            animation: vec![
+                AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("id1") },
+                AnimationFrameDto { frame_start: 11, frame_end: 20, image_id: String::from("id2") }
+            ]
+        }, &repository, &image_repository).await.expect("Expected update not to fail");
+
+        let result = update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
+            index: 2,
+            emotion_id: emotion.id.0.clone(),
+            id: String::from("an id"),
+            parent_id: None,
+            animation: vec![
+                AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("id1") },
+                AnimationFrameDto { frame_start: 11, frame_end: 20, image_id: String::from("id2") }
+            ]
+        }, &repository, &image_repository).await;
+
+        assert!(matches!(result, Err(AddEmotionAnimationLayerError::BadRequest(error)) if error.to_lowercase().contains("duplicate")));
+    }
+
+    #[tokio::test]
+    async fn update_emotion_animation_layer_id_is_reserved_mouth_string_returns_error() {
+        let repository = InMemoryEmotionRepository::new();
+        let image_repository = InMemoryImageRepository::new();
+        let emotion = setup_dummy_emotion(&repository).await;
+        setup_dummy_images(vec!["id1", "id2"], &image_repository).await;
+
+        let result = update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
+            index: 1,
+            emotion_id: emotion.id.0.clone(),
+            id: String::from(MOUTH_LAYER_ID),
+            parent_id: None,
+            animation: vec![
+                AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("id1") },
+                AnimationFrameDto { frame_start: 11, frame_end: 20, image_id: String::from("id2") }
+            ]
+        }, &repository, &image_repository).await;
+
+        assert!(matches!(result, Err(AddEmotionAnimationLayerError::BadRequest(error)) if error.to_lowercase().contains("mouth")));
+    }
+
+    #[tokio::test]
+    async fn update_emotion_animation_layer_parent_id_does_not_exists_returns_error() {
+        let repository = InMemoryEmotionRepository::new();
+        let image_repository = InMemoryImageRepository::new();
+        let emotion = setup_dummy_emotion(&repository).await;
+        setup_dummy_images(vec!["id1", "id2"], &image_repository).await;
+
+        let result = update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
+            index: 1,
+            emotion_id: emotion.id.0.clone(),
+            id: String::from("an id"),
+            parent_id: Some(String::from("not existing layer id")),
+            animation: vec![
+                AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("id1") },
+                AnimationFrameDto { frame_start: 11, frame_end: 20, image_id: String::from("id2") }
+            ]
+        }, &repository, &image_repository).await;
+
+        assert!(matches!(result, Err(AddEmotionAnimationLayerError::BadRequest(error)) if error.to_lowercase().contains("parent")));
+    }
+
+    #[tokio::test]
+    async fn update_emotion_animation_layer_parent_id_exists_save_it() {
+        let repository = InMemoryEmotionRepository::new();
+        let image_repository = InMemoryImageRepository::new();
+        let emotion = setup_dummy_emotion(&repository).await;
+        setup_dummy_images(vec!["id1", "id2"], &image_repository).await;
+
+        update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
+            index: 1,
+            emotion_id: emotion.id.0.clone(),
+            id: String::from("an id"),
+            parent_id: None,
+            animation: vec![
+                AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("id1") },
+                AnimationFrameDto { frame_start: 11, frame_end: 20, image_id: String::from("id2") }
+            ]
+        }, &repository, &image_repository).await.expect("Expected first update not to fail");
+
+        update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
+            index: 2,
+            emotion_id: emotion.id.0.clone(),
+            id: String::from("an id1"),
+            parent_id: Some(String::from("an id")),
+            animation: vec![
+                AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("id1") },
+                AnimationFrameDto { frame_start: 11, frame_end: 20, image_id: String::from("id2") }
+            ]
+        }, &repository, &image_repository).await.expect("Expected second update not to fail");
+
+        let emotion = get_emotion(GetEmotionRequest { id: emotion.id.0 }, &repository).await.expect("Emotion expected");
+        assert_eq!(emotion.animation.len(), 3);
+        assert!(matches!(emotion.animation.get(0).unwrap(), EmotionLayerDto::Mouth { .. }));
+        assert!(matches!(emotion.animation.get(1).unwrap(), EmotionLayerDto::Animation { .. }));
+        assert!(matches!(emotion.animation.get(2).unwrap(), EmotionLayerDto::Animation { .. }));
+
+        if let EmotionLayerDto::Animation { parent_id, .. } = emotion.animation.get(2).unwrap() {
+            assert_eq!(parent_id, &Some(String::from("an id")));
+        }
+    }
+
+    #[tokio::test]
+    async fn update_emotion_animation_layer_parent_id_is_mouth_save_it() {
+        let repository = InMemoryEmotionRepository::new();
+        let image_repository = InMemoryImageRepository::new();
+        let emotion = setup_dummy_emotion(&repository).await;
+        setup_dummy_images(vec!["id1", "id2"], &image_repository).await;
+
+        update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
+            index: 1,
+            emotion_id: emotion.id.0.clone(),
+            id: String::from("an id"),
+            parent_id: Some(String::from(MOUTH_LAYER_ID)),
+            animation: vec![
+                AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("id1") },
+                AnimationFrameDto { frame_start: 11, frame_end: 20, image_id: String::from("id2") }
+            ]
+        }, &repository, &image_repository).await.expect("Expected first update not to fail");
+
+        let emotion = get_emotion(GetEmotionRequest { id: emotion.id.0 }, &repository).await.expect("Emotion expected");
+        assert_eq!(emotion.animation.len(), 2);
+        assert!(matches!(emotion.animation.get(0).unwrap(), EmotionLayerDto::Mouth { .. }));
+        assert!(matches!(emotion.animation.get(1).unwrap(), EmotionLayerDto::Animation { .. }));
+
+        if let EmotionLayerDto::Animation { parent_id, .. } = emotion.animation.get(1).unwrap() {
+            assert_eq!(parent_id, &Some(String::from(MOUTH_LAYER_ID)));
+        }
+    }
+
+    #[tokio::test]
+    async fn update_emotion_animation_layer_parent_id_is_itself_returns_error() {
+        let repository = InMemoryEmotionRepository::new();
+        let image_repository = InMemoryImageRepository::new();
+        let emotion = setup_dummy_emotion(&repository).await;
+        setup_dummy_images(vec!["id1", "id2"], &image_repository).await;
+
+        update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
+            index: 1,
+            emotion_id: emotion.id.0.clone(),
+            id: String::from("an id"),
+            parent_id: None,
+            animation: vec![
+                AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("id1") },
+                AnimationFrameDto { frame_start: 11, frame_end: 20, image_id: String::from("id2") }
+            ]
+        }, &repository, &image_repository).await.expect("Expected first update not to fail");
+
+        let result = update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
+            index: 1,
+            emotion_id: emotion.id.0.clone(),
+            id: String::from("an id"),
+            parent_id: Some(String::from("an id")),
+            animation: vec![
+                AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("id1") },
+                AnimationFrameDto { frame_start: 11, frame_end: 20, image_id: String::from("id2") }
+            ]
+        }, &repository, &image_repository).await;
+
+        assert!(matches!(&result, Err(AddEmotionAnimationLayerError::BadRequest(error)) if error.to_lowercase().contains("parent")));
+    }
+
+    #[tokio::test]
     async fn update_emotion_animation_layer_image_not_existing_returns_error() {
         let repository = InMemoryEmotionRepository::new();
         let image_repository = InMemoryImageRepository::new();
@@ -116,6 +312,8 @@ mod tests {
         let result = update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
             index: 1,
             emotion_id: emotion.id.0.clone(),
+            id: String::from("an id"),
+            parent_id: Some(String::from("parent id")),
             animation: vec![
                 AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("id4") },
                 AnimationFrameDto { frame_start: 11, frame_end: 20, image_id: String::from("id2") }
@@ -135,6 +333,8 @@ mod tests {
         update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
             index: 1,
             emotion_id: emotion.id.0.clone(),
+            id: String::from("an id"),
+            parent_id: None,
             animation: vec![
                 AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("id1") },
                 AnimationFrameDto { frame_start: 11, frame_end: 20, image_id: String::from("id2") }
@@ -144,6 +344,8 @@ mod tests {
         update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
             index: 2,
             emotion_id: emotion.id.0.clone(),
+            id: String::from("an id2"),
+            parent_id: None,
             animation: vec![
                 AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("id2") }
             ]
@@ -152,10 +354,10 @@ mod tests {
         let emotion = get_emotion(GetEmotionRequest { id: emotion.id.0 }, &repository).await.expect("Expected emotion");
         assert_eq!(emotion.animation.len(), 3);
         assert!(matches!(emotion.animation.get(0).unwrap(), EmotionLayerDto::Mouth { .. }));
-        assert!(matches!(emotion.animation.get(1).unwrap(), EmotionLayerDto::Animation(_)));
-        assert!(matches!(emotion.animation.get(2).unwrap(), EmotionLayerDto::Animation(_)));
+        assert!(matches!(emotion.animation.get(1).unwrap(), EmotionLayerDto::Animation { .. }));
+        assert!(matches!(emotion.animation.get(2).unwrap(), EmotionLayerDto::Animation { .. }));
 
-        if let EmotionLayerDto::Animation(layer) = emotion.animation.get(1).unwrap() {
+        if let EmotionLayerDto::Animation { animation: layer, .. } = emotion.animation.get(1).unwrap() {
             assert_eq!(layer.len(), 2);
             assert_eq!(layer.get(0).unwrap().image_id, "id1");
             assert_eq!(layer.get(0).unwrap().frame_start, 0);
@@ -166,7 +368,7 @@ mod tests {
             assert_eq!(layer.get(1).unwrap().frame_end, 20);
         }
 
-        if let EmotionLayerDto::Animation(layer) = emotion.animation.get(2).unwrap() {
+        if let EmotionLayerDto::Animation { animation: layer, .. } = emotion.animation.get(2).unwrap() {
             assert_eq!(layer.len(), 1);
             assert_eq!(layer.get(0).unwrap().image_id, "id2");
             assert_eq!(layer.get(0).unwrap().frame_start, 0);
@@ -184,6 +386,8 @@ mod tests {
         let result = update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
             index: 0,
             emotion_id: emotion.id.0.clone(),
+            id: String::from("an id"),
+            parent_id: Some(String::from("parent id")),
             animation: vec![
                 AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("id1") },
                 AnimationFrameDto { frame_start: 11, frame_end: 20, image_id: String::from("id2") }
@@ -203,6 +407,8 @@ mod tests {
         let result = update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
             index: 2,
             emotion_id: emotion.id.0.clone(),
+            id: String::from("an id"),
+            parent_id: Some(String::from("parent id")),
             animation: vec![
                 AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("id1") },
                 AnimationFrameDto { frame_start: 11, frame_end: 20, image_id: String::from("id2") }
@@ -222,6 +428,8 @@ mod tests {
         update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
             index: 1,
             emotion_id: emotion.id.0.clone(),
+            id: String::from("an id"),
+            parent_id: None,
             animation: vec![
                 AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("id1") },
                 AnimationFrameDto { frame_start: 11, frame_end: 20, image_id: String::from("id2") }
@@ -231,6 +439,8 @@ mod tests {
         update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
             index: 1,
             emotion_id: emotion.id.0.clone(),
+            id: String::from("an id"),
+            parent_id: None,
             animation: vec![
                 AnimationFrameDto { frame_start: 5, frame_end: 11, image_id: String::from("id2") },
                 AnimationFrameDto { frame_start: 12, frame_end: 23, image_id: String::from("id1") }
@@ -240,9 +450,11 @@ mod tests {
         let emotion = get_emotion(GetEmotionRequest { id: emotion.id.0 }, &repository).await.expect("Expected emotion");
         assert_eq!(emotion.animation.len(), 2);
         assert!(matches!(emotion.animation.get(0).unwrap(), EmotionLayerDto::Mouth { .. }));
-        assert!(matches!(emotion.animation.get(1).unwrap(), EmotionLayerDto::Animation(_)));
+        assert!(matches!(emotion.animation.get(1).unwrap(), EmotionLayerDto::Animation { .. }));
 
-        if let EmotionLayerDto::Animation(layer) = emotion.animation.get(1).unwrap() {
+        if let EmotionLayerDto::Animation { id, animation: layer, parent_id } = emotion.animation.get(1).unwrap() {
+            assert_eq!(id, "an id");
+            assert_eq!(parent_id, &None);
             assert_eq!(layer.len(), 2);
             assert_eq!(layer.get(0).unwrap().image_id, "id2");
             assert_eq!(layer.get(0).unwrap().frame_start, 5);

@@ -3,12 +3,14 @@ use async_trait::async_trait;
 use serde::{Serialize, Deserialize};
 use serde_json::{Map, Value};
 use uuid::Uuid;
-use pran_droid_core::domain::emotions::emotion::{EmotionId, EmotionLayer, EmotionName, MouthPositionName};
+use pran_droid_core::domain::emotions::emotion::{AnyLayerId, EmotionId, EmotionLayer, EmotionLayerId, EmotionName, MouthLayerId, MouthPositionName};
 use pran_droid_core::domain::images::image::ImageId;
 use pran_droid_core::domain::emotions::emotion::{Emotion};
 use crate::deta::{Base, Deta, Query, InsertError as DetaInsertError, PutError, QueryAll};
 use pran_droid_core::domain::emotions::emotion_repository::{EmotionRepository, EmotionInsertError, EmotionUpdateError};
 use crate::animations::animation::{AnimationStorage, into_animation_domain, into_animation_storage};
+
+const MOUTH_LAYER_ID: &str = "MOUTH-B0-00AC-4540-BD5E-F2BD30438414";
 
 pub struct DetaEmotionRepository {
     base: Base,
@@ -40,7 +42,7 @@ struct EmotionStorage {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 enum EmotionLayerStorage {
-    Animation(AnimationStorage),
+    Animation { id: String, parent_id: Option<String>, frames: AnimationStorage },
     Mouth { mouth_mapping: HashMap<String, String> }
 }
 
@@ -66,19 +68,43 @@ impl From<&Emotion> for EmotionStorage {
 
 fn into_layer_domain(layer: &EmotionLayerStorage) -> EmotionLayer {
     match layer {
-        EmotionLayerStorage::Animation(animation) => EmotionLayer::Animation(into_animation_domain(animation)),
+        EmotionLayerStorage::Animation { id, parent_id, frames } => EmotionLayer::Animation {
+            id: AnyLayerId(id.clone()),
+            animation: into_animation_domain(frames),
+            parent_id: parent_id.as_ref().map(into_emotion_layer_id_domain)
+        },
         EmotionLayerStorage::Mouth { mouth_mapping } => EmotionLayer::Mouth {
+            id: MouthLayerId,
+            parent_id: None,
             mouth_mapping: mouth_mapping.into_iter().map(|(pos, id)| (TryInto::<MouthPositionName>::try_into(pos).unwrap(), ImageId(id.clone()))).collect()
         },
     }
 }
 
+fn into_emotion_layer_id_domain(id_string: &String) -> EmotionLayerId {
+    match id_string.as_str() {
+        MOUTH_LAYER_ID => EmotionLayerId::Mouth(MouthLayerId),
+        _ => EmotionLayerId::Custom(AnyLayerId(id_string.clone()))
+    }
+}
+
 fn into_layer_storage(layer: &EmotionLayer) -> EmotionLayerStorage {
     match layer {
-        EmotionLayer::Animation(animation) => EmotionLayerStorage::Animation(into_animation_storage(animation)),
-        EmotionLayer::Mouth { mouth_mapping } => EmotionLayerStorage::Mouth {
+        EmotionLayer::Animation { id, parent_id, animation } => EmotionLayerStorage::Animation {
+            id: id.0.clone(),
+            parent_id: parent_id.as_ref().map(into_emotion_layer_id_storage),
+            frames: into_animation_storage(animation)
+        },
+        EmotionLayer::Mouth { mouth_mapping, .. } => EmotionLayerStorage::Mouth {
             mouth_mapping: mouth_mapping.into_iter().map(|(pos, id)| (pos.into(), id.0.clone())).collect()
         },
+    }
+}
+
+fn into_emotion_layer_id_storage(id: &EmotionLayerId) -> String {
+    match id {
+        EmotionLayerId::Mouth(_) => MOUTH_LAYER_ID.to_string(),
+        EmotionLayerId::Custom(AnyLayerId(id)) => id.clone()
     }
 }
 

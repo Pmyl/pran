@@ -58,7 +58,6 @@ export class Timeline {
 
   public restart(): void {
     this._targetFrame = 0;
-    this._layer.dryMoveTo(-this._magnetTranslation.x, -this._magnetTranslation.y);
     this._refreshTimeline();
   }
 
@@ -223,19 +222,15 @@ export class Timeline {
   private _tickOneFrame() {
     let magnetForceX = 0, magnetForceY = 0;
     if (this._magnetTranslation.x !== 0) {
-      magnetForceX = this._magnetTranslation.x > 0 ? 1 : -1;
+      magnetForceX = this._magnetTranslation.x > 0 ? Math.min(this._magnetTranslation.x, 5) : Math.max(this._magnetTranslation.x, -5);
     }
     if (this._magnetTranslation.y !== 0) {
-      magnetForceY = this._magnetTranslation.y > 0 ? 1 : -1;
+      magnetForceY = this._magnetTranslation.y > 0 ? Math.min(this._magnetTranslation.y, 5) : Math.max(this._magnetTranslation.y, -5);
     }
     this._magnetTranslation.x -= magnetForceX;
     this._magnetTranslation.y -= magnetForceY;
-    this._layer.dryMove(
-      magnetForceX,
-      magnetForceY
-    );
 
-    if (this._currentTranslationFrame > this._lastTranslationsFrame) {
+    if (this._currentTranslationFrame === this._lastTranslationsFrame) {
       if (this._isLoop) {
         this._restartTranslations();
       } else {
@@ -243,12 +238,15 @@ export class Timeline {
       }
     }
 
+    let translationX = 0, translationY = 0;
     if (this._translations.has(this._currentTranslationFrame)) {
-      this._layer.dryMove(
-        this._translations.get(this._currentTranslationFrame)[0],
-        this._translations.get(this._currentTranslationFrame)[1]
-      );
+      translationX = this._translations.get(this._currentTranslationFrame)[0];
+      translationY = this._translations.get(this._currentTranslationFrame)[1];
     }
+    this._layer.dryMove(
+      magnetForceX + translationX,
+      magnetForceY + translationY
+    );
     this._currentTranslationFrame++;
   }
 

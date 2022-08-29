@@ -17,11 +17,11 @@ export const previewModal = inlineComponent<ModalContentInputs<void> & { reactio
   pranCanvas.componentElement.style.height = '500px';
   pranCanvas.componentElement.style.marginTop = '-50px';
   const speechBubbleCanvas: Container = Container.CreateEmptyElement('canvas');
-  const speechBubble = new SpeechBubble(speechBubbleCanvas.componentElement as HTMLCanvasElement);
   let pranDroid: PranDroid,
     redeems: string[] = [];
 
   (async() => {
+    const speechBubble = await SpeechBubble.create(speechBubbleCanvas.componentElement as HTMLCanvasElement);
     pranDroid = await buildDroid(pranCanvas, speechBubble);
     pranDroid.start();
   })();

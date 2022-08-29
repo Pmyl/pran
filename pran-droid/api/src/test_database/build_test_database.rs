@@ -3,7 +3,7 @@ use std::path::Path;
 use pran_droid_core::application::emotions::create::{create_emotion, CreateEmotionRequest};
 use pran_droid_core::application::emotions::get_by_name::{get_emotion_by_name, GetEmotionByNameRequest};
 use pran_droid_core::application::emotions::update_layer::{AddEmotionAnimationLayerRequest, update_emotion_animation_layer};
-use pran_droid_core::application::emotions::update_mouth_mapping::{update_emotion_mouth_mapping, UpdateEmotionMouthMappingElementRequest, UpdateEmotionMouthMappingRequest};
+use pran_droid_core::application::emotions::update_mouth_layer::{update_emotion_mouth_layer, UpdateEmotionMouthMappingElementRequest, UpdateEmotionMouthLayerRequest};
 use pran_droid_core::application::images::create::{create_image, CreateImageRequest};
 use pran_droid_core::application::reactions::create::{create_reaction, CreateReactionRequest};
 use pran_droid_core::application::reactions::dtos::reaction_dto::ReactionTriggerDto;
@@ -25,9 +25,33 @@ pub async fn build_test_database(reaction_repository: &dyn ReactionDefinitionRep
 async fn build_emotions_database(emotion_repository: &dyn EmotionRepository, image_repository: &dyn ImageRepository) {
     let happy_emotion = create_emotion(CreateEmotionRequest { name: String::from("happy") }, emotion_repository).await.expect("error creating emotion");
 
-    // Mouth mapping
-    update_emotion_mouth_mapping(UpdateEmotionMouthMappingRequest {
+    update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
         emotion_id: happy_emotion.id.clone(),
+        id: String::from("head"),
+        parent_id: None,
+        animation: vec![
+            AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("idle") },
+        ],
+        index: 1,
+    }, emotion_repository, image_repository).await.expect("error updating animation layer");
+
+    update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
+        emotion_id: happy_emotion.id.clone(),
+        id: String::from("eyes"),
+        parent_id: Some(String::from("head")),
+        animation: vec![
+            AnimationFrameDto { frame_start: 0, frame_end: 200, image_id: String::from("eyes0") },
+            AnimationFrameDto { frame_start: 201, frame_end: 204, image_id: String::from("eyes1") },
+            AnimationFrameDto { frame_start: 205, frame_end: 208, image_id: String::from("eyes2") },
+            AnimationFrameDto { frame_start: 209, frame_end: 212, image_id: String::from("eyes1") },
+        ],
+        index: 2,
+    }, emotion_repository, image_repository).await.expect("error updating animation layer");
+
+    // Mouth mapping
+    update_emotion_mouth_layer(UpdateEmotionMouthLayerRequest {
+        emotion_id: happy_emotion.id.clone(),
+        parent_id: Some(String::from("head")),
         mapping: vec! {
             UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::Ah.into(), image_id: String::from("happyAh") },
             UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::B.into(), image_id: String::from("happyB") },
@@ -43,25 +67,6 @@ async fn build_emotions_database(emotion_repository: &dyn EmotionRepository, ima
             UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::Idle.into(), image_id: String::from("happyIdle") },
         },
     }, emotion_repository, image_repository).await.expect("error updating mouth mapping");
-
-    update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
-        emotion_id: happy_emotion.id.clone(),
-        animation: vec![
-            AnimationFrameDto { frame_start: 0, frame_end: 200, image_id: String::from("eyes0") },
-            AnimationFrameDto { frame_start: 201, frame_end: 204, image_id: String::from("eyes1") },
-            AnimationFrameDto { frame_start: 205, frame_end: 208, image_id: String::from("eyes2") },
-            AnimationFrameDto { frame_start: 209, frame_end: 212, image_id: String::from("eyes1") },
-        ],
-        index: 1,
-    }, emotion_repository, image_repository).await.expect("error updating animation layer");
-
-    update_emotion_animation_layer(AddEmotionAnimationLayerRequest {
-        emotion_id: happy_emotion.id.clone(),
-        animation: vec![
-            AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("idle") },
-        ],
-        index: 2,
-    }, emotion_repository, image_repository).await.expect("error updating animation layer");
 }
 
 async fn build_images_database(image_repository: &dyn ImageRepository, image_storage: &dyn ImageStorage) {

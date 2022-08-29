@@ -28,7 +28,7 @@ mod tests {
     use crate::domain::emotions::emotion::EmotionId;
     use crate::domain::images::image::ImageId;
     use crate::domain::reactions::reaction::{Milliseconds, TalkingReactionStep, Reaction, ReactionStepSkip, ReactionStep, ReactionStepText};
-    use crate::domain::reactions::reaction_definition::{MovingReactionStepDefinition, ReactionDefinition, ReactionDefinitionId, ReactionStepDefinition, ReactionStepMessageAlternativeDefinition, ReactionStepMessageAlternativesDefinition, TalkingReactionStepDefinition};
+    use crate::domain::reactions::reaction_definition::{MovingReactionStepDefinition, ReactionDefinition, ReactionDefinitionId, ReactionStepDefinition, ReactionStepMessageAlternativeDefinition, ReactionStepMessageAlternativesDefinition, ReactionTrigger, TalkingReactionStepDefinition};
     use crate::domain::reactions::reaction_definition_repository::tests::{setup_dummy_action_reaction_definitions, setup_dummy_chat_command_reaction_definitions, setup_dummy_chat_keyword_reaction_definitions};
     use crate::persistence::reactions::in_memory_reaction_repository::InMemoryReactionRepository;
     use super::*;

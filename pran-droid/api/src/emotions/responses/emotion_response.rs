@@ -13,9 +13,10 @@ pub struct EmotionResponse {
 #[derive(Serialize)]
 #[serde(tag = "type")]
 pub enum EmotionLayerResponse {
-    Animation { frames: Vec<AnimationFrameModel> },
     #[serde(rename_all = "camelCase")]
-    Mouth { mouth_mapping: HashMap<String, String> }
+    Animation { id: String, parent_id: Option<String>, frames: Vec<AnimationFrameModel> },
+    #[serde(rename_all = "camelCase")]
+    Mouth { id: String, parent_id: Option<String>, mouth_mapping: HashMap<String, String> }
 }
 
 impl From<EmotionDto> for EmotionResponse {
@@ -31,9 +32,9 @@ impl From<EmotionDto> for EmotionResponse {
 impl From<EmotionLayerDto> for EmotionLayerResponse {
     fn from(dto: EmotionLayerDto) -> EmotionLayerResponse {
         match dto {
-            EmotionLayerDto::Animation(animation) =>
-                EmotionLayerResponse::Animation { frames: animation.into_iter().map(Into::into).collect() },
-            EmotionLayerDto::Mouth { mouth_mapping } => EmotionLayerResponse::Mouth { mouth_mapping }
+            EmotionLayerDto::Animation { id, parent_id, animation } =>
+                EmotionLayerResponse::Animation { id, parent_id, frames: animation.into_iter().map(Into::into).collect() },
+            EmotionLayerDto::Mouth { id, parent_id, mouth_mapping } => EmotionLayerResponse::Mouth { id, parent_id, mouth_mapping }
         }
     }
 }

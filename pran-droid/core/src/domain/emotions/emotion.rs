@@ -33,30 +33,62 @@ pub enum MouthPositionName {
 
 #[derive(Clone, Debug)]
 pub enum EmotionLayer {
-    Animation(Animation),
-    Mouth { mouth_mapping: HashMap<MouthPositionName, ImageId> }
+    Animation { id: AnyLayerId, parent_id: Option<EmotionLayerId>, animation: Animation },
+    Mouth { id: MouthLayerId, parent_id: Option<AnyLayerId>, mouth_mapping: HashMap<MouthPositionName, ImageId> }
 }
+
+#[derive(Clone, Debug)]
+pub enum EmotionLayerId {
+    Mouth(MouthLayerId),
+    Custom(AnyLayerId)
+}
+
+#[derive(Clone, Debug)]
+pub struct MouthLayerId;
+#[derive(Clone, Debug, PartialEq)]
+pub struct AnyLayerId(pub String);
 
 impl Emotion {
     pub(crate) fn new_empty(id: EmotionId, name: EmotionName) -> Self {
         Emotion {
             id,
             name,
-            animation: vec![EmotionLayer::Mouth { mouth_mapping: HashMap::new() }],
+            animation: vec![EmotionLayer::Mouth { id: MouthLayerId, parent_id: None, mouth_mapping: HashMap::new() }],
         }
     }
 
-    pub(crate) fn update_layer(&mut self, index: usize, animation: Animation) -> Result<(), ()> {
+    pub(crate) fn update_layer(&mut self, index: usize, id: AnyLayerId, animation: Animation, parent_id: Option<EmotionLayerId>) -> Result<(), String> {
+        self.assert_new_custom_id_is_unique(&id, index).map_err(|_| format!("Cannot have duplicate ids. Layer with id {} already exists in emotion", id.0))?;
+        self.assert_parent_id_exists(&id, &parent_id).map_err(|_| format!("Parent layer {:?} does not exists", parent_id))?;
+
         if self.animation.len() == index {
-            self.animation.push(EmotionLayer::Animation(animation));
+            self.animation.push(EmotionLayer::Animation { id, animation, parent_id });
             Ok(())
         } else if self.animation.len() < index || matches!(self.animation[index], EmotionLayer::Mouth { .. }) {
-            Err(())
+            Err(format!("Cannot replace layer at index {} because it's a Mouth layer", index))
         } else {
             self.animation.remove(index);
-            self.animation.insert(index, EmotionLayer::Animation(animation));
+            self.animation.insert(index, EmotionLayer::Animation { id, animation, parent_id });
             Ok(())
         }
+    }
+
+    pub(crate) fn update_mouth_layer(&mut self, parent_id: Option<AnyLayerId>) -> Result<(), String> {
+        if let Some(ref id) = parent_id {
+            self.assert_custom_parent_id_exists(id).map_err(|_| format!("Parent layer {:?} does not exists", parent_id))?;
+        }
+
+        let mouth_index = self.animation.iter().position(|layer| matches!(layer, EmotionLayer::Mouth { .. })).unwrap();
+        let mouth_layer = self.animation.remove(mouth_index);
+
+        match mouth_layer {
+            EmotionLayer::Animation { .. } => {},
+            EmotionLayer::Mouth { mouth_mapping, .. } => {
+                self.animation.insert(mouth_index, EmotionLayer::Mouth { id: MouthLayerId, parent_id, mouth_mapping: mouth_mapping.clone() });
+            }
+        }
+
+        Ok(())
     }
 
     pub(super) fn set_mouth_position(&mut self, position_name: MouthPositionName, image_id: ImageId) {
@@ -64,14 +96,51 @@ impl Emotion {
         let mouth_layer = self.animation.get_mut(mouth_index).unwrap();
 
         match mouth_layer {
-            EmotionLayer::Animation(_) => {}
-            EmotionLayer::Mouth { ref mut mouth_mapping } => {
+            EmotionLayer::Animation { .. } => {},
+            EmotionLayer::Mouth { ref mut mouth_mapping, .. } => {
                 if mouth_mapping.contains_key(&position_name) {
                     mouth_mapping.remove(&position_name);
                 }
 
                 mouth_mapping.insert(position_name, image_id);
             }
+        }
+    }
+
+    fn assert_new_custom_id_is_unique(&self, id: &AnyLayerId, index: usize) -> Result<(), ()> {
+        if self.animation.iter().enumerate().any(|(i, layer)| match layer {
+            EmotionLayer::Animation { id: layer_id, .. } => layer_id == id && i != index,
+            EmotionLayer::Mouth { .. } => false
+        }) {
+            return Err(());
+        }
+
+        Ok(())
+    }
+
+    fn assert_parent_id_exists(&self, id: &AnyLayerId, parent_id: &Option<EmotionLayerId>) -> Result<(), ()> {
+        match parent_id {
+            None => Ok(()),
+            Some(emotion_layer_id) => match emotion_layer_id {
+                EmotionLayerId::Mouth(_) => Ok(()),
+                EmotionLayerId::Custom(any_id) =>
+                    self.assert_custom_parent_id_exists(any_id).and_then(|_| if any_id == id {
+                        Err(())
+                    } else {
+                        Ok(())
+                    })
+            }
+        }
+    }
+
+    fn assert_custom_parent_id_exists(&self, parent_id: &AnyLayerId) -> Result<(), ()> {
+        if self.animation.iter().any(|layer| match layer {
+            EmotionLayer::Animation { id: layer_id, .. } => layer_id == parent_id,
+            EmotionLayer::Mouth { .. } => false
+        }) {
+            Ok(())
+        } else {
+            Err(())
         }
     }
 }

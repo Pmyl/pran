@@ -76,7 +76,7 @@ impl EmotionRepository for InMemoryEmotionRepository {
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
-    use crate::domain::emotions::emotion::EmotionLayer;
+    use crate::domain::emotions::emotion::{EmotionLayer, MouthLayerId};
     use super::*;
 
     impl InMemoryEmotionRepository {
@@ -84,7 +84,7 @@ mod tests {
             Emotion {
                 id: EmotionId(id),
                 name: EmotionName(String::from("a name")),
-                animation: vec![EmotionLayer::Mouth { mouth_mapping: HashMap::new() }],
+                animation: vec![EmotionLayer::Mouth { id: MouthLayerId, parent_id: None, mouth_mapping: HashMap::new() }],
             }
         }
     }

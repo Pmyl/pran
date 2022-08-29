@@ -109,8 +109,8 @@ export class Animator {
   public removeTimeline(timeline: Timeline): number {
     const index = this._removeTimeline(timeline);
 
-    this._hasLoopingTimelines = this._timelines.some(timeline => timeline.isLoop);
-    this._hasNonLoopingTimelines = this._timelines.some(timeline => !timeline.isLoop);
+    this._hasLoopingTimelines = this._timelines.length > 0 && this._timelines.some(timeline => timeline.isLoop);
+    this._hasNonLoopingTimelines = this._timelines.length > 0 && this._timelines.some(timeline => !timeline.isLoop);
     this._recalculateTotalFrames();
     this._notifyTimelineChanged(timeline, {
       type: TimelineChangeType.Remove,
@@ -125,7 +125,7 @@ export class Animator {
       timelines = this._timelines.slice();
 
     for (let i = 0; i < timelines.length; i++) {
-      this._removeTimeline(timelines[i]);
+      this.removeTimeline(timelines[i]);
     }
 
     for (let i = 0; i < timelineConfigs.length; i++) {

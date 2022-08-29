@@ -1,4 +1,4 @@
-import { clear, drawId, ManagerTimelineAction, MS_TO_FRAMES, wait } from 'pran-animation-frontend';
+import { clear, drawId, ManagerTimelineAction, ManagerTimelineComplex, MS_TO_FRAMES, wait } from 'pran-animation-frontend';
 import { cmuPhonemesMap, MapOutput, phonemesMapper } from 'pran-phonemes-frontend';
 import { AnimationRun } from '../animation/run/animation-run';
 import { StepAnimationRun } from '../animation/run/step/step-animation-run';
@@ -9,7 +9,7 @@ export const enum EmotionLayer {
   Animation
 }
 
-export type EmotionLayers = ({ type: EmotionLayer.Mouth, mouthMapping?: { [key: string]: string } } | { type: EmotionLayer.Animation, animation: () => ManagerTimelineAction[] })[];
+export type EmotionLayers = ({ type: EmotionLayer.Mouth, id: string, parentId: string, mouthMapping?: { [key: string]: string } } | { type: EmotionLayer.Animation, id: string, parentId: string, animation: () => ManagerTimelineAction[] })[];
 
 export interface Emotion {
   speak(phonemes: string[], durationMs: number): AnimationRun;
@@ -28,9 +28,9 @@ export class ConfigurableEmotion implements Emotion {
       layers: this._emotionLayers.map(layer => {
         switch (layer.type) {
           case EmotionLayer.Mouth:
-            return this._createMouthLayer(phonemes, durationMs, layer.mouthMapping);
+            return { id: layer.id, parentId: layer.parentId, actions: this._createMouthLayer(phonemes, durationMs, layer.mouthMapping), loop: false };
           case EmotionLayer.Animation:
-            return { actions: layer.animation(), loop: true }
+            return { id: layer.id, parentId: layer.parentId, actions: layer.animation(), loop: true } as ManagerTimelineComplex
         }
       })
     }));

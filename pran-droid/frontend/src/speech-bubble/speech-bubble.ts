@@ -1,4 +1,5 @@
 import { waitFor } from '../helpers/async';
+import { AudioPlayer } from '../helpers/audio-player';
 import {
   LETTER_DURATION, MAX_SPEECH_BUBBLE_WIDTH,
   SPEECH_BUBBLE_ARROW_HEIGHT, SPEECH_BUBBLE_ARROW_WIDTH,
@@ -21,9 +22,9 @@ export class SpeechBubble {
   private _lastText: string = '';
   private _lastDrawCancellation: () => void;
   private _bubbleOpen: boolean;
-  private _talkAudio: HTMLAudioElement;
+  private _talkAudio: AudioPlayer;
 
-  constructor(canvas: HTMLCanvasElement) {
+  private constructor(canvas: HTMLCanvasElement, talkAudio: AudioPlayer) {
     this._canvas = canvas;
 
     this._canvas.width = SPEECH_BUBBLE_CANVAS_WIDTH;
@@ -32,7 +33,11 @@ export class SpeechBubble {
     this._canvas.style.height = SPEECH_BUBBLE_CANVAS_HEIGHT + 'px';
     this._context = this._canvas.getContext('2d');
     this._context.translate(.5, .5);
-    this._talkAudio = new Audio('./resources/sounds/talking.wav');
+    this._talkAudio = talkAudio;
+  }
+
+  public static async create(canvas: HTMLCanvasElement): Promise<SpeechBubble> {
+    return new SpeechBubble(canvas, await AudioPlayer.createFromFile('./resources/sounds/talking.wav'));
   }
 
   public openBubble(): void {
@@ -201,7 +206,7 @@ export class SpeechBubble {
         textToWrite += char;
         this._drawSpeechInstant(context, textToWrite, options);
         if (/[a-zA-Z1-9]/.test(char)) {
-          (this._talkAudio.cloneNode(false) as HTMLAudioElement).play().catch(() => {});
+          this._talkAudio.play();
         }
         await waitFor(LETTER_DURATION);
       }

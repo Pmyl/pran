@@ -1,7 +1,9 @@
 .droid-view {
     font-family: Arial, serif;
-    min-width: 0;
-    min-height: 0;
+    min-width: 1920px;
+    max-width: 1920px;
+    min-height: 1080px;
+    max-height: 1080px;
     display: flex;
     flex-direction: column;
     padding: 0;
@@ -13,4 +15,20 @@
     z-index: 1000;
     bottom: 0;
     right: 0;
+}
+
+.pran-droid-canvas {
+    width: 1920px;
+    height: 1080px;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1;
+}
+
+.speech-bubble-canvas {
+    position: absolute;
+    top: 420px;
 }

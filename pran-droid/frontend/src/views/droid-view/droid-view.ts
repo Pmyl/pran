@@ -1,4 +1,4 @@
-import { Container, inlineComponent, onClick } from 'pran-gular-frontend';
+import { Component, Container, inlineComponent, onClick } from 'pran-gular-frontend';
 import { cmuPhonemesMap } from 'pran-phonemes-frontend';
 import { connectToBrain } from '../../brain-connection/connect-to-brain';
 import { PranDroid } from '../../droid/droid';
@@ -13,37 +13,29 @@ export const droidView = inlineComponent(controls => {
   authorize();
   controls.setup("droid-view", "droid-view");
 
-  const pranCanvas: Container = Container.CreateEmptyElement('canvas');
+  const isDebugMode = !!new URLSearchParams(window.location.search).has("debug");
+
+  const pranCanvas: Container = Container.CreateEmptyElement('canvas', 'pran-droid-canvas');
   (pranCanvas.componentElement as HTMLCanvasElement).width = 1920;
   (pranCanvas.componentElement as HTMLCanvasElement).height = 1080;
-  pranCanvas.componentElement.style.width = '1920px';
-  pranCanvas.componentElement.style.height = '1080px';
-  pranCanvas.componentElement.style.position = 'absolute';
-  pranCanvas.componentElement.style.top = '0';
-  pranCanvas.componentElement.style.right = '0';
-  pranCanvas.componentElement.style.bottom = '0';
-  pranCanvas.componentElement.style.left = '0';
-  const speechBubbleCanvas: Container = Container.CreateEmptyElement('canvas');
-  const speechBubble = new SpeechBubble(speechBubbleCanvas.componentElement as HTMLCanvasElement);
-  speechBubbleCanvas.componentElement.style.position = 'absolute';
-  speechBubbleCanvas.componentElement.style.top = '0';
-  speechBubbleCanvas.componentElement.style.right = '0';
-  speechBubbleCanvas.componentElement.style.bottom = '0';
-  speechBubbleCanvas.componentElement.style.left = '0';
+  const speechBubbleCanvas: Container = Container.CreateEmptyElement('canvas', 'speech-bubble-canvas');
   const testerComponent = pranDroidTester();
 
   (async() => {
+    const speechBubble = await SpeechBubble.create(speechBubbleCanvas.componentElement as HTMLCanvasElement);
     const pranDroid = await buildDroid(pranCanvas, speechBubble);
     pranDroid.start();
-    //connectToBrain(pranDroid);
+    !isDebugMode && connectToBrain(pranDroid);
     testerComponent.setInputs({ pranDroid });
   })();
 
-  return () => [
+  const componentsArray: Component<object>[] = [
     speechBubbleCanvas,
-    pranCanvas,
-    testerComponent
+    pranCanvas
   ];
+  isDebugMode && componentsArray.push(testerComponent);
+
+  return () => componentsArray;
 });
 
 const pranDroidTester = inlineComponent<{ pranDroid: PranDroid }>(controls => {
@@ -55,7 +47,7 @@ const pranDroidTester = inlineComponent<{ pranDroid: PranDroid }>(controls => {
 
     return e => onClick(e, '.test-button', () => i.pranDroid.react([{
       bubble: {
-        text: 'Hello my name is pran droid and I\'m cool',
+        text: 'Hello my name is pran droid and I\'m cool, this is a bii',
         letterByLetter: true
       },
       skip: {

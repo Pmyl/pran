@@ -1,4 +1,3 @@
-
 use std::fmt::Debug;
 use thiserror::Error;
 use crate::application::emotions::dtos::emotion_dto::EmotionDto;
@@ -38,7 +37,7 @@ pub async fn create_emotion(request: CreateEmotionRequest, repository: &dyn Emot
 
 #[cfg(test)]
 mod tests {
-    use crate::application::emotions::dtos::emotion_dto::EmotionLayerDto;
+    use crate::application::emotions::dtos::emotion_dto::{EmotionLayerDto, MOUTH_LAYER_ID};
     use crate::domain::emotions::emotion::EmotionId;
     use crate::persistence::emotions::in_memory_emotion_repository::InMemoryEmotionRepository;
     use super::*;
@@ -63,7 +62,7 @@ mod tests {
         match create_emotion(request, &repository).await {
             Ok(emotion) => {
                 assert_eq!(emotion.animation.len(), 1);
-                assert!(matches!(emotion.animation.first().unwrap(), EmotionLayerDto::Mouth { .. }));
+                assert!(matches!(emotion.animation.first().unwrap(), EmotionLayerDto::Mouth { id, .. } if id == MOUTH_LAYER_ID));
             },
             _ => unreachable!("expected create emotion to not fail")
         }
@@ -76,7 +75,7 @@ mod tests {
 
         match create_emotion(request, &repository).await {
             Ok(emotion) => {
-                assert!(matches!(emotion.animation.first().unwrap(), EmotionLayerDto::Mouth { mouth_mapping } if mouth_mapping.len() == 0));
+                assert!(matches!(emotion.animation.first().unwrap(), EmotionLayerDto::Mouth { mouth_mapping, .. } if mouth_mapping.len() == 0));
             },
             _ => unreachable!("expected create emotion to not fail")
         }

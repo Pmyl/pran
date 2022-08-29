@@ -46,17 +46,20 @@ async function setupEmotions(pranDroid: PranDroid): Promise<void> {
   const emotions: {
     id: string,
     name: string,
-    layers: ({ type: 'Mouth', mouthMapping: { [key: string]: string } } | { type: 'Animation', frames: { frameStart: number, frameEnd: number, imageId: string }[]})[],
+    layers: ({ type: 'Mouth', id: string, parentId: string, mouthMapping: { [key: string]: string } } | { type: 'Animation', id: string, parentId: string, frames: { frameStart: number, frameEnd: number, imageId: string }[]})[],
   }[] = (await retryFetch("/api/emotions").then(r => r.json())).data;
+  emotions.forEach(emotion => {
+    emotion.layers.sort((a, b) => a.id !== b.parentId ? 1 : -1);
+  });
   console.log("Emotions", emotions);
 
   pranDroid.setEmotionRange(emotions.reduce((acc, emotion) => {
     acc[emotion.id] = new ConfigurableEmotion(emotion.layers.map(layer => {
       switch (layer.type) {
         case 'Mouth':
-          return { type: EmotionLayer.Mouth, mouthMapping: layer.mouthMapping };
+          return { type: EmotionLayer.Mouth, id: layer.id, parentId: layer.parentId, mouthMapping: layer.mouthMapping };
         case 'Animation':
-          return { type: EmotionLayer.Animation, animation: () => animationToTimelineActions(layer.frames) };
+          return { type: EmotionLayer.Animation, id: layer.id, parentId: layer.parentId, animation: () => animationToTimelineActions(layer.frames) };
       }
     }));
 
@@ -75,13 +78,12 @@ function getIdleAnimation(): AnimationRun {
         layers: [{
           id: 'head',
           actions: [drawId('head_idle')],
-          translations: testIdleTranslation,
           loop: true
         }, {
-          id: 'mouth',
+          id: 'Mouth',
           parentId: 'head',
-          actions: [drawId('happyIdle'), wait(200)],
-          loop: false
+          actions: [drawId('happyIdle')],
+          loop: true
         }, {
           id: 'eyes',
           parentId: 'head',
@@ -95,16 +97,6 @@ function getIdleAnimation(): AnimationRun {
             drawId('eyes_semi_open'),
             wait(3),
             drawId('eyes_open')
-          ],
-          translations: [
-            [0, [0, 0]],
-            [10, [0, 5]],
-            [20, [0, 5]],
-            [30, [0, 3]],
-            [35, [0, 2]],
-            [60, [0, -5]],
-            [70, [0, -8]],
-            [75, [0, -2]],
           ],
           loop: true
         }]
