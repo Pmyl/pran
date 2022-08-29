@@ -14,7 +14,7 @@ export interface ManagerTimelineComplex {
   id?: string | undefined;
   parentId?: string | undefined;
   actions: ManagerTimelineAction[];
-  translations?: [number, [number, number]][] | undefined;
+  translations: Map<number, [number, number]>;
   loop: boolean;
 }
 
@@ -24,8 +24,8 @@ export class AnimatorManager {
   public get imagesMap(): ReadonlyMap<string, HTMLImageElement> {
     return this._imagesMap;
   };
-  private _imagesMap: Map<string, HTMLImageElement>;
-  private _canvasController: MainCanvasController;
+  private readonly _imagesMap: Map<string, HTMLImageElement>;
+  private readonly _canvasController: MainCanvasController;
 
   private constructor(canvasController: MainCanvasController, imagesMap: Map<string, HTMLImageElement>) {
     this._canvasController = canvasController;

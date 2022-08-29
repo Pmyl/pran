@@ -9,7 +9,10 @@ export const enum EmotionLayer {
   Animation
 }
 
-export type EmotionLayers = ({ type: EmotionLayer.Mouth, id: string, parentId: string, mouthMapping?: { [key: string]: string } } | { type: EmotionLayer.Animation, id: string, parentId: string, animation: () => ManagerTimelineAction[] })[];
+export type EmotionLayers = (
+  { type: EmotionLayer.Mouth, id: string, parentId: string, mouthMapping?: { [key: string]: string }, translations: Map<number, [number, number]> }
+  | { type: EmotionLayer.Animation, id: string, parentId: string, animation: () => ManagerTimelineAction[], translations: Map<number, [number, number]> }
+)[];
 
 export interface Emotion {
   speak(phonemes: string[], durationMs: number): AnimationRun;
@@ -29,9 +32,9 @@ export class ConfigurableEmotion implements Emotion {
       layers: this._emotionLayers.map(layer => {
         switch (layer.type) {
           case EmotionLayer.Mouth:
-            return { id: layer.id, parentId: layer.parentId, actions: this._createMouthLayer(phonemes, durationMs, layer.mouthMapping), loop: false };
+            return { id: layer.id, parentId: layer.parentId, actions: this._createMouthLayer(phonemes, durationMs, layer.mouthMapping), loop: false, translations: layer.translations };
           case EmotionLayer.Animation:
-            return { id: layer.id, parentId: layer.parentId, actions: layer.animation(), loop: true } as ManagerTimelineComplex
+            return { id: layer.id, parentId: layer.parentId, actions: layer.animation(), loop: true, translations: layer.translations } as ManagerTimelineComplex
         }
       })
     }));
@@ -43,9 +46,9 @@ export class ConfigurableEmotion implements Emotion {
       layers: this._emotionLayers.map(layer => {
         switch (layer.type) {
           case EmotionLayer.Mouth:
-            return { id: layer.id, parentId: layer.parentId, actions: [drawId(layer.mouthMapping['idle'])], loop: false };
+            return { id: layer.id, parentId: layer.parentId, actions: [drawId(layer.mouthMapping['idle'])], loop: false, translations: layer.translations };
           case EmotionLayer.Animation:
-            return { id: layer.id, parentId: layer.parentId, actions: layer.animation(), loop: true } as ManagerTimelineComplex
+            return { id: layer.id, parentId: layer.parentId, actions: layer.animation(), loop: true, translations: layer.translations } as ManagerTimelineComplex
         }
       })
     }));

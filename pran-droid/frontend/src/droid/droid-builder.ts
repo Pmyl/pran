@@ -37,7 +37,7 @@ async function setupEmotions(pranDroid: PranDroid, idleEmotionName: string): Pro
   const emotions: {
     id: string,
     name: string,
-    layers: ({ type: 'Mouth', id: string, parentId: string, mouthMapping: { [key: string]: string } } | { type: 'Animation', id: string, parentId: string, frames: { frameStart: number, frameEnd: number, imageId: string }[]})[],
+    layers: ({ type: 'Mouth', id: string, parentId: string, mouthMapping: { [key: string]: string }, translations: { [frame: string]: [number, number] } } | { type: 'Animation', id: string, parentId: string, frames: { frameStart: number, frameEnd: number, imageId: string }[], translations: { [frame: string]: [number, number] } })[],
   }[] = (await retryFetch('/api/emotions').then(r => r.json())).data;
   emotions.forEach(emotion => emotion.layers.sort((a, b) => a.id !== b.parentId ? 1 : -1));
   console.log('Emotions', emotions);
@@ -46,9 +46,21 @@ async function setupEmotions(pranDroid: PranDroid, idleEmotionName: string): Pro
     acc[emotion.id] = new ConfigurableEmotion(emotion.layers.map(layer => {
       switch (layer.type) {
         case 'Mouth':
-          return { type: EmotionLayer.Mouth, id: layer.id, parentId: layer.parentId, mouthMapping: layer.mouthMapping };
+          return {
+            type: EmotionLayer.Mouth,
+            id: layer.id,
+            parentId: layer.parentId,
+            mouthMapping: layer.mouthMapping,
+            translations: new Map(Object.entries(layer.translations).map(translation => [+translation[0], translation[1]]))
+          };
         case 'Animation':
-          return { type: EmotionLayer.Animation, id: layer.id, parentId: layer.parentId, animation: () => animationToTimelineActions(layer.frames) };
+          return {
+            type: EmotionLayer.Animation,
+            id: layer.id,
+            parentId: layer.parentId,
+            animation: () => animationToTimelineActions(layer.frames),
+            translations: new Map(Object.entries(layer.translations).map(translation => [+translation[0], translation[1]]))
+          };
       }
     }));
 

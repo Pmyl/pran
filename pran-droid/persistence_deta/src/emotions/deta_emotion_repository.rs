@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use serde::{Serialize, Deserialize};
 use serde_json::{Map, Value};
 use uuid::Uuid;
-use pran_droid_core::domain::emotions::emotion::{AnyLayerId, EmotionId, EmotionLayer, EmotionLayerId, EmotionName, MouthLayerId, MouthPositionName};
+use pran_droid_core::domain::emotions::emotion::{AnyLayerId, EmotionId, EmotionLayer, EmotionLayerId, EmotionName, LayerTranslation, LayerTranslations, MouthLayerId, MouthPositionName};
 use pran_droid_core::domain::images::image::ImageId;
 use pran_droid_core::domain::emotions::emotion::{Emotion};
 use crate::deta::{Base, Deta, Query, InsertError as DetaInsertError, PutError, QueryAll};
@@ -42,8 +42,8 @@ struct EmotionStorage {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 enum EmotionLayerStorage {
-    Animation { id: String, parent_id: Option<String>, frames: AnimationStorage },
-    Mouth { mouth_mapping: HashMap<String, String> }
+    Animation { id: String, parent_id: Option<String>, frames: AnimationStorage, translations: Option<HashMap<u32, (u32, u32)>> },
+    Mouth { parent_id: Option<String>, mouth_mapping: HashMap<String, String>, translations: Option<HashMap<u32, (u32, u32)>> }
 }
 
 impl Into<Emotion> for EmotionStorage {
@@ -68,15 +68,17 @@ impl From<&Emotion> for EmotionStorage {
 
 fn into_layer_domain(layer: &EmotionLayerStorage) -> EmotionLayer {
     match layer {
-        EmotionLayerStorage::Animation { id, parent_id, frames } => EmotionLayer::Animation {
+        EmotionLayerStorage::Animation { id, parent_id, frames, translations } => EmotionLayer::Animation {
             id: AnyLayerId(id.clone()),
             animation: into_animation_domain(frames),
-            parent_id: parent_id.as_ref().map(into_emotion_layer_id_domain)
+            parent_id: parent_id.as_ref().map(into_emotion_layer_id_domain),
+            translations: into_translations_domain(translations)
         },
-        EmotionLayerStorage::Mouth { mouth_mapping } => EmotionLayer::Mouth {
+        EmotionLayerStorage::Mouth { parent_id, mouth_mapping, translations } => EmotionLayer::Mouth {
             id: MouthLayerId,
-            parent_id: None,
-            mouth_mapping: mouth_mapping.into_iter().map(|(pos, id)| (TryInto::<MouthPositionName>::try_into(pos).unwrap(), ImageId(id.clone()))).collect()
+            parent_id: parent_id.as_ref().map(into_any_layer_id_domain),
+            mouth_mapping: mouth_mapping.into_iter().map(|(pos, id)| (TryInto::<MouthPositionName>::try_into(pos).unwrap(), ImageId(id.clone()))).collect(),
+            translations: into_translations_domain(translations)
         },
     }
 }
@@ -88,15 +90,22 @@ fn into_emotion_layer_id_domain(id_string: &String) -> EmotionLayerId {
     }
 }
 
+fn into_any_layer_id_domain(id_string: &String) -> AnyLayerId {
+    AnyLayerId(id_string.clone())
+}
+
 fn into_layer_storage(layer: &EmotionLayer) -> EmotionLayerStorage {
     match layer {
-        EmotionLayer::Animation { id, parent_id, animation } => EmotionLayerStorage::Animation {
+        EmotionLayer::Animation { id, parent_id, animation, translations } => EmotionLayerStorage::Animation {
             id: id.0.clone(),
             parent_id: parent_id.as_ref().map(into_emotion_layer_id_storage),
-            frames: into_animation_storage(animation)
+            frames: into_animation_storage(animation),
+            translations: Some(into_translations_storage(translations))
         },
-        EmotionLayer::Mouth { mouth_mapping, .. } => EmotionLayerStorage::Mouth {
-            mouth_mapping: mouth_mapping.into_iter().map(|(pos, id)| (pos.into(), id.0.clone())).collect()
+        EmotionLayer::Mouth { parent_id, mouth_mapping, translations, .. } => EmotionLayerStorage::Mouth {
+            mouth_mapping: mouth_mapping.into_iter().map(|(pos, id)| (pos.into(), id.0.clone())).collect(),
+            parent_id: parent_id.as_ref().map(into_any_layer_id_storage),
+            translations: Some(into_translations_storage(translations))
         },
     }
 }
@@ -106,6 +115,27 @@ fn into_emotion_layer_id_storage(id: &EmotionLayerId) -> String {
         EmotionLayerId::Mouth(_) => MOUTH_LAYER_ID.to_string(),
         EmotionLayerId::Custom(AnyLayerId(id)) => id.clone()
     }
+}
+
+fn into_any_layer_id_storage(id: &AnyLayerId) -> String {
+    id.0.clone()
+}
+
+fn into_translations_domain(translations: &Option<HashMap<u32, (u32, u32)>>) -> HashMap<u32, LayerTranslation> {
+    match translations {
+        None => HashMap::new(),
+        Some(translations) => translations.iter().fold(HashMap::new(), |mut acc, (frame, translation)| {
+            acc.insert(*frame, LayerTranslation { x: translation.0, y: translation.1 });
+            acc
+        })
+    }
+}
+
+fn into_translations_storage(translations: &LayerTranslations) -> HashMap<u32, (u32, u32)> {
+    translations.iter().fold(HashMap::new(), |mut acc, (frame, translation)| {
+        acc.insert(*frame, (translation.x, translation.y));
+        acc
+    })
 }
 
 #[async_trait]

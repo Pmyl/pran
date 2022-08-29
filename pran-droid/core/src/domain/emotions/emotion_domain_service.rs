@@ -1,7 +1,7 @@
 use thiserror::Error;
 use crate::domain::animations::animation::Animation;
 use crate::domain::animations::animation_domain_service::validate_images;
-use crate::domain::emotions::emotion::{AnyLayerId, Emotion, EmotionLayerId, MouthPositionName};
+use crate::domain::emotions::emotion::{AnyLayerId, Emotion, EmotionLayerId, LayerTranslations, MouthPositionName};
 use crate::domain::images::image::ImageId;
 use crate::domain::images::image_repository::ImageRepository;
 
@@ -24,9 +24,9 @@ pub(crate) async fn set_mouth_position(emotion: &mut Emotion, position_name: Mou
     }
 }
 
-pub(crate) async fn update_layer_in_emotion(index: usize, emotion: &mut Emotion, id: AnyLayerId, animation: Animation, parent_id: Option<EmotionLayerId>, image_repository: &dyn ImageRepository) -> Result<(), UpdateLayerInEmotionError> {
+pub(crate) async fn update_layer_in_emotion(index: usize, emotion: &mut Emotion, id: AnyLayerId, parent_id: Option<EmotionLayerId>, animation: Animation, translations: LayerTranslations, image_repository: &dyn ImageRepository) -> Result<(), UpdateLayerInEmotionError> {
     validate_images(&animation, image_repository).await.map_err(|error| UpdateLayerInEmotionError(error.0.clone()))?;
-    emotion.update_layer(index, id, animation, parent_id).map_err(|err| UpdateLayerInEmotionError(err))?;
+    emotion.update_layer(index, id, parent_id, animation, translations).map_err(|err| UpdateLayerInEmotionError(err))?;
 
     Ok(())
 }

@@ -229,8 +229,12 @@ export class Timeline {
     }
     this._magnetTranslation.x -= magnetForceX;
     this._magnetTranslation.y -= magnetForceY;
+    this._layer.dryMove(
+      magnetForceX,
+      magnetForceY
+    );
 
-    if (this._currentTranslationFrame === this._lastTranslationsFrame) {
+    if (this._currentTranslationFrame >= this._lastTranslationsFrame) {
       if (this._isLoop) {
         this._restartTranslations();
       } else {
@@ -243,10 +247,15 @@ export class Timeline {
       translationX = this._translations.get(this._currentTranslationFrame)[0];
       translationY = this._translations.get(this._currentTranslationFrame)[1];
     }
-    this._layer.dryMove(
-      magnetForceX + translationX,
-      magnetForceY + translationY
-    );
+    if (this._magnetTranslation.x === 0 && this._magnetTranslation.y === 0) {
+      this._layer.dryMove(
+        translationX,
+        translationY
+      );
+    } else {
+      this._magnetTranslation.x += translationX;
+      this._magnetTranslation.y += translationY;
+    }
     this._currentTranslationFrame++;
   }
 
@@ -263,6 +272,8 @@ export class Timeline {
 
   private _restartTranslations(): void {
     this._currentTranslationFrame = 0;
+    this._magnetTranslation.x = -this._layer.getTranslation().x;
+    this._magnetTranslation.y = -this._layer.getTranslation().y;
   }
 
   private _restart(): void {

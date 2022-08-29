@@ -29,6 +29,7 @@ async fn build_emotions_database(emotion_repository: &dyn EmotionRepository, ima
         emotion_id: happy_emotion.id.clone(),
         id: String::from("head"),
         parent_id: None,
+        translations: None,
         animation: vec![
             AnimationFrameDto { frame_start: 0, frame_end: 10, image_id: String::from("idle") },
         ],
@@ -39,6 +40,7 @@ async fn build_emotions_database(emotion_repository: &dyn EmotionRepository, ima
         emotion_id: happy_emotion.id.clone(),
         id: String::from("eyes"),
         parent_id: Some(String::from("head")),
+        translations: None,
         animation: vec![
             AnimationFrameDto { frame_start: 0, frame_end: 200, image_id: String::from("eyes0") },
             AnimationFrameDto { frame_start: 201, frame_end: 204, image_id: String::from("eyes1") },
@@ -52,6 +54,7 @@ async fn build_emotions_database(emotion_repository: &dyn EmotionRepository, ima
     update_emotion_mouth_layer(UpdateEmotionMouthLayerRequest {
         emotion_id: happy_emotion.id.clone(),
         parent_id: Some(String::from("head")),
+        translations: None,
         mapping: vec! {
             UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::Ah.into(), image_id: String::from("happyAh") },
             UpdateEmotionMouthMappingElementRequest { name: MouthPositionName::B.into(), image_id: String::from("happyB") },

@@ -84,7 +84,7 @@ mod tests {
             Emotion {
                 id: EmotionId(id),
                 name: EmotionName(String::from("a name")),
-                animation: vec![EmotionLayer::Mouth { id: MouthLayerId, parent_id: None, mouth_mapping: HashMap::new() }],
+                animation: vec![EmotionLayer::Mouth { id: MouthLayerId, parent_id: None, mouth_mapping: HashMap::new(), translations: HashMap::new() }],
             }
         }
     }

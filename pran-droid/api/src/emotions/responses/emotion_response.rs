@@ -14,9 +14,9 @@ pub struct EmotionResponse {
 #[serde(tag = "type")]
 pub enum EmotionLayerResponse {
     #[serde(rename_all = "camelCase")]
-    Animation { id: String, parent_id: Option<String>, frames: Vec<AnimationFrameModel> },
+    Animation { id: String, parent_id: Option<String>, frames: Vec<AnimationFrameModel>, translations: HashMap<u32, (u32, u32)> },
     #[serde(rename_all = "camelCase")]
-    Mouth { id: String, parent_id: Option<String>, mouth_mapping: HashMap<String, String> }
+    Mouth { id: String, parent_id: Option<String>, mouth_mapping: HashMap<String, String>, translations: HashMap<u32, (u32, u32)> }
 }
 
 impl From<EmotionDto> for EmotionResponse {
@@ -32,9 +32,10 @@ impl From<EmotionDto> for EmotionResponse {
 impl From<EmotionLayerDto> for EmotionLayerResponse {
     fn from(dto: EmotionLayerDto) -> EmotionLayerResponse {
         match dto {
-            EmotionLayerDto::Animation { id, parent_id, animation } =>
-                EmotionLayerResponse::Animation { id, parent_id, frames: animation.into_iter().map(Into::into).collect() },
-            EmotionLayerDto::Mouth { id, parent_id, mouth_mapping } => EmotionLayerResponse::Mouth { id, parent_id, mouth_mapping }
+            EmotionLayerDto::Animation { id, parent_id, animation, translations } =>
+                EmotionLayerResponse::Animation { id, parent_id, frames: animation.into_iter().map(Into::into).collect(), translations },
+            EmotionLayerDto::Mouth { id, parent_id, mouth_mapping, translations, .. } =>
+                EmotionLayerResponse::Mouth { id, parent_id, mouth_mapping, translations }
         }
     }
 }

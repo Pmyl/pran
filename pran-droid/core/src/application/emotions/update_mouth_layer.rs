@@ -1,6 +1,7 @@
+use std::collections::HashMap;
 use std::fmt::Debug;
 use thiserror::Error;
-use crate::application::emotions::dtos::emotion_dto::EmotionDto;
+use crate::application::emotions::dtos::emotion_dto::{EmotionDto, into_translations};
 use crate::domain::emotions::emotion::{AnyLayerId, EmotionId, MouthPositionName};
 use crate::domain::emotions::emotion_domain_service::{set_mouth_position, SetMouthPositionToEmotionError};
 use crate::domain::emotions::emotion_repository::{EmotionRepository};
@@ -22,6 +23,7 @@ pub struct UpdateEmotionMouthLayerRequest {
     pub emotion_id: String,
     pub parent_id: Option<String>,
     pub mapping: Vec<UpdateEmotionMouthMappingElementRequest>,
+    pub translations: Option<HashMap<u32, (u32, u32)>>,
 }
 
 pub async fn update_emotion_mouth_layer(request: UpdateEmotionMouthLayerRequest, repository: &dyn EmotionRepository, image_repository: &dyn ImageRepository) -> Result<(), UpdateEmotionMouthMappingError> {
@@ -35,7 +37,7 @@ pub async fn update_emotion_mouth_layer(request: UpdateEmotionMouthLayerRequest,
         .ok_or_else(|| UpdateEmotionMouthMappingError::BadRequest(format!("Emotion with id {:?} does not exists", request.emotion_id)))?;
 
     let parent_id = request.parent_id.map(|id| AnyLayerId(id.clone()));
-    emotion.update_mouth_layer(parent_id).map_err(|err| UpdateEmotionMouthMappingError::BadRequest(err))?;
+    emotion.update_mouth_layer(parent_id, into_translations(request.translations)).map_err(|err| UpdateEmotionMouthMappingError::BadRequest(err))?;
 
     for element in request.mapping.into_iter() {
         match (ImageId::try_from(element.image_id), MouthPositionName::try_from(element.name)) {
@@ -79,7 +81,8 @@ mod tests {
             mapping: vec![UpdateEmotionMouthMappingElementRequest {
                 name: element_name_ah(),
                 image_id: String::from("id1")
-            }]
+            }],
+            translations: None
         };
 
         match update_emotion_mouth_layer(request, &repository, &image_repository).await {
@@ -103,7 +106,8 @@ mod tests {
             mapping: vec![UpdateEmotionMouthMappingElementRequest {
                 name: element_name_ah(),
                 image_id: String::from("id1")
-            }]
+            }],
+            translations: None
         };
 
         match update_emotion_mouth_layer(request, &repository, &image_repository).await {
@@ -125,7 +129,8 @@ mod tests {
             mapping: vec![UpdateEmotionMouthMappingElementRequest {
                 name: element_name_ah(),
                 image_id: String::from("id1")
-            }]
+            }],
+            translations: None
         };
 
         update_emotion_mouth_layer(request, &repository, &image_repository).await
@@ -142,6 +147,10 @@ mod tests {
         let request = UpdateEmotionMouthLayerRequest {
             emotion_id: emotion.id.0.clone(),
             parent_id: None,
+            translations: Some(HashMap::from([
+                (0, (10, 11)),
+                (15, (1, 45))
+            ])),
             mapping: vec![UpdateEmotionMouthMappingElementRequest {
                 name: element_name_ah(),
                 image_id: String::from("id1")
@@ -155,12 +164,17 @@ mod tests {
             Ok(_) => {
                 match get_emotion(GetEmotionRequest { id: emotion.id.0 }, &repository).await {
                     Some(emotion) => {
-                        let mouth_mapping = get_mouth_mapping(emotion);
+                        let mouth_mapping = get_mouth_mapping(&emotion);
                         assert!(mouth_mapping.contains_key(&element_name_ah()));
                         assert_eq!(mouth_mapping.get(&element_name_ah()).unwrap(), "id1");
 
                         assert!(mouth_mapping.contains_key(&element_name_oh()));
                         assert_eq!(mouth_mapping.get(&element_name_oh()).unwrap(), "id2");
+
+                        let translations = get_mouth_translation(&emotion);
+                        assert_eq!(translations.len(), 2);
+                        assert!(matches!(translations.get(&0), Some(translation) if translation.0 == 10 && translation.1 == 11));
+                        assert!(matches!(translations.get(&15), Some(translation) if translation.0 == 1 && translation.1 == 45));
                     },
                     None => unreachable!("emotion should have existed")
                 }
@@ -182,7 +196,8 @@ mod tests {
             mapping: vec![UpdateEmotionMouthMappingElementRequest {
                 name: String::from("not existing mouth position"),
                 image_id: String::from("id1")
-            }]
+            }],
+            translations: None
         };
 
         match update_emotion_mouth_layer(request, &repository, &image_repository).await {
@@ -206,7 +221,8 @@ mod tests {
             mapping: vec![UpdateEmotionMouthMappingElementRequest {
                 name: element_name_ah(),
                 image_id: String::from("id3")
-            }]
+            }],
+            translations: None
         };
 
         match update_emotion_mouth_layer(request, &repository, &image_repository).await {
@@ -233,7 +249,8 @@ mod tests {
             }, UpdateEmotionMouthMappingElementRequest {
                 name: element_name_oh(),
                 image_id: String::from("id2")
-            }]
+            }],
+            translations: None
         }, &repository, &image_repository).await.unwrap();
 
         let request = UpdateEmotionMouthLayerRequest {
@@ -242,14 +259,15 @@ mod tests {
             mapping: vec![UpdateEmotionMouthMappingElementRequest {
                 name: element_name_oh(),
                 image_id: String::from("id4")
-            }]
+            }],
+            translations: None
         };
 
         match update_emotion_mouth_layer(request, &repository, &image_repository).await {
             Ok(_) => {
                 match get_emotion(GetEmotionRequest { id: emotion.id.0 }, &repository).await {
                     Some(emotion) => {
-                        let mouth_mapping = get_mouth_mapping(emotion);
+                        let mouth_mapping = get_mouth_mapping(&emotion);
                         assert_eq!(mouth_mapping.len(), 2);
                         assert!(mouth_mapping.contains_key(&element_name_ah()));
                         assert_eq!(mouth_mapping.get(&element_name_ah()).unwrap(), "id1");
@@ -275,7 +293,8 @@ mod tests {
             parent_id: None,
             animation: vec![],
             index: 1,
-            emotion_id: emotion.id.0.clone()
+            emotion_id: emotion.id.0.clone(),
+            translations: None
         }, &repository, &image_repository).await.expect("Update emotion animation layer setup should not fail");
 
         let request = UpdateEmotionMouthLayerRequest {
@@ -287,7 +306,8 @@ mod tests {
             }, UpdateEmotionMouthMappingElementRequest {
                 name: element_name_oh(),
                 image_id: String::from("id2")
-            }]
+            }],
+            translations: None
         };
 
         match update_emotion_mouth_layer(request, &repository, &image_repository).await {
@@ -320,7 +340,8 @@ mod tests {
             }, UpdateEmotionMouthMappingElementRequest {
                 name: element_name_oh(),
                 image_id: String::from("id2")
-            }]
+            }],
+            translations: None
         };
 
         match update_emotion_mouth_layer(request, &repository, &image_repository).await {
@@ -337,7 +358,7 @@ mod tests {
         MouthPositionName::Oh.into()
     }
 
-    fn get_mouth_mapping(emotion: EmotionDto) -> HashMap<String, String> {
+    fn get_mouth_mapping(emotion: &EmotionDto) -> HashMap<String, String> {
         emotion.animation.iter()
             .find(|layer| match layer {
                 EmotionLayerDto::Animation { .. } => false,
@@ -346,6 +367,20 @@ mod tests {
             .and_then(|layer| match layer {
                 EmotionLayerDto::Animation { .. } => None,
                 EmotionLayerDto::Mouth { mouth_mapping, .. } => Some(mouth_mapping)
+            })
+            .cloned()
+            .expect("Emotion expected to have a mouth layer")
+    }
+
+    fn get_mouth_translation(emotion: &EmotionDto) -> HashMap<u32, (u32, u32)> {
+        emotion.animation.iter()
+            .find(|layer| match layer {
+                EmotionLayerDto::Animation { .. } => false,
+                EmotionLayerDto::Mouth { .. } => true
+            })
+            .and_then(|layer| match layer {
+                EmotionLayerDto::Animation { .. } => None,
+                EmotionLayerDto::Mouth { translations, .. } => Some(translations)
             })
             .cloned()
             .expect("Emotion expected to have a mouth layer")
