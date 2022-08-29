@@ -13,6 +13,7 @@ export type EmotionLayers = ({ type: EmotionLayer.Mouth, id: string, parentId: s
 
 export interface Emotion {
   speak(phonemes: string[], durationMs: number): AnimationRun;
+  asIdleAnimation(): AnimationRun;
 }
 
 export class ConfigurableEmotion implements Emotion {
@@ -29,6 +30,20 @@ export class ConfigurableEmotion implements Emotion {
         switch (layer.type) {
           case EmotionLayer.Mouth:
             return { id: layer.id, parentId: layer.parentId, actions: this._createMouthLayer(phonemes, durationMs, layer.mouthMapping), loop: false };
+          case EmotionLayer.Animation:
+            return { id: layer.id, parentId: layer.parentId, actions: layer.animation(), loop: true } as ManagerTimelineComplex
+        }
+      })
+    }));
+  }
+
+  public asIdleAnimation(): AnimationRun {
+    return StepAnimationRun.animating(SingleAnimationStepper.create({
+      fps: 60,
+      layers: this._emotionLayers.map(layer => {
+        switch (layer.type) {
+          case EmotionLayer.Mouth:
+            return { id: layer.id, parentId: layer.parentId, actions: [drawId(layer.mouthMapping['idle'])], loop: false };
           case EmotionLayer.Animation:
             return { id: layer.id, parentId: layer.parentId, actions: layer.animation(), loop: true } as ManagerTimelineComplex
         }
