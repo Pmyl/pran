@@ -44,12 +44,17 @@
     width: 98%;
 }
 
-.management-view_create-new-container {
+.management-view_options-container {
     position: absolute;
     top: 20px;
     right: 20px;
 }
 
+.management-view_option-button + .management-view_option-button {
+    margin-left: 10px;
+}
+
+.management-view_view-emotions-button,
 .management-view_create-new-button {
     width: 40px;
     height: 40px;

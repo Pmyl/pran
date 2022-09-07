@@ -10,7 +10,7 @@ export function animationToTimelineActions(frames: { frameStart: number, frameEn
       actions.push(clear());
     } else if (frame.frameStart > currentFrame) {
       actions.push(clear());
-      actions.push(wait(frame.frameEnd - currentFrame - 1));
+      actions.push(wait(frame.frameStart - currentFrame - 1));
     }
 
     actions.push(drawId(frame.imageId));

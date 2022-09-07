@@ -22,6 +22,7 @@ export const previewModal = inlineComponent<ModalContentInputs<void> & { reactio
 
   (async() => {
     const speechBubble = await SpeechBubble.create(speechBubbleCanvas.componentElement as HTMLCanvasElement);
+    speechBubble.shush();
     pranDroid = await buildDroid(pranCanvas, speechBubble);
     pranDroid.start();
   })();

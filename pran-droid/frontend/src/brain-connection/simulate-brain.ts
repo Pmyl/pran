@@ -1,5 +1,5 @@
 import { PranDroid } from '../droid/droid';
-import { reactionToSteps } from './response-parsers';
+import { reactionToPranDroidSteps } from './response-parsers';
 
 export async function simulateBrainMessage(pranDroid: PranDroid, message: string) {
   const reaction = await fetch(
@@ -12,7 +12,7 @@ export async function simulateBrainMessage(pranDroid: PranDroid, message: string
     .then(x => x.json());
 
   if (!!reaction) {
-    pranDroid.react(reactionToSteps(reaction));
+    pranDroid.react(reactionToPranDroidSteps(reaction));
   }
 }
 
@@ -27,6 +27,6 @@ export async function simulateBrainRedeem(pranDroid: PranDroid, id: string) {
     .then(x => x.json());
 
   if (!!reaction) {
-    pranDroid.react(reactionToSteps(reaction));
+    pranDroid.react(reactionToPranDroidSteps(reaction));
   }
 }

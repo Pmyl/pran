@@ -13,7 +13,7 @@ export class PranDroid {
 
   private _isReacting: boolean;
   private _reactionQueue: PranDroidReaction[] = [];
-  private _emotionRange: { [emotion: string]: Emotion };
+  private _emotionRange: { [emotion: string]: Emotion } = {};
 
   constructor(animationPlayer: PranDroidAnimationPlayer, speechBubble: SpeechBubble) {
     this._animationPlayer = animationPlayer;
@@ -26,6 +26,12 @@ export class PranDroid {
 
   public setEmotionRange(emotionRange: { [emotion: string]: Emotion }): void {
     this._emotionRange = emotionRange;
+  }
+
+  public setEmotions(emotions: Emotion[]): void {
+    emotions.forEach(emotion => {
+      this._emotionRange[emotion.id] = emotion;
+    });
   }
 
   public getEmotionRange(): { [emotion: string]: Emotion } {

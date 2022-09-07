@@ -107,7 +107,7 @@ export class ParentCanvasController implements MainCanvasController {
 
     public redraw(): void {
       for (let i = 0; i < this._imagesToDraw.length; i++) {
-        this._context2d.drawImage(this._imagesToDraw[i], this.globalX, this._context2d.canvas.height - this._imagesToDraw[i].height + this.globalY);
+        this._context2d.drawImage(this._imagesToDraw[i], Math.round(this.globalX), Math.round(this._context2d.canvas.height - this._imagesToDraw[i].height + this.globalY));
       }
     }
 

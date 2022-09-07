@@ -1,0 +1,7 @@
+.emotions-modal_emotion-button-container {
+  display: flex;
+}
+
+.emotions-modal_emotion-button {
+  flex: 1 0 100%;
+}

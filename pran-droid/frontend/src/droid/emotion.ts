@@ -2,6 +2,7 @@ import { clear, drawId, ManagerTimelineAction, ManagerTimelineComplex, MS_TO_FRA
 import { cmuPhonemesMap, MapOutput, phonemesMapper } from 'pran-phonemes-frontend';
 import { AnimationRun } from '../animation/run/animation-run';
 import { StepAnimationRun } from '../animation/run/step/step-animation-run';
+import { LoopAnimationStepper } from '../animation/run/step/stepper/loop-animation-stepper';
 import { SingleAnimationStepper } from '../animation/run/step/stepper/single-animation-stepper';
 
 export const enum EmotionLayer {
@@ -15,14 +16,18 @@ export type EmotionLayers = (
 )[];
 
 export interface Emotion {
+  id: string;
   speak(phonemes: string[], durationMs: number): AnimationRun;
   asIdleAnimation(): AnimationRun;
 }
 
 export class ConfigurableEmotion implements Emotion {
+  public id: string;
+
   private _emotionLayers: EmotionLayers;
 
-  constructor(emotionLayers: EmotionLayers) {
+  constructor(id: string, emotionLayers: EmotionLayers) {
+    this.id = id;
     this._emotionLayers = emotionLayers;
   }
 
@@ -41,12 +46,12 @@ export class ConfigurableEmotion implements Emotion {
   }
 
   public asIdleAnimation(): AnimationRun {
-    return StepAnimationRun.animating(SingleAnimationStepper.create({
+    return StepAnimationRun.animating(LoopAnimationStepper.create({
       fps: 60,
       layers: this._emotionLayers.map(layer => {
         switch (layer.type) {
           case EmotionLayer.Mouth:
-            return { id: layer.id, parentId: layer.parentId, actions: [drawId(layer.mouthMapping['idle'])], loop: false, translations: layer.translations };
+            return { id: layer.id, parentId: layer.parentId, actions: [drawId(layer.mouthMapping['idle'])], loop: true, translations: layer.translations };
           case EmotionLayer.Animation:
             return { id: layer.id, parentId: layer.parentId, actions: layer.animation(), loop: true, translations: layer.translations } as ManagerTimelineComplex
         }

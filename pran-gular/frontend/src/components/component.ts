@@ -243,6 +243,38 @@ export class ComplexRenderer {
     this._newNewableComponents = new Map<NewableComponent<object>, Set<Component>>();
   }
 
+  public div(classes?: string) {
+    return this.el('div', classes);
+  }
+
+  public span(classes?: string) {
+    return this.el('span', classes);
+  }
+
+  public p(classes?: string) {
+    return this.el('p', classes);
+  }
+
+  public button(classes?: string) {
+    return this.el('button', classes).attr('type', 'button');
+  }
+
+  public buttonSubmit(classes?: string) {
+    return this.el('button', classes).attr('type', 'submit');
+  }
+
+  public h1(classes?: string) {
+    return this.el('h1', classes);
+  }
+
+  public h2(classes?: string) {
+    return this.el('h2', classes);
+  }
+
+  public h3(classes?: string) {
+    return this.el('h3', classes);
+  }
+
   private _insertComponentAtCurrentIndex<TInputs extends object>(cmp: { component: NewableComponent<TInputs> }, inputs: TInputs) {
     let instances: Set<Component<TInputs>> = this._getOrCreateNewableComponents(this._newableComponents, cmp.component);
     let instance: Component;
@@ -278,7 +310,6 @@ export class ComplexRenderer {
     this._log(`--- Component: ${component.selector}`);
     component.componentElement.remove();
   }
-
   private _getOrCreateNewableComponents<TInputs extends object>(newableComponents: Map<NewableComponent<object>, Set<Component<object>>>, component: NewableComponent<TInputs>) {
     if (!newableComponents.has(component)) {
       newableComponents.set(component, new Set());
@@ -286,6 +317,7 @@ export class ComplexRenderer {
 
     return newableComponents.get(component) as Set<Component<TInputs>>;
   }
+
   private _createElement(selector: string): HTMLElement {
     const element = document.createElement(selector);
     this._log(`+++ Element: ${element.tagName}`);
@@ -384,8 +416,8 @@ export class ComplexRenderer {
       currentInstruction = this._instructions[++this._currentInstructionIndex];
     }
   }
-
   // Example: el -> parent element, attr -> element
+
   private _getElementInstructionIsActingOn(instruction: Instruction): HTMLElement {
     switch (instruction[0]) {
       case 'text':

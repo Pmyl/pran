@@ -5,7 +5,8 @@ import { reactionsTable } from '../public-view/components/table';
 import { getReaction, getReactions } from '../public-view/helpers/get-reactions';
 import { PranDroidReactionDefinitions } from '../public-view/models';
 import './management-view.css';
-import { editReactionModal } from './edit/edit-reaction-modal';
+import { emotionsModal } from './emotions/emotions-modal';
+import { editReactionModal } from './reactions/edit-reaction-modal';
 import { previewModal } from './preview/preview-modal';
 
 export const managementView = inlineComponent(controls => {
@@ -56,13 +57,9 @@ export const managementView = inlineComponent(controls => {
     });
   };
 
-  const createReaction = () => {
-    Modal.open(editReactionModal()).then(loadReactions).then(controls.changed);
-  };
-
-  const openPreviewModal = () => {
-    Modal.open(previewModal({ reactions: reactions || [] }));
-  };
+  const openCreateReactionModal = () => Modal.open(editReactionModal()).then(loadReactions).then(controls.changed);
+  const openEmotionsModal = () => Modal.open(emotionsModal());
+  const openPreviewModal = () => Modal.open(previewModal({ reactions: reactions || [] }));
 
   return (_, r) => {
     !reactions
@@ -76,8 +73,9 @@ export const managementView = inlineComponent(controls => {
             r.endEl();
           r.endEl();
           r.el('h6', 'management-view_subtitle').text('Management app').endEl();
-          r.el('div', 'management-view_create-new-container');
-            r.el('button', 'button button-positive-alt management-view_create-new-button').attr('type', 'button').text('+').endEl();
+          r.el('div', 'management-view_options-container');
+            r.el('button', 'button management-view_option-button management-view_view-emotions-button').attr('type', 'button').text('E').endEl();
+            r.el('button', 'button button-positive-alt management-view_option-button management-view_create-new-button').attr('type', 'button').text('+').endEl();
           r.endEl();
 
           r.el('div', 'public-view_table-container');
@@ -87,7 +85,8 @@ export const managementView = inlineComponent(controls => {
       })();
 
     return e => (
-      onClick(e, '.management-view_create-new-button', () => createReaction()),
+      onClick(e, '.management-view_create-new-button', () => openCreateReactionModal()),
+      onClick(e, '.management-view_view-emotions-button', () => openEmotionsModal()),
       onClick(e, '.management-view_preview-button', () => openPreviewModal())
     );
   };

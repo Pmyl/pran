@@ -23,6 +23,7 @@ export class SpeechBubble {
   private _lastDrawCancellation: () => void;
   private _bubbleOpen: boolean;
   private _talkAudio: AudioPlayer;
+  private _isSilent: boolean = false;
 
   private constructor(canvas: HTMLCanvasElement, talkAudio: AudioPlayer) {
     this._canvas = canvas;
@@ -38,6 +39,10 @@ export class SpeechBubble {
 
   public static async create(canvas: HTMLCanvasElement): Promise<SpeechBubble> {
     return new SpeechBubble(canvas, await AudioPlayer.createFromFile('./resources/sounds/talking.wav'));
+  }
+
+  public shush(): void {
+    this._isSilent = true;
   }
 
   public openBubble(): void {
@@ -205,7 +210,7 @@ export class SpeechBubble {
         this._clearBubble();
         textToWrite += char;
         this._drawSpeechInstant(context, textToWrite, options);
-        if (/[a-zA-Z1-9]/.test(char)) {
+        if (!this._isSilent && /[a-zA-Z1-9]/.test(char)) {
           this._talkAudio.play();
         }
         await waitFor(LETTER_DURATION);
