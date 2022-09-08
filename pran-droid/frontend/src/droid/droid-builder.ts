@@ -3,6 +3,7 @@ import { Container } from 'pran-gular-frontend';
 import { PlayerController } from '../animation/player-controller';
 import { PranDroidAnimationPlayer } from '../animation/pran-droid-animation-player';
 import { getEmotions } from '../api-interface/emotions';
+import { getImages } from '../api-interface/images';
 import { emotionToPranDroidEmotion } from '../brain-connection/response-parsers';
 import { retryFetch } from '../helpers/retry-fetch';
 import { SpeechBubble } from '../speech-bubble/speech-bubble';
@@ -61,8 +62,7 @@ export class PranDroidBuilder {
     let images;
 
     if (this._useApiImages) {
-      images = (await retryFetch('/api/images').then(r => r.json())).data;
-      console.log('Images', images);
+      images = await getImages();
     } else {
       images = this._images;
     }

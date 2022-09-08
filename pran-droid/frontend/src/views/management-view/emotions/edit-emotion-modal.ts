@@ -1,10 +1,12 @@
-import { ComplexRenderer, Container, inlineComponent, ModalContentInputs, onChange, onClick } from 'pran-gular-frontend';
-import { EmotionApiAnimationLayerModel, EmotionApiLayerModel, EmotionApiModel } from '../../../api-interface/emotions';
+import { ComplexRenderer, Container, inlineComponent, Modal, ModalContentInputs, onChange, onClick } from 'pran-gular-frontend';
+import { EmotionApiAnimationLayerModel, EmotionApiLayerModel, EmotionApiModel, EmotionApiMouthLayerModel } from '../../../api-interface/emotions';
 import { emotionToPranDroidEmotion } from '../../../brain-connection/response-parsers';
 import { PranDroid } from '../../../droid/droid';
 import { PranDroidBuilder } from '../../../droid/droid-builder';
+import { deepClone } from '../../../helpers/deepClone';
 import { SpeechBubble } from '../../../speech-bubble/speech-bubble';
 import './edit-emotion-modal.css';
+import { selectImageModal } from '../images/select-image-modal';
 
 interface EmotionLayerModelNode {
   layer: EmotionApiLayerModel;
@@ -43,7 +45,7 @@ export const editEmotionModal = inlineComponent<ModalContentInputs<void> & { emo
       layersMap = new Map<string, EmotionLayerModelNode>();
 
       e.layers.forEach(layer => {
-        const layerNode = { layer: layer, children: [] };
+        const layerNode = { layer: deepClone(layer), children: [] };
         if (layer.parentId && layersMap.has(layer.parentId)) {
           layersMap.get(layer.parentId).children.push(layerNode);
         } else {
@@ -64,8 +66,6 @@ export const editEmotionModal = inlineComponent<ModalContentInputs<void> & { emo
     }
   };
 
-  // TODO: on change of emotion call pranDroid.setIdle(emotionToPranDroidEmotion(emotion).asIdleAnimation())
-  // so that the preview updates live
   // TODO: figure out how to create the most "zoomed in" canvas possible to use for preview
 
   function drawEmotionLayer(r: ComplexRenderer, layerNode: EmotionLayerModelNode) {
@@ -73,15 +73,24 @@ export const editEmotionModal = inlineComponent<ModalContentInputs<void> & { emo
       r.div('edit-emotion-modal_emotion-row-content');
         r.div().text(layerNode.layer.type).endEl();
         if (layerNode.layer.type === 'Mouth') {
-          r.div().text(JSON.stringify(layerNode.layer.mouthMapping)).endEl();
+          r.div();
+            Object.keys(layerNode.layer.mouthMapping).forEach(mouthKey => {
+              r.el('label').text(mouthKey).endEl();
+              r.button('button').attr('id', `layer-${layerNode.layer.id}-mouth-${mouthKey}`).text((layerNode.layer as EmotionApiMouthLayerModel).mouthMapping[mouthKey]).endEl();
+            });
+          r.endEl();
         } else {
           layerNode.layer.frames.forEach((frame, index) => {
             r.div();
               r.el('input').attr('id', `layer-${layerNode.layer.id}-${index}-frame-start`).endEl();
               r.el('input').attr('id', `layer-${layerNode.layer.id}-${index}-frame-end`).endEl();
-              r.el('input').attr('id', `layer-${layerNode.layer.id}-${index}-image-id`).endEl();
+              r.button('button').attr('id', `layer-${layerNode.layer.id}-${index}-image-id`).text(frame.imageId).endEl();
+              if ((layerNode.layer as EmotionApiAnimationLayerModel).frames.length > 1) {
+                r.button('button button-danger').attr('id', `layer-${layerNode.layer.id}-${index}-delete-image-id`).text('🗑').endEl();
+              }
             r.endEl();
           });
+          r.button('button button-positive').attr('id', `layer-${layerNode.layer.id}-add-frame`).text('+').endEl();
         }
       r.endEl();
       r.div('edit-emotion-modal_emotion-row-children-container');
@@ -122,11 +131,20 @@ export const editEmotionModal = inlineComponent<ModalContentInputs<void> & { emo
         if (layerNode.layer.type === 'Animation') {
           layerNode.layer.frames.forEach((frame, index) => {
             setInputValue(e, `#layer-${layerNode.layer.id}-${index}-frame-start`, frame.frameStart.toString());
-            onChange(e, `#layer-${layerNode.layer.id}-${index}-frame-start`, t => (t.target.value !== '' && (frame.frameStart = parseInt(t.target.value), rebuildEmotionPreview())))
+            onChange(e, `#layer-${layerNode.layer.id}-${index}-frame-start`, t => (t.target.value !== '' && (frame.frameStart = parseInt(t.target.value), rebuildEmotionPreview())));
             setInputValue(e, `#layer-${layerNode.layer.id}-${index}-frame-end`, frame.frameEnd.toString());
-            onChange(e, `#layer-${layerNode.layer.id}-${index}-frame-end`, t => (t.target.value !== '' && (frame.frameEnd = parseInt(t.target.value), rebuildEmotionPreview())))
-            setInputValue(e, `#layer-${layerNode.layer.id}-${index}-image-id`, frame.imageId);
-            onChange(e, `#layer-${layerNode.layer.id}-${index}-image-id`, t => (t.target.value !== '' && (frame.imageId = t.target.value, rebuildEmotionPreview())))
+            onChange(e, `#layer-${layerNode.layer.id}-${index}-frame-end`, t => (t.target.value !== '' && (frame.frameEnd = parseInt(t.target.value), rebuildEmotionPreview())));
+            onClick(e, `#layer-${layerNode.layer.id}-${index}-image-id`, _ =>
+              Modal.open(selectImageModal()).then(result => !!result && (frame.imageId = result.id, rebuildEmotionPreview())));
+            onClick(e, `#layer-${layerNode.layer.id}-${index}-delete-image-id`, _ =>
+              ((layerNode.layer as EmotionApiAnimationLayerModel).frames.splice(index, 1), rebuildEmotionPreview()));
+          });
+          onClick(e, `#layer-${layerNode.layer.id}-add-frame`, _ =>
+            ((layerNode.layer as EmotionApiAnimationLayerModel).frames.push({ frameStart: 0, frameEnd: 1, imageId: '' }), rebuildEmotionPreview()));
+        } else {
+          Object.keys(layerNode.layer.mouthMapping).forEach(mouthKey => {
+            onClick(e, `#layer-${layerNode.layer.id}-mouth-${mouthKey}`, t =>
+              Modal.open(selectImageModal()).then(result => !!result && ((layerNode.layer as EmotionApiMouthLayerModel).mouthMapping[mouthKey] = result.id, rebuildEmotionPreview())))
           });
         }
       })
