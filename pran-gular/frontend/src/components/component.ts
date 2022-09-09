@@ -67,7 +67,7 @@ export class ComplexRenderer {
       currentInstruction = this._instructions[this._currentInstructionIndex];
     }
 
-    if (!!currentInstruction && currentInstruction[0] === instruction) {
+    if (!!currentInstruction && currentInstruction[0] === instruction && currentInstruction[1].parentElement === this._elementQueue[0]) {
       element = currentInstruction[1];
       this._currentInstructionIndex++;
     } else {

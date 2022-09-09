@@ -178,7 +178,7 @@ describe('Component Complex Rendering', () => {
       });
     });
 
-    describe('Root -> 2 Element when inserting a new element between two existing', () => {
+    describe('Root -> 2 Elements when inserting a new element between two existing', () => {
       it('should not destroy the existing elements', () => {
         const fixture = createComplexRendererFixture();
 
@@ -230,7 +230,7 @@ describe('Component Complex Rendering', () => {
       });
     });
 
-    describe('Root -> 2 Element when removing the first element', () => {
+    describe('Root -> 2 Elements when removing the first element', () => {
       it('should have only one element left', () => {
         const fixture = createComplexRendererFixture();
 
@@ -238,6 +238,37 @@ describe('Component Complex Rendering', () => {
         fixture.render(r => r.el('div').el('span').endEl().endEl());
 
         expect(fixture.hostElement.children[0].children.length).toBe(1);
+      });
+    });
+
+    describe('Root -> 2 Element with Element 0 -> Button and Element 1 is a Button when duplicating Element 0', () => {
+      it('should render the correct elements', () => {
+        const fixture = createComplexRendererFixture();
+
+        fixture.render(r => r
+          .div()
+            .button().endEl()
+          .endEl()
+          .button().endEl());
+        fixture.render(r => r
+          .div()
+            .button().endEl()
+          .endEl()
+          .div()
+            .button().endEl()
+          .endEl()
+          .button().endEl());
+
+        expect(fixture.hostElement.children.length).toBe(3);
+        expect(fixture.hostElement.children[0].tagName).toBe('DIV')
+        expect(fixture.hostElement.children[0].children.length).toBe(1)
+        expect(fixture.hostElement.children[0].children[0].tagName).toBe('BUTTON');
+
+        expect(fixture.hostElement.children[1].tagName).toBe('DIV')
+        expect(fixture.hostElement.children[1].children.length).toBe(1)
+        expect(fixture.hostElement.children[1].children[0].tagName).toBe('BUTTON');
+
+        expect(fixture.hostElement.children[2].tagName).toBe('BUTTON');
       });
     });
 
@@ -435,7 +466,7 @@ describe('Component Complex Rendering', () => {
     });
 
     // Attributes
-    describe('Root -> 1 Elements without attribute when adding an attribute', () => {
+    describe('Root -> 1 Element without attribute when adding an attribute', () => {
       it('should keep the same element', () => {
         const fixture = createComplexRendererFixture();
 
