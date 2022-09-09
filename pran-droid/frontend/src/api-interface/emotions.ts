@@ -31,3 +31,13 @@ export const getEmotions = () => retryFetch('/api/emotions')
     x.data.forEach(emotion => emotion.layers.sort((a, b) => a.id !== b.parentId ? 1 : -1))
     return x.data as EmotionApiModel[];
   });
+
+export const createEmotion = (emotionApiModel: { name: string; }) => fetch(
+    '/api/emotions',
+    {
+      method: 'POST',
+      body: JSON.stringify(emotionApiModel),
+      headers: { 'Content-Type': 'application/json' }
+    }
+  )
+  .then(x => x.json()) as Promise<EmotionApiModel>;

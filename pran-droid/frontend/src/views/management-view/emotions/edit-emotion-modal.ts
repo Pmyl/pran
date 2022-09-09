@@ -1,5 +1,5 @@
 import { ComplexRenderer, Container, inlineComponent, Modal, ModalContentInputs, onChange, onClick } from 'pran-gular-frontend';
-import { EmotionApiAnimationLayerModel, EmotionApiLayerModel, EmotionApiModel, EmotionApiMouthLayerModel } from '../../../api-interface/emotions';
+import { EmotionApiAnimationLayerModel, EmotionApiLayerModel, EmotionApiModel, EmotionApiMouthLayerModel, createEmotion } from '../../../api-interface/emotions';
 import { emotionToPranDroidEmotion } from '../../../brain-connection/response-parsers';
 import { PranDroid } from '../../../droid/droid';
 import { PranDroidBuilder } from '../../../droid/droid-builder';
@@ -102,16 +102,7 @@ export const editEmotionModal = inlineComponent<ModalContentInputs<void> & { emo
   }
 
   function rebuildEmotionPreview() {
-    const layers = [];
-    layersMap.forEach(l => {
-      layers.push(l.layer);
-    });
-    const emotionApi = {
-      id: emotionModel.id,
-      name: emotionModel.name,
-      layers: layers.sort((a, b) => a.id !== b.parentId ? 1 : -1)
-    };
-    pranDroid.setIdle(emotionToPranDroidEmotion(emotionApi).asIdleAnimation());
+    pranDroid.setIdle(emotionToPranDroidEmotion(buildApiModel()).asIdleAnimation());
     pranDroid.start();
     controls.changed();
   }
@@ -120,11 +111,34 @@ export const editEmotionModal = inlineComponent<ModalContentInputs<void> & { emo
     (container.querySelector(query) as HTMLInputElement).value = value;
   }
 
+  function buildApiModel() {
+    const layers = [];
+    layersMap.forEach(l => {
+      layers.push(l.layer);
+    });
+
+    return {
+      id: emotionModel.id,
+      name: emotionModel.name,
+      layers: layers.sort((a, b) => a.id !== b.parentId ? 1 : -1)
+    };
+  }
+
+  async function saveEmotionInApi() {
+    if (!emotionModel.id) {
+      const emotionApi: EmotionApiModel = await createEmotion({ name: emotionModel.name });
+      emotionModel.id = emotionApi.id;
+    }
+
+    // update in api
+  }
+
   return (i, r) => {
     r.div();
       emotionModel.layerNodes.forEach(node => drawEmotionLayer(r, node));
     r.endEl();
     r.cmpi(pranCanvas).cmpi(speechBubbleCanvas);
+    r.button('button button-positive save-button').text('Save').endEl();
 
     return e => (
       layersMap.forEach(layerNode => {
@@ -147,7 +161,8 @@ export const editEmotionModal = inlineComponent<ModalContentInputs<void> & { emo
               Modal.open(selectImageModal()).then(result => !!result && ((layerNode.layer as EmotionApiMouthLayerModel).mouthMapping[mouthKey] = result.id, rebuildEmotionPreview())))
           });
         }
-      })
+      }),
+      onClick(e, '.save-button', saveEmotionInApi)
     );
   };
 });
